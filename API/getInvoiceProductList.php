@@ -14,15 +14,23 @@ $i=0;
         pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
 
         $invoiceDate = isset($_GET['invoiceDate']) ? $_GET['invoiceDate'] : '';
+        $invoiceNetworkStatus = isset($_GET['invoiceNetworkStatus']) ? trim((string) $_GET['invoiceNetworkStatus']) : '';
+        $invoiceNumber = isset($_GET['invoiceNumber']) ? trim((string) $_GET['invoiceNumber']) : '';
         
         date_default_timezone_set("Asia/Calcutta");
         $date = date("Y-m-d");
-        
-	if ($invoiceDate !== '') {
-		$sth="SELECT * FROM `invoice_final_product` LEFT JOIN `invoice` ON `invoice`.`invoiceNumber`=`invoice_final_product`.`invoiceNumber` WHERE `invoice`.`licenseId`='$userId' AND `invoice`.`invoiceDate` LIKE '%$invoiceDate%'";
-	} else {
-		$sth="SELECT * FROM `invoice_final_product` LEFT JOIN `invoice` ON `invoice`.`invoiceNumber`=`invoice_final_product`.`invoiceNumber` WHERE `invoice`.`licenseId`='$userId'";
-	}
+        $escUser = mysqli_real_escape_string($con, (string) $userId);
+        $where = "`invoice`.`licenseId`='$escUser'";
+        if ($invoiceNetworkStatus !== '') {
+            $where .= " AND `invoice`.`invoiceNetworkStatus`='" . mysqli_real_escape_string($con, $invoiceNetworkStatus) . "'";
+        }
+        if ($invoiceNumber !== '') {
+            $where .= " AND `invoice_final_product`.`invoiceNumber`='" . mysqli_real_escape_string($con, $invoiceNumber) . "'";
+        }
+        if ($invoiceDate !== '') {
+            $where .= " AND `invoice`.`invoiceDate` LIKE '%" . mysqli_real_escape_string($con, $invoiceDate) . "%'";
+        }
+        $sth = "SELECT * FROM `invoice_final_product` LEFT JOIN `invoice` ON `invoice`.`invoiceNumber`=`invoice_final_product`.`invoiceNumber` WHERE $where";
 
     if ($result = mysqli_query($con, $sth))
     {

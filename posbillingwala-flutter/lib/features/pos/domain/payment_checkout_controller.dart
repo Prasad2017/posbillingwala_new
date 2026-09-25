@@ -6,6 +6,7 @@ import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.da
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/license_validator.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
+import 'package:pos_billingwala_v2/features/pos/domain/billing_date.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_mode.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/staff/data/staff_store.dart';
@@ -264,6 +265,7 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
             updateInventory: printer.productQuantityUpdate,
             createdByStaffId: staffId,
             createdByStaffName: staff?.name,
+            billingDate: resolveBillingDateTimeFromRef(ref),
           );
       state = state.copyWith(busy: false, result: result);
       return result;

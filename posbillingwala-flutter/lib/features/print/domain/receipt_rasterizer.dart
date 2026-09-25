@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -6,6 +7,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_slip_builder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_encoder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_image_encoder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
@@ -62,6 +64,7 @@ class ReceiptRasterizer {
     final rendered = await render(
       text,
       width,
+      paperSize: settings.paperSize,
       qrPayload: qrPayload,
       logoPath: logoPath,
       qrMarker: qrMarker,
@@ -72,6 +75,221 @@ class ReceiptRasterizer {
       charsPerLine: settings.charsPerLine,
       feedLines: feedLinesOverride ?? settings.feedLines,
     );
+  }
+
+  /* Same bitmap as printMessSlip — PNG for on-screen thermal preview. */
+  Future<Uint8List> renderTextPng(
+    String text, {
+    required PrinterSettings settings,
+    String? qrPayload,
+    String? logoPath,
+    String? qrMarker,
+    bool useAssetLogoFallback = false,
+  }) async {
+    final width = widthPxFor(settings.paperSize);
+    final rendered = await render(
+      text,
+      width,
+      paperSize: settings.paperSize,
+      qrPayload: qrPayload,
+      logoPath: logoPath,
+      qrMarker: qrMarker,
+      useAssetLogoFallback: useAssetLogoFallback,
+    );
+    return rgbaToPng(rendered);
+  }
+
+  /* Mess QR / coupon — shop header painted like invoice [renderTicket]. */
+  Future<List<int>> encodeMessLayout(
+    MessSlipLayout layout, {
+    required PrinterSettings settings,
+    String? logoPath,
+    int? feedLinesOverride,
+    bool useAssetLogoFallback = false,
+  }) async {
+    final width = widthPxFor(settings.paperSize);
+    final rendered = await renderMessLayout(
+      layout,
+      width,
+      paperSize: settings.paperSize,
+      logoPath: logoPath,
+      useAssetLogoFallback: useAssetLogoFallback,
+    );
+    return _escPosRaster(
+      rendered,
+      charsPerLine: settings.charsPerLine,
+      feedLines: feedLinesOverride ?? settings.feedLines,
+    );
+  }
+
+  Future<Uint8List> renderMessLayoutPng(
+    MessSlipLayout layout, {
+    required PrinterSettings settings,
+    String? logoPath,
+    bool useAssetLogoFallback = false,
+  }) async {
+    final width = widthPxFor(settings.paperSize);
+    final rendered = await renderMessLayout(
+      layout,
+      width,
+      paperSize: settings.paperSize,
+      logoPath: logoPath,
+      useAssetLogoFallback: useAssetLogoFallback,
+    );
+    return rgbaToPng(rendered);
+  }
+
+  Future<RenderedImage> renderMessLayout(
+    MessSlipLayout layout,
+    int widthPx, {
+    required PrinterPaperSize paperSize,
+    String? logoPath,
+    bool useAssetLogoFallback = false,
+  }) async {
+    final is2Inch = paperSize != PrinterPaperSize.inch3;
+    final hPad = is2Inch ? 6.0 : 8.0;
+    /* Match invoice / [renderTicket] absolute pt sizes. */
+    final shopSize = is2Inch ? 20.0 : 24.0;
+    final bodySize = is2Inch ? 17.0 : 20.0;
+    final bannerSize = is2Inch ? 15.0 : 17.0;
+    final lineGap = is2Inch ? 2.0 : 2.5;
+    final sectionGap = is2Inch ? 3.5 : 4.5;
+    final contentW = widthPx - hPad * 2;
+
+    TextStyle style({
+      double? size,
+      FontWeight weight = FontWeight.w500,
+    }) => AppFonts.printBody(
+      fontSize: size ?? bodySize,
+      weight: weight,
+      height: 1.15,
+    );
+
+    final logoImage = await loadLogo(
+      logoPath: logoPath,
+      widthPx: widthPx,
+      useAssetLogoFallback: useAssetLogoFallback,
+      widthFraction: 0.28,
+    );
+
+    final ops = <_PaintOp>[];
+    var y = 8.0;
+
+    if (logoImage != null) {
+      final lw = logoImage.width.toDouble();
+      final lh = logoImage.height.toDouble();
+      ops.add(_PaintOp.image(logoImage, (widthPx - lw) / 2, y));
+      y += lh + 4;
+    }
+
+    /* Shop name larger+bold; address / mobile / GST = body — same as bill. */
+    for (var i = 0; i < layout.shopLines.length; i++) {
+      y = _paintCentered(
+        ops,
+        layout.shopLines[i],
+        style(
+          size: i == 0 ? shopSize : bodySize,
+          weight: i == 0 ? FontWeight.w700 : FontWeight.w500,
+        ),
+        widthPx: widthPx,
+        maxWidth: contentW,
+        y: y,
+        gap: lineGap,
+      );
+    }
+
+    if (layout.shopLines.isNotEmpty && layout.bodyLines.isNotEmpty) {
+      y += sectionGap;
+    }
+
+    for (var i = 0; i < layout.bodyLines.length; i++) {
+      final isTitle = i == 0;
+      y = _paintCentered(
+        ops,
+        layout.bodyLines[i],
+        style(
+          size: isTitle ? bannerSize + 2 : bodySize,
+          weight: isTitle ? FontWeight.w700 : FontWeight.w500,
+        ),
+        widthPx: widthPx,
+        maxWidth: contentW,
+        y: y,
+        gap: lineGap,
+      );
+    }
+
+    final qr = layout.qrPayload?.trim() ?? '';
+    if (qr.isNotEmpty) {
+      final qrSize = (widthPx * 0.42).clamp(100.0, is2Inch ? 160.0 : 200.0);
+      y += sectionGap;
+      ops.add(_PaintOp.qr(qr, (widthPx - qrSize) / 2, y, qrSize));
+      y += qrSize + sectionGap;
+    }
+
+    for (var i = 0; i < layout.footerLines.length; i++) {
+      final line = layout.footerLines[i];
+      final isToken = line.toLowerCase().startsWith('token:');
+      y = _paintCentered(
+        ops,
+        line,
+        style(
+          size: bodySize,
+          weight: isToken ? FontWeight.w700 : FontWeight.w500,
+        ),
+        widthPx: widthPx,
+        maxWidth: contentW,
+        y: y,
+        gap: lineGap,
+      );
+    }
+
+    final height = (y + 16).ceil().clamp(24, 12000);
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, widthPx.toDouble(), height.toDouble()),
+      Paint()..color = const Color(0xFFFFFFFF),
+    );
+    for (final op in ops) {
+      op.paint(canvas, this);
+    }
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(widthPx, height);
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+    image.dispose();
+    for (final op in ops) {
+      op.dispose();
+    }
+    if (byteData == null) {
+      return RenderedImage(
+        rgba: Uint8List(widthPx * height * 4),
+        width: widthPx,
+        height: height,
+      );
+    }
+    return RenderedImage(
+      rgba: byteData.buffer.asUint8List(),
+      width: widthPx,
+      height: height,
+    );
+  }
+
+  static Future<Uint8List> rgbaToPng(RenderedImage rendered) async {
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromPixels(
+      rendered.rgba,
+      rendered.width,
+      rendered.height,
+      ui.PixelFormat.rgba8888,
+      completer.complete,
+    );
+    final image = await completer.future;
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    if (data == null) {
+      throw StateError('Could not encode mess slip preview');
+    }
+    return data.buffer.asUint8List();
   }
 
   List<int> _escPosRaster(
@@ -422,15 +640,22 @@ class ReceiptRasterizer {
   Future<RenderedImage> render(
     String text,
     int widthPx, {
+    PrinterPaperSize paperSize = PrinterPaperSize.inch2,
     String? qrPayload,
     String? logoPath,
     String? qrMarker,
     bool useAssetLogoFallback = false,
   }) async {
+    final is2Inch = paperSize != PrinterPaperSize.inch3;
+    /* Match [renderTicket] / bill print absolute pt sizes. */
+    final bodySize = is2Inch ? 17.0 : 20.0;
+    final lineHeight = 1.15;
+
     final logoImage = await loadLogo(
       logoPath: logoPath,
       widthPx: widthPx,
       useAssetLogoFallback: useAssetLogoFallback,
+      widthFraction: 0.28,
     );
     final logoDrawH = logoImage == null
         ? 0.0
@@ -457,10 +682,15 @@ class ReceiptRasterizer {
       }
     }
 
-    /* Shared with invoice preview — Poppins + Indic fallbacks so user data */
-    /* (EN / MR / HI / …) prints identically on Android, iOS, and web share. */
-    final style = AppFonts.printBody();
-    final boldStyle = AppFonts.printBold();
+    /* Shared with invoice / bill raster — Poppins + Indic fallbacks. */
+    final style = AppFonts.printBody(
+      fontSize: bodySize,
+      height: lineHeight,
+    );
+    final boldStyle = AppFonts.printBold(
+      fontSize: bodySize,
+      height: lineHeight,
+    );
 
     final topPainter = TextPainter(
       text: TextSpan(text: topText, style: style),
@@ -479,7 +709,8 @@ class ReceiptRasterizer {
       )..layout(maxWidth: widthPx - 16.0);
     }
 
-    final qrSize = (widthPx * 0.55).clamp(120.0, 280.0);
+    /* Same QR budget as [renderTicket]. */
+    final qrSize = (widthPx * 0.42).clamp(100.0, is2Inch ? 160.0 : 200.0);
     final qrData = qrPayload?.trim() ?? '';
     final drawQr = qrData.isNotEmpty && (hasInlineQr || marker.isEmpty);
     final qrGap = drawQr ? qrSize + 24 : 0.0;

@@ -212,12 +212,15 @@
             </ul>
         </li>
 
-        <li class="{{ $is(['settings/logo', 'settings/favicon', 'website']) ? 'mm-active' : '' }}">
+        <li class="{{ $is(['settings/logo', 'settings/favicon', 'settings/pos-banners', 'website']) ? 'mm-active' : '' }}">
             <a href="javascript:;" class="has-arrow">
                 <div class="parent-icon"><i class='bx bx-slider-alt'></i></div>
                 <div class="menu-title">App Settings</div>
             </a>
-            <ul class="{{ $is(['settings/logo', 'settings/favicon', 'website']) ? 'mm-show mm-collapse' : 'mm-collapse' }}">
+            <ul class="{{ $is(['settings/logo', 'settings/favicon', 'settings/pos-banners', 'website']) ? 'mm-show mm-collapse' : 'mm-collapse' }}">
+                <li class="{{ $navCurrent('settings/pos-banners') ? 'pb-nav-current' : '' }}">
+                    <a href="{{ url('settings/pos-banners') }}"><i class="sub-icon bx bx-images"></i><span>Banner Upload</span></a>
+                </li>
                 <li class="{{ $navCurrent('settings/logo') ? 'pb-nav-current' : '' }}">
                     <a href="{{ url('settings/logo') }}"><i class="sub-icon bx bx-image"></i><span>Logo Update</span></a>
                 </li>

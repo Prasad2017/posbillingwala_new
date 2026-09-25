@@ -31,6 +31,13 @@ class MessMemberDto {
   final String memberStatus;
   final String? memberNetworkStatus;
 
+  /* API may send active/inactive; local DB uses 1=active, 2=deleted (Android). */
+  static String normalizeStatus(String? raw) {
+    final s = (raw ?? '').trim().toLowerCase();
+    if (s == '2' || s == 'inactive' || s == 'deleted') return '2';
+    return '1';
+  }
+
   factory MessMemberDto.fromJson(Map<String, dynamic> json) {
     return MessMemberDto(
       memberId: parseInt(json['memberId']) ?? 0,
@@ -46,7 +53,7 @@ class MessMemberDto {
       college: parseString(json['college']),
       studentYear: parseString(json['studentYear']),
       company: parseString(json['company']),
-      memberStatus: parseString(json['memberStatus']) ?? '1',
+      memberStatus: normalizeStatus(parseString(json['memberStatus'])),
       memberNetworkStatus: parseString(json['memberNetworkStatus']),
     );
   }

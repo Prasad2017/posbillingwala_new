@@ -903,6 +903,8 @@ class CompanyPrinterSettings extends Table {
   TextColumn get kotAutoPrint => text().withDefault(const Constant('off'))();
 
   TextColumn get kotPreview => text().withDefault(const Constant('on'))();
+
+  TextColumn get printFastBill => text().withDefault(const Constant('off'))();
 }
 
 /* Android `inventory` ledger (append-only stock in/out rows). */

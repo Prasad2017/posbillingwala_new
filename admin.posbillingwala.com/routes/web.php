@@ -19,6 +19,7 @@ use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\CrashController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\PosHomeBannerController;
 use App\Http\Controllers\WebsiteContentController;
 use App\Http\Controllers\PushNotificationController;
 
@@ -234,6 +235,11 @@ Route::middleware(['auth'])->group(function () {
 	Route::post('settings/logo', [SettingsController::class, 'updateLogo']);
 	Route::get('settings/favicon', [SettingsController::class, 'favicon']);
 	Route::post('settings/favicon', [SettingsController::class, 'updateFavicon']);
+	Route::get('settings/pos-banners', [PosHomeBannerController::class, 'index']);
+	Route::post('settings/pos-banners', [PosHomeBannerController::class, 'store']);
+	Route::get('settings/pos-banners/toggle/{id}', [PosHomeBannerController::class, 'toggle']);
+	Route::get('settings/pos-banners/move/{id}/{direction}', [PosHomeBannerController::class, 'move']);
+	Route::get('settings/pos-banners/delete/{id}', [PosHomeBannerController::class, 'destroy']);
 
 	Route::get('users', [\App\Http\Controllers\UsersController::class, 'hub']);
 

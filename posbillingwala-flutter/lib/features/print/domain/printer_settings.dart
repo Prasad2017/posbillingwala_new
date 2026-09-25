@@ -100,6 +100,7 @@ class PrinterSettings {
     this.productQuantityUpdate = true,
     this.kotAutoPrint = false,
     this.kotPreview = true,
+    this.printFastBill = false,
     this.kotCopies = 1,
   });
 
@@ -132,6 +133,7 @@ class PrinterSettings {
   final bool productQuantityUpdate;
   final bool kotAutoPrint;
   final bool kotPreview;
+  final bool printFastBill;
   final int kotCopies;
 
   int get charsPerLine => charsPerLineFor(isKot: false);
@@ -188,6 +190,7 @@ class PrinterSettings {
     bool? productQuantityUpdate,
     bool? kotAutoPrint,
     bool? kotPreview,
+    bool? printFastBill,
     int? kotCopies,
   }) {
     return PrinterSettings(
@@ -219,6 +222,7 @@ class PrinterSettings {
           productQuantityUpdate ?? this.productQuantityUpdate,
       kotAutoPrint: kotAutoPrint ?? this.kotAutoPrint,
       kotPreview: kotPreview ?? this.kotPreview,
+      printFastBill: printFastBill ?? this.printFastBill,
       kotCopies: kotCopies ?? this.kotCopies,
     );
   }
@@ -267,6 +271,7 @@ class PrinterSettingsStore {
   static const qtyUpdateKey = 'printer_qty_update';
   static const kotAutoKey = 'printer_kot_auto';
   static const kotPreviewKey = 'printer_kot_preview';
+  static const printFastBillKey = 'printer_print_fast_bill';
   static const kotCopiesKey = 'printer_kot_copies';
   static const pendingUploadKey = 'printer_pending_upload';
 
@@ -323,6 +328,7 @@ class PrinterSettingsStore {
       productQuantityUpdate: prefs.getBool(qtyUpdateKey) ?? true,
       kotAutoPrint: prefs.getBool(kotAutoKey) ?? false,
       kotPreview: prefs.getBool(kotPreviewKey) ?? true,
+      printFastBill: prefs.getBool(printFastBillKey) ?? false,
       kotCopies: prefs.getInt(kotCopiesKey) ?? 1,
     );
     final overlay = dbOverlay;
@@ -378,6 +384,7 @@ class PrinterSettingsStore {
     await prefs.setBool(qtyUpdateKey, settings.productQuantityUpdate);
     await prefs.setBool(kotAutoKey, settings.kotAutoPrint);
     await prefs.setBool(kotPreviewKey, settings.kotPreview);
+    await prefs.setBool(printFastBillKey, settings.printFastBill);
     await prefs.setInt(kotCopiesKey, settings.kotCopies);
     final persist = dbPersist;
     if (persist != null) {

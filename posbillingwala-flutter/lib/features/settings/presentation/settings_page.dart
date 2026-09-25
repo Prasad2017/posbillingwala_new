@@ -416,6 +416,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           productQuantityUpdate: p.productQuantityUpdate == '1',
           kotAutoPrint: p.kotAutoPrint == '1' || p.kotAutoPrint == 'on',
           kotPreview: p.kotPreview != '0' && p.kotPreview != 'off',
+          printFastBill: p.printFastBill == '1' || p.printFastBill == 'on',
           kotCopies: int.tryParse(p.kotCopies) ?? current.kotCopies,
           invoicePrefix: p.invoicePrefix.isNotEmpty
               ? p.invoicePrefix
@@ -489,6 +490,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         ),
         kotAutoPrint: settings.kotAutoPrint ? '1' : '0',
         kotPreview: settings.kotPreview ? '1' : '0',
+        printFastBill: settings.printFastBill ? '1' : '0',
         kotCopies: '${settings.kotCopies}',
         paperSize: settings.paperSize.dbValue,
         kotPaperSize: settings.kotPaperSize.dbValue,
@@ -604,6 +606,14 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     await settingsPageSave(showSnack: false);
     if (!mounted) return;
     final mode = channel == PrinterChannelKind.kot ? 'kot' : 'invoice';
+    await context.push('/settings/test-print?mode=$mode');
+    if (!mounted) return;
+    await refreshBtStatus();
+  }
+
+  Future<void> openMessTestPreview(String mode) async {
+    await settingsPageSave(showSnack: false);
+    if (!mounted) return;
     await context.push('/settings/test-print?mode=$mode');
     if (!mounted) return;
     await refreshBtStatus();
@@ -941,6 +951,19 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     child: Column(
                       children: [
                         SettingSwitchTile(
+                          title: 'Print Fast Bill',
+                          value: settings.printFastBill,
+                          subtitle:
+                              'When ON, select the billing date while creating a bill. That date is used for save, print, numbering, and reports.',
+                          onChanged: (value) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(
+                                  settings.copyWith(printFastBill: value),
+                                );
+                          },
+                        ),
+                        SettingSwitchTile(
                           title: 'Use Logo on Bill',
                           value: settings.logoUse,
                           onChanged: (value) {
@@ -1032,7 +1055,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const Text(
-                          'Open sample invoice or KOT on the next screen',
+                          'Open sample invoice, KOT, or mess slip on the next screen',
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondary,
@@ -1065,6 +1088,39 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: PreviewActionButton(
+                                icon: Icons.qr_code_2_rounded,
+                                label: 'Mess QR Token',
+                                onPressed: btBusy
+                                    ? null
+                                    : () => openMessTestPreview('mess-qr'),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: PreviewActionButton(
+                                icon: Icons.confirmation_number_rounded,
+                                label: 'Mess Coupon',
+                                onPressed: btBusy
+                                    ? null
+                                    : () =>
+                                        openMessTestPreview('mess-coupon'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        PreviewActionButton(
+                          icon: Icons.qr_code_rounded,
+                          label: 'Mess QR Code',
+                          onPressed: btBusy
+                              ? null
+                              : () => openMessTestPreview('mess-common-qr'),
                         ),
                       ],
                     ),

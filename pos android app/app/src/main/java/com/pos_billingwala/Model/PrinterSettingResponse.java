@@ -198,6 +198,9 @@ public class PrinterSettingResponse {
     @SerializedName("kotPreview")
     @Expose
     public String kotPreview;
+    @SerializedName("printFastBill")
+    @Expose
+    public String printFastBill;
 
     public String getKotEnable() {
         return kotEnable;
@@ -237,5 +240,13 @@ public class PrinterSettingResponse {
 
     public void setKotPreview(String kotPreview) {
         this.kotPreview = kotPreview;
+    }
+
+    public String getPrintFastBill() {
+        return printFastBill;
+    }
+
+    public void setPrintFastBill(String printFastBill) {
+        this.printFastBill = printFastBill;
     }
 }

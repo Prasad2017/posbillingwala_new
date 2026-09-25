@@ -87,7 +87,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public static final String KOT_TABLE = "kot";
     public static final String KOT_ITEM_TABLE = "kot_item";
     // Database Version
-    public static final int DATABASE_VERSION = 31;
+    public static final int DATABASE_VERSION = 32;
 
     /** SQL suffix: only rows for the logged-in license branch. */
     private static String andBranchScope(String tableAlias) {
@@ -253,7 +253,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             + " bluetoothAddress VARCHAR, bluetoothKOTAddress VARCHAR, KOTPrinterName VARCHAR,"
             + " printerFeedLines VARCHAR, KotPrinterFeedLines VARCHAR, settingStatus TINYINT,"
             + " kotEnable VARCHAR DEFAULT 'on', kotPrefix VARCHAR DEFAULT 'KOT-', kotCopies VARCHAR DEFAULT '1',"
-            + " kotAutoPrint VARCHAR DEFAULT 'off', kotPreview VARCHAR DEFAULT 'on')";
+            + " kotAutoPrint VARCHAR DEFAULT 'off', kotPreview VARCHAR DEFAULT 'on',"
+            + " printFastBill VARCHAR DEFAULT 'off')";
 
     public final String COMPANY_QUERY = "CREATE TABLE IF NOT EXISTS " + COMPANY_TABLE + "(companyId INTEGER PRIMARY KEY AUTOINCREMENT, companyName VARCHAR, cashierName VARCHAR, companyMobile VARCHAR, " + "companyAddress VARCHAR, shopName1 VARCHAR, shopName2 VARCHAR, addressLine1 VARCHAR, addressLine2 VARCHAR, addressLine3 VARCHAR, phoneNo1 VARCHAR, phoneNo2 VARCHAR, currencyName VARCHAR, countryName VARCHAR, stateName VARCHAR, tableStatus VARCHAR, noOfTable VARCHAR,gstStatus VARCHAR, gstNumber VARCHAR, shopCGST VARCHAR, shopSGST VARCHAR, panNumber VARCHAR, companyFssis VARCHAR, companyLogo VARCHAR, paymentLogo VARCHAR, openingMinutes VARCHAR, closingMinutes VARCHAR, companyStatus TINYINT)";
 
@@ -454,6 +455,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotAutoPrint VARCHAR DEFAULT 'off'";
     public final String ALTER_PRINTER_KOT_PREVIEW_QUERY =
             "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN kotPreview VARCHAR DEFAULT 'on'";
+    public final String ALTER_PRINTER_PRINT_FAST_BILL_QUERY =
+            "ALTER TABLE " + PRINTER_SETTING_TABLE + " ADD COLUMN printFastBill VARCHAR DEFAULT 'off'";
     public final String ALTER_CART_SESSION_ID_QUERY =
             "ALTER TABLE " + CART_PRODUCT_TABLE + " ADD COLUMN diningSessionId VARCHAR";
     public final String ALTER_CART_ORDER_ROUND_ID_QUERY =
@@ -647,6 +650,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "printerFeedLines", ALTER_PRINTER_FEED_LINES_SETTING_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "KotPrinterFeedLines", ALTER_KOT_PRINTER_FEED_LINES_SETTING_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "duplicateBillUse", ALTER_PRINTER_DUPLICATE_BILL_SETTING_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "printFastBill", ALTER_PRINTER_PRINT_FAST_BILL_QUERY);
         // Phase 3 catalog foundation (additive only)
         db.execSQL(FOOD_TYPE_QUERY);
         db.execSQL(PRODUCT_SUBCATEGORY_QUERY);
@@ -725,6 +729,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotCopies", ALTER_PRINTER_KOT_COPIES_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotAutoPrint", ALTER_PRINTER_KOT_AUTO_PRINT_QUERY);
         addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "kotPreview", ALTER_PRINTER_KOT_PREVIEW_QUERY);
+        addColumnIfNotExists(db, PRINTER_SETTING_TABLE, "printFastBill", ALTER_PRINTER_PRINT_FAST_BILL_QUERY);
         addColumnIfNotExists(db, CART_PRODUCT_TABLE, "diningSessionId", ALTER_CART_SESSION_ID_QUERY);
         addColumnIfNotExists(db, CART_PRODUCT_TABLE, "orderRoundId", ALTER_CART_ORDER_ROUND_ID_QUERY);
         addColumnIfNotExists(db, CART_PRODUCT_TABLE, "kotPrinted", ALTER_CART_KOT_PRINTED_QUERY);
@@ -2980,7 +2985,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         }
     }
 
-    public boolean addCompanyPrinterSetting(String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String invoiceTermsCondition, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, int settingStatus) {
+    public boolean addCompanyPrinterSetting(String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String printFastBill, String invoiceTermsCondition, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, int settingStatus) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -2994,6 +2999,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("customerUse", customerUse);
         contentValues.put("productQuantityUpdate", productQuantityUpdate);
         contentValues.put("duplicateBillUse", duplicateBillUse != null ? duplicateBillUse : "off");
+        contentValues.put("printFastBill", printFastBill != null ? printFastBill : "off");
         contentValues.put("invoiceTermsCondition", invoiceTermsCondition);
         contentValues.put("bluetoothAddress", bluetoothAddress);
         contentValues.put("bluetoothKOTAddress", bluetoothKOTAddress);
@@ -3033,7 +3039,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     }
 
-    public void updateCompanyPrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String invoiceTermsCondition, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, int settingStatus) {
+    public void updateCompanyPrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String printFastBill, String invoiceTermsCondition, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, int settingStatus) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -3047,6 +3053,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         contentValues.put("customerUse", customerUse);
         contentValues.put("productQuantityUpdate", productQuantityUpdate);
         contentValues.put("duplicateBillUse", duplicateBillUse != null ? duplicateBillUse : "off");
+        contentValues.put("printFastBill", printFastBill != null ? printFastBill : "off");
         contentValues.put("bluetoothAddress", bluetoothAddress);
         contentValues.put("bluetoothKOTAddress", bluetoothKOTAddress);
         contentValues.put("printerFeedLines", printerFeedLines);
@@ -4160,6 +4167,14 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 printerSettingResponse.setKotAutoPrint(kotAutoIdx >= 0 ? cursor.getString(kotAutoIdx) : "off");
                 int kotPreviewIdx = cursor.getColumnIndex("kotPreview");
                 printerSettingResponse.setKotPreview(kotPreviewIdx >= 0 ? cursor.getString(kotPreviewIdx) : "on");
+                int printFastBillIdx = cursor.getColumnIndex("printFastBill");
+                if (printFastBillIdx >= 0) {
+                    String printFast = cursor.getString(printFastBillIdx);
+                    printerSettingResponse.setPrintFastBill(
+                            printFast != null && !printFast.isEmpty() ? printFast : "off");
+                } else {
+                    printerSettingResponse.setPrintFastBill("off");
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -4657,8 +4672,65 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         while (cursor.moveToNext()) {
             totalCount = Integer.parseInt(cursor.getString(cursor.getColumnIndex("totalCount")));
         }
+        cursor.close();
         db.close();
         return totalCount;
+    }
+
+    /**
+     * Next bill sequence for a calendar day (yyyy-MM-dd).
+     * Continues the last number for that date — e.g. 18-Sep has 1..10, later return → 11.
+     * Does not restart at 1 just because device date changed.
+     */
+    @SuppressLint("Range")
+    public int nextInvoiceSequenceForDate(String yyyyMmDd) {
+        if (yyyyMmDd == null || yyyyMmDd.trim().isEmpty()) {
+            return 1;
+        }
+        String day = yyyyMmDd.trim();
+        SQLiteDatabase db = this.getReadableDatabase();
+        int maxSeq = 0;
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT invoiceNumber FROM " + INVOICE_TABLE
+                            + " WHERE invoiceDate LIKE '%" + day + "%'"
+                            + andBranchScope(null),
+                    null);
+            while (cursor.moveToNext()) {
+                String number = cursor.getString(cursor.getColumnIndex("invoiceNumber"));
+                int seq = parseInvoiceSequence(number);
+                if (seq > maxSeq) {
+                    maxSeq = seq;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return maxSeq + 1;
+    }
+
+    /** Trailing ##### from `PB/18-09/00011` → 11. */
+    public static int parseInvoiceSequence(String invoiceNumber) {
+        if (invoiceNumber == null) {
+            return 0;
+        }
+        String raw = invoiceNumber.trim();
+        if (raw.isEmpty()) {
+            return 0;
+        }
+        String[] parts = raw.split("/");
+        String tail = parts.length > 0 ? parts[parts.length - 1].trim() : raw;
+        try {
+            return Integer.parseInt(tail);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     /** Total saved invoices (used for trial soft gate). */

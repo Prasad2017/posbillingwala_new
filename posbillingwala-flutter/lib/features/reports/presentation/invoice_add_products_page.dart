@@ -16,7 +16,7 @@ import 'package:pos_billingwala_v2/features/pos/presentation/pos_page.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
-/* Fast-billing style catalog to append / adjust products on a saved invoice. */
+/* Fast-billing style catalog — add / +/- qty / remove lines on a saved invoice. */
 class InvoiceAddProductsPage extends ConsumerStatefulWidget {
   const InvoiceAddProductsPage({super.key, required this.invoiceId});
 
@@ -51,8 +51,18 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
     final strings = AppStrings.of(ref);
     final categoriesAsync = ref.watch(categoriesProvider);
     final db = ref.watch(appDatabaseProvider);
+    final itemsAsync = ref.watch(invoiceItemsEditProvider(widget.invoiceId));
+    final billItems = itemsAsync.maybeWhen(
+      data: (items) => items,
+      orElse: () => const <InvoiceItem>[],
+    );
     final widthClass = context.widthClass;
     final pad = AppBreakpoints.pagePaddingFor(widthClass);
+    final lineCount = billItems.length;
+    final qtyTotal = billItems.fold<double>(
+      0,
+      (sum, i) => sum + i.productQuantity,
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -162,6 +172,25 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
                   return p.productName.toLowerCase().contains(query) ||
                       (p.productCode?.toLowerCase().contains(query) ?? false);
                 }).toList();
+
+                /* Products already on the bill first — same mental model as cart. */
+                filtered.sort((a, b) {
+                  final aq = InvoiceProductQtyControls.qtyForProduct(
+                    billItems,
+                    a,
+                  );
+                  final bq = InvoiceProductQtyControls.qtyForProduct(
+                    billItems,
+                    b,
+                  );
+                  final aOn = aq > 0;
+                  final bOn = bq > 0;
+                  if (aOn != bOn) return aOn ? -1 : 1;
+                  return a.productName.toLowerCase().compareTo(
+                    b.productName.toLowerCase(),
+                  );
+                });
+
                 if (filtered.isEmpty) {
                   return AppEmptyState(
                     title: strings.noProductsYet,
@@ -171,25 +200,34 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
                 }
                 return LayoutBuilder(
                   builder: (context, constraints) {
+                    final widthClass = AppBreakpoints.ofWidth(
+                      constraints.maxWidth,
+                    );
                     final cols = AppBreakpoints.productColumnsForWidth(
                       constraints.maxWidth - pad * 2,
                     );
+                    final mainExtent = AppBreakpoints.productCardExtentFor(
+                      widthClass,
+                      height: context.heightClass,
+                    );
                     return GridView.builder(
-                      padding: EdgeInsets.fromLTRB(pad, 4, pad, 24),
+                      padding: EdgeInsets.fromLTRB(pad, 4, pad, 16),
+                      addAutomaticKeepAlives: false,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: cols,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        childAspectRatio: context.isShortHeight
-                            ? 1.25
-                            : (cols >= 4 ? 1.05 : 1.15),
+                        crossAxisSpacing: 6,
+                        mainAxisSpacing: 6,
+                        mainAxisExtent: mainExtent,
                       ),
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         final product = filtered[index];
-                        return InvoiceProductCard(
-                          invoiceId: widget.invoiceId,
-                          product: product,
+                        return Align(
+                          alignment: Alignment.topCenter,
+                          child: InvoiceProductCard(
+                            invoiceId: widget.invoiceId,
+                            product: product,
+                          ),
                         );
                       },
                     );
@@ -198,13 +236,27 @@ class InvoiceAddProductsPageState extends ConsumerState<InvoiceAddProductsPage> 
               },
             ),
           ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(pad, 8, pad, 12),
+              child: AppButton(
+                label: lineCount == 0
+                    ? 'Done'
+                    : 'Done · $lineCount line${lineCount == 1 ? '' : 's'}'
+                        ' · ${ProductUnits.formatQty(qtyTotal)}',
+                icon: Icons.check_rounded,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-/* Same layout as fast-billing [ProductCard] with invoice qty controls. */
+/* Same card chrome as fast-billing [ProductCard] + invoice qty controls. */
 class InvoiceProductCard extends ConsumerWidget {
   const InvoiceProductCard({
     super.key,
@@ -224,6 +276,15 @@ class InvoiceProductCard extends ConsumerWidget {
         ? '₹ ${product.productPrice.toStringAsFixed(1)}'
         : '₹ ${product.productPrice.toStringAsFixed(1)}/$unit';
     final showImage = hasProductImage(product.productImage);
+    final onBill = ref.watch(
+      invoiceItemsEditProvider(invoiceId).select((async) {
+        final items = async.maybeWhen(
+          data: (items) => items,
+          orElse: () => const <InvoiceItem>[],
+        );
+        return InvoiceProductQtyControls.qtyForProduct(items, product) > 0;
+      }),
+    );
 
     return RepaintBoundary(
       child: Material(
@@ -239,13 +300,16 @@ class InvoiceProductCard extends ConsumerWidget {
             product: product,
           ),
           child: Container(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                width: 1,
+                color: onBill
+                    ? AppColors.primary.withValues(alpha: 0.45)
+                    : AppColors.primary.withValues(alpha: 0.12),
+                width: onBill ? 1.5 : 1,
               ),
               boxShadow: [
                 BoxShadow(
@@ -266,7 +330,7 @@ class InvoiceProductCard extends ConsumerWidget {
                       ProductImageThumb(
                         key: ValueKey('img-${product.productId}'),
                         value: product.productImage,
-                        size: 48,
+                        size: 36,
                         radius: 10,
                         showPlaceholder: false,
                       ),
@@ -275,10 +339,11 @@ class InvoiceProductCard extends ConsumerWidget {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             product.productName,
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontWeight: FontWeight.w800,
@@ -287,7 +352,7 @@ class InvoiceProductCard extends ConsumerWidget {
                               height: 1.15,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             priceLabel,
                             maxLines: 1,
@@ -296,6 +361,7 @@ class InvoiceProductCard extends ConsumerWidget {
                               fontWeight: FontWeight.w700,
                               fontSize: 12,
                               color: AppColors.textPrimary,
+                              height: 1.1,
                             ),
                           ),
                         ],
@@ -303,7 +369,7 @@ class InvoiceProductCard extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 GestureDetector(
                   onTap: () {},
                   behavior: HitTestBehavior.opaque,
@@ -331,7 +397,10 @@ class InvoiceProductQtyControls extends ConsumerWidget {
   final int invoiceId;
   final Product product;
 
-  /* Match by productId, then code, then name — covers cloud / legacy lines. */
+  static String _norm(String? value) =>
+      (value ?? '').trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+
+  /* Match by productId, then code, then name / snapshot — covers cloud lines. */
   static List<InvoiceItem> linesForProduct(
     List<InvoiceItem> items,
     Product product,
@@ -343,26 +412,33 @@ class InvoiceProductQtyControls extends ConsumerWidget {
         .toList(growable: false);
     if (byId.isNotEmpty) return byId;
 
-    final code = product.productCode?.trim().toLowerCase() ?? '';
+    final code = _norm(product.productCode);
     if (code.isNotEmpty) {
       final byCode = items
-          .where(
-            (i) => (i.productCode?.trim().toLowerCase() ?? '') == code,
-          )
+          .where((i) => _norm(i.productCode) == code)
           .toList(growable: false);
       if (byCode.isNotEmpty) return byCode;
     }
 
-    final name = product.productName.trim().toLowerCase();
+    final name = _norm(product.productName);
     if (name.isEmpty) return const [];
     return items
-        .where((i) => i.productName.trim().toLowerCase() == name)
+        .where(
+          (i) =>
+              _norm(i.productName) == name ||
+              _norm(i.snapshotProductName) == name,
+        )
         .toList(growable: false);
   }
 
   static double qtyForProduct(List<InvoiceItem> items, Product product) {
     return linesForProduct(items, product)
         .fold<double>(0, (sum, i) => sum + i.productQuantity);
+  }
+
+  static void _refresh(WidgetRef ref, int invoiceId) {
+    ref.invalidate(invoiceDetailProvider(invoiceId));
+    ref.invalidate(invoiceItemsEditProvider(invoiceId));
   }
 
   static Future<void> addOrIncrement(
@@ -383,7 +459,7 @@ class InvoiceProductQtyControls extends ConsumerWidget {
         product: product,
       );
       if (!added || !context.mounted) return;
-      ref.invalidate(invoiceDetailProvider(invoiceId));
+      _refresh(ref, invoiceId);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.of(ref).itemAddedPending)),
       );
@@ -398,7 +474,7 @@ class InvoiceProductQtyControls extends ConsumerWidget {
             invoiceItemId: lines.first.invoiceItemId,
             quantity: next,
           );
-      ref.invalidate(invoiceDetailProvider(invoiceId));
+      _refresh(ref, invoiceId);
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -424,14 +500,40 @@ class InvoiceProductQtyControls extends ConsumerWidget {
     try {
       final db = ref.read(appDatabaseProvider);
       if (next <= 0) {
-        await db.deleteInvoiceItemAndRecompute(line.invoiceItemId);
+        /* Remove every matched line so qty UI clears fully. */
+        for (final row in lines) {
+          await db.deleteInvoiceItemAndRecompute(row.invoiceItemId);
+        }
       } else {
         await db.updateInvoiceItemQuantity(
           invoiceItemId: line.invoiceItemId,
           quantity: next,
         );
       }
-      ref.invalidate(invoiceDetailProvider(invoiceId));
+      _refresh(ref, invoiceId);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  static Future<void> removeAll(
+    BuildContext context,
+    WidgetRef ref, {
+    required int invoiceId,
+    required Product product,
+  }) async {
+    final items =
+        ref.read(invoiceItemsEditProvider(invoiceId)).asData?.value ??
+        const <InvoiceItem>[];
+    final lines = linesForProduct(items, product);
+    if (lines.isEmpty) return;
+    try {
+      final db = ref.read(appDatabaseProvider);
+      for (final row in lines) {
+        await db.deleteInvoiceItemAndRecompute(row.invoiceItemId);
+      }
+      _refresh(ref, invoiceId);
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -440,16 +542,20 @@ class InvoiceProductQtyControls extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final itemsAsync = ref.watch(invoiceItemsEditProvider(invoiceId));
-    final qty = itemsAsync.maybeWhen(
-      data: (items) => qtyForProduct(items, product),
-      orElse: () => 0.0,
+    final qty = ref.watch(
+      invoiceItemsEditProvider(invoiceId).select((async) {
+        final items = async.maybeWhen(
+          data: (items) => items,
+          orElse: () => const <InvoiceItem>[],
+        );
+        return qtyForProduct(items, product);
+      }),
     );
 
     if (qty <= 0) {
       return SizedBox(
         width: double.infinity,
-        height: 34,
+        height: 32,
         child: Material(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(10),
@@ -481,10 +587,13 @@ class InvoiceProductQtyControls extends ConsumerWidget {
       );
     }
 
+    final step = ProductUnits.stepFor(product.productUnit);
+    final atMin = qty <= step;
+
     return Container(
       width: double.infinity,
-      height: 34,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
         color: AppColors.primaryLight,
         borderRadius: BorderRadius.circular(10),
@@ -493,13 +602,21 @@ class InvoiceProductQtyControls extends ConsumerWidget {
       child: Row(
         children: [
           qtyIconButton(
-            icon: Icons.remove,
-            onTap: () => removeOrDecrement(
-              context,
-              ref,
-              invoiceId: invoiceId,
-              product: product,
-            ),
+            icon: atMin ? Icons.delete_outline_rounded : Icons.remove,
+            color: atMin ? AppColors.danger : AppColors.primary,
+            onTap: () => atMin
+                ? removeAll(
+                    context,
+                    ref,
+                    invoiceId: invoiceId,
+                    product: product,
+                  )
+                : removeOrDecrement(
+                    context,
+                    ref,
+                    invoiceId: invoiceId,
+                    product: product,
+                  ),
           ),
           Expanded(
             child: Text(
@@ -529,6 +646,7 @@ class InvoiceProductQtyControls extends ConsumerWidget {
   Widget qtyIconButton({
     required IconData icon,
     required VoidCallback onTap,
+    Color color = AppColors.primary,
   }) {
     return Material(
       color: Colors.transparent,
@@ -539,7 +657,7 @@ class InvoiceProductQtyControls extends ConsumerWidget {
         child: SizedBox(
           width: 28,
           height: 28,
-          child: Icon(icon, size: 16, color: AppColors.primary),
+          child: Icon(icon, size: 16, color: color),
         ),
       ),
     );

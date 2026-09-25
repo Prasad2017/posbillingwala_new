@@ -74,15 +74,30 @@ final messHubStatsProvider =
         final todayCoupons = await db.countMessCouponsForMemberOnDay(
           m.memberName,
           today,
+          memberId: id,
         );
         final todayTokens = await db.countMessTokensForMemberOnDay(
           memberId: id,
           day: today,
         );
-        final monthTokens = await db.countMessTokensForMemberMonth(
+        /* Android: month = coupons + QR mess_token slips. */
+        final monthCoupons = await db.countMessCouponsForMemberMonth(
+          memberId: id,
+          memberName: m.memberName,
+          yyyyMm: month,
+        );
+        final monthQrTokens = await db.countMessTokensForMemberMonth(
           memberId: id,
           yyyyMm: month,
         );
+        var monthTokens = monthCoupons > monthQrTokens
+            ? monthCoupons
+            : monthQrTokens;
+        if (monthCoupons > 0 &&
+            monthQrTokens > 0 &&
+            monthCoupons != monthQrTokens) {
+          monthTokens = monthCoupons + monthQrTokens;
+        }
         out.add(
           MessHubMemberStats(
             member: m,
@@ -177,6 +192,19 @@ class MessHubMembersPaneState extends ConsumerState<MessHubMembersPane> {
                     maxColumns: 4,
                     spacing: 8,
                   );
+                  if (cols == 1) {
+                    /* Phone: height follows content (no fixed grid cell). */
+                    return ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                      itemCount: rows.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) => MessHubMemberCard(
+                        stats: rows[index],
+                        institutePay: institutePay,
+                        onPrinted: () => ref.invalidate(messHubStatsProvider),
+                      ),
+                    );
+                  }
                   return GridView.builder(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                     itemCount: rows.length,
@@ -184,7 +212,7 @@ class MessHubMembersPaneState extends ConsumerState<MessHubMembersPane> {
                       crossAxisCount: cols,
                       mainAxisSpacing: 8,
                       crossAxisSpacing: 8,
-                      mainAxisExtent: cols == 1 ? 168 : 178,
+                      mainAxisExtent: 148,
                     ),
                     itemBuilder: (context, index) => MessHubMemberCard(
                       stats: rows[index],
@@ -222,24 +250,23 @@ class MessHubMemberCard extends ConsumerWidget {
     final pendingColor = const Color(0xFFF59E0B);
 
     return Material(
-      color: stats.hasPending
-          ? const Color(0xFFFFF8E7)
-          : Colors.white.withValues(alpha: 0.92),
+      color: Colors.white,
       borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: canPrint ? () => printQr(context, ref) : null,
-        child: Container(
+      elevation: 0,
+      child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
+              width: 1.6,
               color: stats.hasPending
                   ? pendingColor
-                  : AppColors.border.withValues(alpha: 0.7),
+                  : AppColors.primary.withValues(alpha: 0.45),
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
@@ -296,12 +323,12 @@ class MessHubMemberCard extends ConsumerWidget {
                   color: AppColors.textSecondary,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: _PrintActionChip(
-                      label: canPrint ? 'Print Coupon' : 'Printed',
+                      label: canPrint ? 'Print Coupon' : 'Printed today',
                       enabled: canPrint,
                       onTap: () => printCoupon(context, ref),
                     ),
@@ -309,7 +336,7 @@ class MessHubMemberCard extends ConsumerWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: _PrintActionChip(
-                      label: canPrint ? 'Print QR Token' : 'Printed',
+                      label: canPrint ? 'Print QR Token' : 'Printed today',
                       enabled: canPrint,
                       onTap: () => printQr(context, ref),
                     ),
@@ -319,19 +346,18 @@ class MessHubMemberCard extends ConsumerWidget {
             ],
           ),
         ),
-      ),
     );
   }
 
   Future<void> printCoupon(BuildContext context, WidgetRef ref) async {
     if (!await guardPrint(context, ref, qr: false)) return;
     if (!context.mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
         builder: (_) => MessCouponPage(member: stats.member),
       ),
     );
-    onPrinted();
+    if (saved == true) onPrinted();
   }
 
   Future<void> printQr(BuildContext context, WidgetRef ref) async {
@@ -349,23 +375,28 @@ class MessHubMemberCard extends ConsumerWidget {
       return;
     }
     try {
-      final result = await ref
+      final messType = MessTokenQrHelper.resolveMessType(
+        existingPrintsToday: stats.todayPrints,
+      );
+      final prep = ref
           .read(messControllerProvider.notifier)
-          .issueMemberToken(stats.member);
+          .prepareMemberToken(stats.member, messType: messType);
       if (!context.mounted) return;
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
+      final saved = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
           builder: (_) => MessTokenQrPage(
             title: 'QR Token Preview',
             subtitle: stats.member.memberName,
             memberMobile: stats.member.memberMobileNumber,
-            payload: result.payload,
-            tokenCode: result.token.tokenCode,
-            messType: result.token.messType,
+            payload: prep.payload,
+            tokenCode: prep.tokenCode,
+            messType: prep.messType,
+            member: stats.member,
+            commitAfterPrint: true,
           ),
         ),
       );
-      onPrinted();
+      if (saved == true) onPrinted();
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));

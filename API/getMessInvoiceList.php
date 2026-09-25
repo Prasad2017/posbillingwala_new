@@ -43,6 +43,9 @@ $i=0;
             
         }
     }
+
+    /* Flutter MessApi alias (ApiResponseKeys.messInvoiceResponse). */
+    $response["messInvoiceResponse"] = $response["memberInvoiceResponse"];
     
     echo json_encode($response);
     }

@@ -444,22 +444,43 @@ class QrPreview extends StatelessWidget {
           ),
         ],
       ),
-      child: QrImageView(
-        data: ShareAppPage.shareAppPagePlayStoreLink,
-        size: size * 0.88,
-        backgroundColor: Colors.white,
-        eyeStyle: const QrEyeStyle(
-          eyeShape: QrEyeShape.square,
-          color: AppColors.primaryDark,
-        ),
-        dataModuleStyle: const QrDataModuleStyle(
-          dataModuleShape: QrDataModuleShape.square,
-          color: AppColors.primary,
-        ),
-        embeddedImage: const AssetImage(AppAssets.appLogo),
-        embeddedImageStyle: QrEmbeddedImageStyle(
-          size: Size(size * 0.22, size * 0.22),
-        ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          QrImageView(
+            data: ShareAppPage.shareAppPagePlayStoreLink,
+            size: size * 0.88,
+            backgroundColor: Colors.white,
+            eyeStyle: const QrEyeStyle(
+              eyeShape: QrEyeShape.square,
+              color: AppColors.primaryDark,
+            ),
+            dataModuleStyle: const QrDataModuleStyle(
+              dataModuleShape: QrDataModuleShape.square,
+              color: AppColors.primary,
+            ),
+          ),
+          Container(
+            width: size * 0.26,
+            height: size * 0.26,
+            padding: EdgeInsets.all(size * 0.028),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(size * 0.045),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.navy.withValues(alpha: .08),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(size * 0.028),
+              child: Image.asset(AppAssets.appLogo, fit: BoxFit.contain),
+            ),
+          ),
+        ],
       ),
     );
   }

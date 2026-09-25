@@ -305,11 +305,15 @@ class MessApi {
     );
     return MessMealTokenTodayResult(
       tokens: mapJsonList(
-        data[ApiResponseKeys.messMealTokens] ?? data['messMealTokens'],
+        data[ApiResponseKeys.messMealTokens] ??
+            data['messMealTokens'] ??
+            data['tokens'],
         MessMealTokenDto.fromJson,
       ),
       sessionCounts: mapJsonList(
-        data[ApiResponseKeys.messSessionCounts] ?? data['messSessionCounts'],
+        data[ApiResponseKeys.messSessionCounts] ??
+            data['messSessionCounts'] ??
+            data['counts'],
         MessSessionCountDto.fromJson,
       ),
     );
@@ -351,7 +355,9 @@ class MessApi {
       query: {'userId': userId},
     );
     return mapJsonList(
-      data[ApiResponseKeys.messInvoiceResponse],
+      data[ApiResponseKeys.messInvoiceResponse] ??
+          data['messInvoiceResponse'] ??
+          data['memberInvoiceResponse'],
       MessInvoiceDto.fromJson,
     );
   }

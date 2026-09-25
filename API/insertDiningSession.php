@@ -103,6 +103,7 @@ if ($existing !== null && isset($existing['sessionId'])) {
     $ok = mysqli_query($con, "UPDATE `dining_session` SET $set WHERE `sessionId`='" . $esc($existing['sessionId']) . "'");
     $response['status'] = $ok ? '1' : '0';
     $response['message'] = $ok ? 'update successful!' : 'update failed!';
+    $response['sessionId'] = (string) $existing['sessionId'];
 } else {
     $ok = mysqli_query($con, "INSERT INTO `dining_session`(
         `licenseId`, `organization_id`, `branch_id`, `device_id`, `localSessionId`,
@@ -131,7 +132,15 @@ if ($existing !== null && isset($existing['sessionId'])) {
      )");
     $response['status'] = $ok ? '1' : '0';
     $response['message'] = $ok ? 'insert successful!' : 'insert failed!';
+    if ($ok) {
+        $response['sessionId'] = (string) mysqli_insert_id($con);
+    }
 }
+
+if ($networkStatus !== '') {
+    $response['sessionNetworkStatus'] = $networkStatus;
+}
+$response['localSessionId'] = $localSessionId;
 
 header('Content-type: application/json; charset=utf-8');
 echo json_encode($response);

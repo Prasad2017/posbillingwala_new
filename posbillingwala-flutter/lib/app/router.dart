@@ -27,6 +27,7 @@ import 'package:pos_billingwala_v2/features/masters/presentation/product_portion
 import 'package:pos_billingwala_v2/features/masters/presentation/products_page.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/subcategories_page.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/table_master_page.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_payment_args.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_meal_sessions_page.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_meal_tokens_today_page.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_members_page.dart';
@@ -46,6 +47,7 @@ import 'package:pos_billingwala_v2/features/print/presentation/printer_form_page
 import 'package:pos_billingwala_v2/features/print/presentation/printer_list_page.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/printer_routing_page.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/test_invoice_preview_page.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/test_mess_preview_page.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/edit_invoice_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/expense_report_page.dart';
@@ -262,6 +264,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/mess/payments',
             name: 'mess-payments',
             builder: (context, state) {
+              if (state.extra is MessPaymentsArgs) {
+                final args = state.extra as MessPaymentsArgs;
+                return MessPaymentsPage(
+                  member: args.member,
+                  mode: args.mode,
+                );
+              }
               final member = state.extra is MessMember
                   ? state.extra as MessMember
                   : null;
@@ -654,6 +663,21 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'test-print-preview',
             builder: (context, state) {
               final mode = state.uri.queryParameters['mode'] ?? 'invoice';
+              if (mode == 'mess-qr') {
+                return const TestMessPreviewPage(
+                  kind: TestMessPreviewKind.qrToken,
+                );
+              }
+              if (mode == 'mess-coupon') {
+                return const TestMessPreviewPage(
+                  kind: TestMessPreviewKind.coupon,
+                );
+              }
+              if (mode == 'mess-common-qr') {
+                return const TestMessPreviewPage(
+                  kind: TestMessPreviewKind.commonQr,
+                );
+              }
               final channel = mode == 'kot'
                   ? PrinterChannelKind.kot
                   : PrinterChannelKind.bill;

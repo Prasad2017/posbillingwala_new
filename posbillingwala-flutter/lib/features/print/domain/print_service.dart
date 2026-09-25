@@ -3,12 +3,14 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_slip_builder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_builder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_image_share.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_labels.dart';
+import 'package:pos_billingwala_v2/features/print/domain/receipt_rasterizer.dart';
 import 'package:pos_billingwala_v2/features/print/domain/sample_receipt_data.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/features/print/domain/thermal_ticket.dart';
@@ -180,6 +182,77 @@ class PrintService {
       bytes: bytes,
       channel: channel,
       preferShare: preferShare,
+      label: label,
+    );
+  }
+
+  /* Android mess slips — same shop header paint as invoice bill. */
+  Future<PrintResult> printMessSlip(
+    String text, {
+    String? qrPayload,
+    PrinterChannelKind channel = PrinterChannelKind.bill,
+    String label = 'Mess',
+    bool includeLogo = true,
+    MessSlipLayout? layout,
+  }) async {
+    syncSavedEndpoints(isKot: channel == PrinterChannelKind.kot);
+    final settings = this.settings.copyWith(
+      paperSize: this.settings.paperSizeFor(
+        isKot: channel == PrinterChannelKind.kot,
+      ),
+    );
+    final logoPath = includeLogo && settings.logoUse
+        ? shopProfile.logoLocalPath
+        : null;
+    final List<int> bytes;
+    if (layout != null) {
+      final withQr = (layout.qrPayload == null ||
+              (layout.qrPayload!.trim().isEmpty)) &&
+          (qrPayload?.trim().isNotEmpty ?? false)
+          ? MessSlipLayout(
+              shopLines: layout.shopLines,
+              bodyLines: layout.bodyLines,
+              footerLines: layout.footerLines,
+              qrPayload: qrPayload,
+            )
+          : layout;
+      bytes = await const ReceiptRasterizer().encodeMessLayout(
+        withQr,
+        settings: settings,
+        logoPath: logoPath,
+        useAssetLogoFallback: false,
+        feedLinesOverride: channel == PrinterChannelKind.kot
+            ? settings.kotFeedLines
+            : settings.feedLines,
+      );
+    } else {
+      final marker = ThermalTicket.upiQrMarker;
+      final qr = qrPayload?.trim() ?? '';
+      final String body;
+      if (qr.isEmpty) {
+        body = text;
+      } else if (text.contains(marker)) {
+        body = text;
+      } else {
+        body = '$text\n$marker\n';
+      }
+      bytes = await const ReceiptRasterizer().encodeText(
+        body,
+        settings: settings,
+        qrPayload: qr.isEmpty ? null : qr,
+        qrMarker: qr.isEmpty ? null : marker,
+        logoPath: logoPath,
+        useAssetLogoFallback: false,
+        feedLinesOverride: channel == PrinterChannelKind.kot
+            ? settings.kotFeedLines
+            : settings.feedLines,
+      );
+    }
+    return dispatch(
+      text: layout?.toPlainText(width: settings.charsPerLine) ?? text,
+      bytes: bytes,
+      channel: channel,
+      preferShare: false,
       label: label,
     );
   }

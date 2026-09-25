@@ -77,5 +77,7 @@ foreach ($rows as $row) {
 $response['status'] = '1';
 $response['message'] = 'ok';
 $response['tokens'] = $tokens;
+/* Android Gson / Flutter alias (AllApiResponse.messMealTokens). */
+$response['messMealTokens'] = $tokens;
 echo json_encode($response);
 mysqli_close($con);

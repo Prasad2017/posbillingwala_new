@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_slip_builder.dart';
+import 'package:pos_billingwala_v2/features/mess/presentation/mess_slip_preview.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
+import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
+import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 String messTokenDigits(String? value) =>
     (value ?? '').replaceAll(RegExp(r'\D'), '');
@@ -18,7 +21,7 @@ bool messTokenHasRequiredIdentity(String? name, String? mobile) {
   return (name ?? '').trim().isNotEmpty && messTokenDigits(mobile).length == 10;
 }
 
-class MessTokenQrPage extends ConsumerWidget {
+class MessTokenQrPage extends ConsumerStatefulWidget {
   const MessTokenQrPage({
     super.key,
     required this.title,
@@ -27,6 +30,8 @@ class MessTokenQrPage extends ConsumerWidget {
     this.tokenCode,
     this.messType,
     this.memberMobile,
+    this.member,
+    this.commitAfterPrint = false,
   });
 
   final String title;
@@ -35,10 +40,21 @@ class MessTokenQrPage extends ConsumerWidget {
   final String? tokenCode;
   final String? messType;
   final String? memberMobile;
+  final MessMember? member;
+  /* When true, persist token+invoice only after successful print (Android). */
+  final bool commitAfterPrint;
 
-  Future<void> messTokenQrPagePrint(BuildContext context, WidgetRef ref) async {
-    if (!messTokenHasRequiredIdentity(subtitle, memberMobile)) {
-      if (!context.mounted) return;
+  @override
+  ConsumerState<MessTokenQrPage> createState() => MessTokenQrPageState();
+}
+
+class MessTokenQrPageState extends ConsumerState<MessTokenQrPage> {
+  bool busy = false;
+  bool committed = false;
+
+  Future<void> messTokenQrPagePrint() async {
+    if (!messTokenHasRequiredIdentity(widget.subtitle, widget.memberMobile)) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppStrings.of(ref).tokenPrintNameMobileRequired),
@@ -46,53 +62,83 @@ class MessTokenQrPage extends ConsumerWidget {
       );
       return;
     }
-    final width = ref.read(printerSettingsProvider).charsPerLine;
-    final time = DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
-    final mobile = messTokenDigits(memberMobile);
-    final buf = StringBuffer()
-      ..writeln(messTokenQrPageCenter('MESS TOKEN', width))
-      ..writeln('-' * width)
-      ..writeln(subtitle.trim())
-      ..writeln(mobile)
-      ..writeln(messType ?? 'Meal')
-      ..writeln('Code: ${tokenCode ?? '-'}')
-      ..writeln(time)
-      ..writeln('-' * width)
-      ..writeln(payload);
-    final result = await ref
-        .read(printServiceProvider)
-        .printRawText(
-          buf.toString(),
-          channel: PrinterChannelKind.kot,
-          label: 'Mess token',
+    setState(() => busy = true);
+    try {
+      final profile = ref.read(shopReceiptProfileProvider);
+      final mobile = messTokenDigits(widget.memberMobile);
+      final layout = MessSlipBuilder.qrTokenLayout(
+        profile: profile,
+        memberName: widget.subtitle,
+        memberMobile: mobile,
+        messType: widget.messType ?? 'Meal',
+        tokenCode: widget.tokenCode ?? '',
+        qrPayload: widget.payload,
+      );
+      final result = await ref.read(printServiceProvider).printMessSlip(
+        layout.toPlainText(
+          width: ref.read(printerSettingsProvider).charsPerLine,
+        ),
+        layout: layout,
+        qrPayload: widget.payload,
+        channel: PrinterChannelKind.bill,
+        label: 'Mess QR token',
+      );
+      final ok =
+          result.outcome != PrintOutcome.failed &&
+          result.outcome != PrintOutcome.previewOnly;
+      if (ok &&
+          widget.commitAfterPrint &&
+          !committed &&
+          widget.member != null &&
+          (widget.tokenCode ?? '').isNotEmpty) {
+        await ref.read(messControllerProvider.notifier).commitMemberToken(
+          member: widget.member!,
+          tokenCode: widget.tokenCode!,
+          messType: widget.messType ?? 'Lunch',
         );
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(result.message ?? 'Print done')));
-  }
-
-  String messTokenQrPageCenter(String text, int width) {
-    if (text.length >= width) return text;
-    final pad = (width - text.length) ~/ 2;
-    return '${' ' * pad}$text';
+        committed = true;
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message ?? 'Print done')),
+      );
+      if (ok && widget.commitAfterPrint) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final profile = ref.watch(shopReceiptProfileProvider);
+    final mobile = messTokenDigits(widget.memberMobile);
+    final layout = messQrTokenPreviewLayout(
+      profile: profile,
+      memberName: widget.subtitle,
+      memberMobile: mobile,
+      messType: widget.messType ?? 'Meal',
+      tokenCode: widget.tokenCode ?? '',
+      qrPayload: widget.payload,
+    );
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Text(widget.title),
         actions: [
           IconButton(
             tooltip: 'Print token',
-            onPressed: () => messTokenQrPagePrint(context, ref),
+            onPressed: busy ? null : messTokenQrPagePrint,
             icon: const Icon(Icons.print_rounded),
           ),
           IconButton(
             tooltip: 'Copy payload',
             onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: payload));
+              await Clipboard.setData(ClipboardData(text: widget.payload));
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('QR payload copied')),
@@ -102,98 +148,46 @@ class MessTokenQrPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: ResponsiveScrollShell(
-        dashboard: true,
-        child: ListView(
-          padding: EdgeInsets.all(
-            AppBreakpoints.pagePaddingFor(context.widthClass) + 8,
-          ),
-          children: [
-            Center(
-              child: AppModuleIcon(
-                icon: Icons.qr_code_2_rounded,
-                color: AppColors.teal,
-                size: 70,
-              ),
-            ),
-            const SizedBox(height: 12),
-            AppCard(
-              accentColor: AppColors.primary,
-              padding: const EdgeInsets.all(24),
-              child: Column(
+      body: Column(
+        children: [
+          Expanded(
+            child: ResponsiveScrollShell(
+              dashboard: true,
+              child: ListView(
+                padding: EdgeInsets.all(
+                  AppBreakpoints.pagePaddingFor(context.widthClass) + 8,
+                ),
                 children: [
-                  const AppModuleIcon(
-                    icon: Icons.qr_code_2_rounded,
-                    color: AppColors.primary,
-                    size: 58,
-                  ),
-                  const SizedBox(height: 12),
                   Text(
-                    subtitle,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+                    'Preview uses bill printer paper size and logo setting.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.black54,
                     ),
                   ),
-                  if ((memberMobile ?? '').trim().isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      messTokenDigits(memberMobile),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  QrImageView(
-                    data: payload,
-                    size: 240,
-                    backgroundColor: Colors.white,
-                    eyeStyle: const QrEyeStyle(
-                      eyeShape: QrEyeShape.square,
-                      color: AppColors.primary,
-                    ),
-                    dataModuleStyle: const QrDataModuleStyle(
-                      dataModuleShape: QrDataModuleShape.square,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  if (tokenCode != null) ...[
-                    const SizedBox(height: 16),
-                    SelectableText(
-                      tokenCode!,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  Text(
-                    'Show this QR at the mess counter to verify the meal token.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+                  const SizedBox(height: 8),
+                  MessSlipPreview(layout: layout),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            AppButton(
-              label: 'Print token',
-              icon: Icons.print_rounded,
-              expanded: false,
-              onPressed: () => messTokenQrPagePrint(context, ref),
+          ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppBreakpoints.pagePaddingFor(context.widthClass),
+                8,
+                AppBreakpoints.pagePaddingFor(context.widthClass),
+                12,
+              ),
+              child: AppButton(
+                label: 'Print QR Token',
+                icon: Icons.print_rounded,
+                isLoading: busy,
+                onPressed: busy ? null : messTokenQrPagePrint,
+              ),
             ),
-            const SizedBox(height: 8),
-            AppButton(
-              label: 'Done',
-              onPressed: () => Navigator.of(context).pop(),
-              variant: AppButtonVariant.outlined,
-              expanded: false,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

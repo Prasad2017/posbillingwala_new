@@ -75,9 +75,9 @@ class FetchLocalCounts {
     final invoiceComboItems = await tableCount(db.invoiceComboItems);
     final inventory = await tableCount(db.inventoryMovements);
     final expenses = await tableCount(db.shopExpenses);
-    final messMembers = await (db.select(
-      db.messMembers,
-    )..where((t) => t.memberStatus.equals('1'))).get().then((r) => r.length);
+    final messMembers = await (db.select(db.messMembers)..where(
+      (t) => t.memberStatus.equals('1') | t.memberStatus.equals('active'),
+    )).get().then((r) => r.length);
     final messPayments = await tableCount(db.messMemberPayments);
     final messInvoices = await tableCount(db.messInvoices);
     final messTokens = await tableCount(db.messTokens);

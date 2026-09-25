@@ -77,6 +77,10 @@
     <string name="ui_duplicate_invoice_print">डुप्लिकेट इनव्हॉइस प्रिंट</string>
     <string name="ui_duplicate_bill_copy">डुप्लिकेट बिल कॉपी (इनव्हॉइस यादी)</string>
     <string name="ui_duplicate_bill_copy_hint">सुरू असताना इनव्हॉइस यादीतून प्रिंट केलेल्या बिलांवर Duplicate Copy दिसेल. नवीन बिलिंगवर परिणाम होणार नाही.</string>
+    <string name="ui_print_fast_bill">प्रिंट फास्ट बिल</string>
+    <string name="ui_print_fast_bill_hint">सुरू असताना बिल तयार करताना बिलिंग तारीख निवडा. तीच तारीख सेव्ह, प्रिंट, नंबरिंग आणि रिपोर्टमध्ये वापरली जाईल.</string>
+    <string name="ui_billing_date">बिलिंग तारीख</string>
+    <string name="ui_select_billing_date">तारीख निवडा</string>
     <string name="ui_enter_pin">PIN प्रविष्ट करा*</string>
     <string name="ui_enter_quantity">प्रमाण प्रविष्ट करा*</string>
     <string name="ui_expense">खर्च</string>

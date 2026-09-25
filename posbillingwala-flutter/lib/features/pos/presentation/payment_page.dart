@@ -13,6 +13,7 @@ import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
+import 'package:pos_billingwala_v2/features/pos/domain/billing_date.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_checkout_controller.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_mode.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
@@ -524,10 +525,10 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
               ),
             ),
             titleSpacing: 8,
-            title: const Column(
+            title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Payment',
                   style: TextStyle(
                     color: Colors.white,
@@ -535,14 +536,17 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
                     fontSize: 20,
                   ),
                 ),
-                Text(
-                  'Review your order',
-                  style: TextStyle(
-                    color: Color(0xFFB8D4FF),
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12.5,
+                if (printerSettings.printFastBill)
+                  const BillingDateBar(inAppBar: true)
+                else
+                  const Text(
+                    'Review your order',
+                    style: TextStyle(
+                      color: Color(0xFFB8D4FF),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12.5,
+                    ),
                   ),
-                ),
               ],
             ),
             actions: [

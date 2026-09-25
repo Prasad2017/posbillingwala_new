@@ -67,6 +67,10 @@ try {
     if ($kotPreview === '') {
         $kotPreview = 'on';
     }
+    $printFastBill = $post('printFastBill', 'off');
+    if ($printFastBill === '') {
+        $printFastBill = 'off';
+    }
 
     $sql = "SELECT * FROM `company_printer_setting` WHERE `licenseId`='" . mysqli_real_escape_string($con, $userId) . "' LIMIT 1";
     $res = mysqli_query($con, $sql);
@@ -116,6 +120,7 @@ try {
             `kotCopies`='" . mysqli_real_escape_string($con, $kotCopies) . "',
             `kotAutoPrint`='" . mysqli_real_escape_string($con, $kotAutoPrint) . "',
             `kotPreview`='" . mysqli_real_escape_string($con, $kotPreview) . "',
+            `printFastBill`='" . mysqli_real_escape_string($con, $printFastBill) . "',
             `paperSize`='" . mysqli_real_escape_string($con, $paperSize) . "',
             `kotPaperSize`='" . mysqli_real_escape_string($con, $kotPaperSize) . "',
             `billConnectionType`='" . mysqli_real_escape_string($con, $billConnectionType) . "',
@@ -138,6 +143,7 @@ try {
             `invoiceTermsCondition`, `logoUse`, `paymentUse`, `customerUse`, `productQuantityUpdate`,
             `duplicateBillUse`, `bluetoothAddress`, `bluetoothKOTAddress`, `printerFeedLines`,
             `KotPrinterFeedLines`, `kotEnable`, `kotPrefix`, `kotCopies`, `kotAutoPrint`, `kotPreview`,
+            `printFastBill`,
             `paperSize`, `kotPaperSize`, `billConnectionType`, `kotConnectionType`,
             `billUsbIdentifier`, `billUsbName`, `kotUsbIdentifier`, `kotUsbName`,
             `settingStatus`
@@ -162,6 +168,7 @@ try {
             '" . mysqli_real_escape_string($con, $kotCopies) . "',
             '" . mysqli_real_escape_string($con, $kotAutoPrint) . "',
             '" . mysqli_real_escape_string($con, $kotPreview) . "',
+            '" . mysqli_real_escape_string($con, $printFastBill) . "',
             '" . mysqli_real_escape_string($con, $paperSize) . "',
             '" . mysqli_real_escape_string($con, $kotPaperSize) . "',
             '" . mysqli_real_escape_string($con, $billConnectionType) . "',

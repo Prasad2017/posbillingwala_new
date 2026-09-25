@@ -4,10 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
-import 'package:pos_billingwala_v2/features/auth/domain/license_validator.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 Widget _themedPickerShell(BuildContext context, Widget child) {
   return Theme(
@@ -22,7 +20,7 @@ Widget _themedPickerShell(BuildContext context, Widget child) {
   );
 }
 
-/* Registration → today bounds for report day/month/year pickers. */
+/* Day/month/year pickers: 2018-01-01 → today (all dates in range). */
 class ReportPickerBounds {
   const ReportPickerBounds({required this.first, required this.last});
 
@@ -58,43 +56,18 @@ class ReportPickerBounds {
   }
 }
 
-Future<ReportPickerBounds> loadReportPickerBounds() async {
+ReportPickerBounds loadReportPickerBounds() {
   final now = DateTime.now();
-  final last = DateTime(now.year, now.month, now.day);
-  var first = last;
-
-  final prefs = await SharedPreferences.getInstance();
-  final issuedRaw = prefs.getString('issuedAt')?.trim() ?? '';
-  var issuedSec = int.tryParse(issuedRaw) ?? 0;
-
-  /* Fallback: signed licence payload issuedAt (unix seconds). */
-  if (issuedSec <= 0) {
-    try {
-      final payload = await LicenseValidator.verifyAndParse(prefs);
-      if (payload != null && payload.issuedAt > 0) {
-        issuedSec = payload.issuedAt;
-      }
-    } catch (_) {
-      /* keep fallback below */
-    }
-  }
-
-  if (issuedSec > 0) {
-    final issued = DateTime.fromMillisecondsSinceEpoch(issuedSec * 1000);
-    first = DateTime(issued.year, issued.month, issued.day);
-  }
-
-  if (first.isAfter(last)) {
-    first = last;
-  }
-  return ReportPickerBounds(first: first, last: last);
+  return ReportPickerBounds(
+    first: DateTime(2018, 1, 1),
+    last: DateTime(now.year, now.month, now.day),
+  );
 }
 
 /* Day wise → full calendar date picker. */
 Future<void> pickReportDay(BuildContext context, WidgetRef ref) async {
   final period = ref.read(reportPeriodProvider);
-  final bounds = await loadReportPickerBounds();
-  if (!context.mounted) return;
+  final bounds = loadReportPickerBounds();
   final initial = bounds.clampDay(
     period.kind == ReportPeriodKind.day && period.day != null
         ? period.day!
@@ -116,8 +89,7 @@ Future<void> pickReportDay(BuildContext context, WidgetRef ref) async {
 /* Month wise → month + year only (no day). */
 Future<void> pickReportMonth(BuildContext context, WidgetRef ref) async {
   final period = ref.read(reportPeriodProvider);
-  final bounds = await loadReportPickerBounds();
-  if (!context.mounted) return;
+  final bounds = loadReportPickerBounds();
   final initial = bounds.clampMonth(
     period.kind == ReportPeriodKind.month && period.day != null
         ? period.day!
@@ -139,8 +111,7 @@ Future<void> pickReportMonth(BuildContext context, WidgetRef ref) async {
 /* Year wise → year only. */
 Future<void> pickReportYear(BuildContext context, WidgetRef ref) async {
   final period = ref.read(reportPeriodProvider);
-  final bounds = await loadReportPickerBounds();
-  if (!context.mounted) return;
+  final bounds = loadReportPickerBounds();
   final initial = bounds.clampYear(
     period.kind == ReportPeriodKind.year && period.day != null
         ? period.day!

@@ -195,6 +195,17 @@ class AdminTables
             });
         }
 
+        if (!Schema::hasTable('pos_home_banners')) {
+            Schema::create('pos_home_banners', function (Blueprint $table) {
+                $table->increments('bannerId');
+                $table->string('image_path', 255);
+                $table->string('image_url', 500);
+                $table->unsignedInteger('sort_order')->default(0);
+                $table->unsignedTinyInteger('is_active')->default(1);
+                $table->dateTime('created_at')->useCurrent();
+            });
+        }
+
         if (!Schema::hasTable('website_settings')) {
             Schema::create('website_settings', function (Blueprint $table) {
                 $table->string('setting_key', 80)->primary();

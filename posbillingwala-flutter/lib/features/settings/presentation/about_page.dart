@@ -278,12 +278,18 @@ class HeroCard extends StatelessWidget {
             style: AppTypography.bodySmall(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 18),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final feature in aboutPageFeatures)
-                Expanded(child: FeatureTile(item: feature)),
-            ],
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: aboutPageFeatures.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.92,
+            ),
+            itemBuilder: (context, index) =>
+                FeatureTile(item: aboutPageFeatures[index]),
           ),
         ],
       ),
@@ -312,36 +318,36 @@ class FeatureTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: Column(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: item.background,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            alignment: Alignment.center,
-            child: Icon(item.icon, color: item.color, size: 22),
+    return Column(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: item.background,
+            borderRadius: BorderRadius.circular(14),
           ),
-          const SizedBox(height: 6),
-          Text(
+          alignment: Alignment.center,
+          child: Icon(item.icon, color: item.color, size: 24),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: Text(
             item.label,
             textAlign: TextAlign.center,
-            maxLines: 3,
+            maxLines: 2,
+            softWrap: true,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontFamily: AppFonts.family,
-              fontSize: 9.5,
-              height: 1.2,
+              fontSize: 11.5,
+              height: 1.25,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

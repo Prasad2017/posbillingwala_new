@@ -40,7 +40,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     public static Activity activity;
     View view;
     String[] printerList;
-    String printerName = "2-Inch", KOTPrinterName = "2-Inch", settingId, logoUse = "off", paymentUse = "off", customerUse = "off", productQuantityUpdate = "off", duplicateBillUse = "off";
+    String printerName = "2-Inch", KOTPrinterName = "2-Inch", settingId, logoUse = "off", paymentUse = "off", customerUse = "off", productQuantityUpdate = "off", duplicateBillUse = "off", printFastBill = "off";
     String kotEnable = "on", kotPrefix = "KOT-", kotCopies = "1", kotAutoPrint = "off";
     /** Paper size last used when a bill/KOT printer was successfully picked or loaded. */
     String lastConnectedPrinterName = "2-Inch", lastConnectedKOTPrinterName = "2-Inch";
@@ -144,6 +144,11 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
                 duplicateBillUse = isChecked ? "on" : "off";
             }
         });
+        binding.printFastBillSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (!suppressSwitchListener) {
+                printFastBill = isChecked ? "on" : "off";
+            }
+        });
         binding.kotEnableSwitch.setOnCheckedChangeListener((button, isChecked) -> {
             if (!suppressSwitchListener) {
                 kotEnable = isChecked ? "on" : "off";
@@ -243,10 +248,10 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     public void addCompanyPrinterSetting() {
 
         if (ActionButtonUi.getLabel(binding.saveSetting.getRoot()).toString().equalsIgnoreCase(getString(R.string.ui_save_setting))) {
-            posBillingWalaDatabase.addCompanyPrinterSetting(printerName, KOTPrinterName, binding.invoicePrefix.getText().toString(), binding.invoiceTitle.getText().toString(), logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse, binding.invoiceTermsCondition.getText().toString(), bluetoothAddress, bluetoothKOTAddress, binding.printerFeedLines.getText().toString().isEmpty() ? "1" : binding.printerFeedLines.getText().toString(), binding.KotPrinterFeedLines.getText().toString().isEmpty() ? "1" : binding.KotPrinterFeedLines.getText().toString(), 0);
+            posBillingWalaDatabase.addCompanyPrinterSetting(printerName, KOTPrinterName, binding.invoicePrefix.getText().toString(), binding.invoiceTitle.getText().toString(), logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse, printFastBill, binding.invoiceTermsCondition.getText().toString(), bluetoothAddress, bluetoothKOTAddress, binding.printerFeedLines.getText().toString().isEmpty() ? "1" : binding.printerFeedLines.getText().toString(), binding.KotPrinterFeedLines.getText().toString().isEmpty() ? "1" : binding.KotPrinterFeedLines.getText().toString(), 0);
             Toast.makeText(activity, getString(R.string.toast_company_setting_saved), Toast.LENGTH_SHORT).show();
         } else {
-            posBillingWalaDatabase.updateCompanyPrinterSetting(settingId, printerName, KOTPrinterName, binding.invoicePrefix.getText().toString(), binding.invoiceTitle.getText().toString(), logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse, binding.invoiceTermsCondition.getText().toString(), bluetoothAddress, bluetoothKOTAddress, binding.printerFeedLines.getText().toString().isEmpty() ? "1" : binding.printerFeedLines.getText().toString(), binding.KotPrinterFeedLines.getText().toString().isEmpty() ? "1" : binding.KotPrinterFeedLines.getText().toString(), 0);
+            posBillingWalaDatabase.updateCompanyPrinterSetting(settingId, printerName, KOTPrinterName, binding.invoicePrefix.getText().toString(), binding.invoiceTitle.getText().toString(), logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse, printFastBill, binding.invoiceTermsCondition.getText().toString(), bluetoothAddress, bluetoothKOTAddress, binding.printerFeedLines.getText().toString().isEmpty() ? "1" : binding.printerFeedLines.getText().toString(), binding.KotPrinterFeedLines.getText().toString().isEmpty() ? "1" : binding.KotPrinterFeedLines.getText().toString(), 0);
             Toast.makeText(activity, getString(R.string.toast_company_setting_updated), Toast.LENGTH_SHORT).show();
         }
 
@@ -321,6 +326,9 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             customerUse = printerSettingResponse.getCustomerUse() != null ? printerSettingResponse.getCustomerUse() : "off";
             productQuantityUpdate = printerSettingResponse.getProductQuantityUpdate() != null ? printerSettingResponse.getProductQuantityUpdate() : "off";
             duplicateBillUse = printerSettingResponse.getDuplicateBillUse() != null ? printerSettingResponse.getDuplicateBillUse() : "off";
+            printFastBill = printerSettingResponse.getPrintFastBill() != null
+                    && !printerSettingResponse.getPrintFastBill().isEmpty()
+                    ? printerSettingResponse.getPrintFastBill() : "off";
             kotEnable = printerSettingResponse.getKotEnable() != null && !printerSettingResponse.getKotEnable().isEmpty()
                     ? printerSettingResponse.getKotEnable() : "on";
             kotPrefix = printerSettingResponse.getKotPrefix() != null && !printerSettingResponse.getKotPrefix().isEmpty()
@@ -354,6 +362,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         setSwitchCheckedSilently(binding.customerSwitch, customerUse.equalsIgnoreCase("on"));
         setSwitchCheckedSilently(binding.productQuantityUpdate, productQuantityUpdate.equalsIgnoreCase("on"));
         setSwitchCheckedSilently(binding.duplicateBillSwitch, duplicateBillUse.equalsIgnoreCase("on"));
+        setSwitchCheckedSilently(binding.printFastBillSwitch, printFastBill.equalsIgnoreCase("on"));
         setSwitchCheckedSilently(binding.kotEnableSwitch, kotEnable.equalsIgnoreCase("on"));
         setSwitchCheckedSilently(binding.kotAutoPrintSwitch, kotAutoPrint.equalsIgnoreCase("on"));
         updateKotSettingsVisibility();
@@ -461,7 +470,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         }
         posBillingWalaDatabase.updateCompanyPrinterSetting(settingId, printerName, KOTPrinterName,
                 binding.invoicePrefix.getText().toString(), binding.invoiceTitle.getText().toString(),
-                logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse,
+                logoUse, paymentUse, customerUse, productQuantityUpdate, duplicateBillUse, printFastBill,
                 binding.invoiceTermsCondition.getText().toString(),
                 bluetoothAddress != null ? bluetoothAddress : "",
                 bluetoothKOTAddress != null ? bluetoothKOTAddress : "",

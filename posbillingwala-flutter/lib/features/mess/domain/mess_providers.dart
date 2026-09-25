@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:drift/drift.dart';
@@ -7,10 +8,12 @@ import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/utils/json_parsers.dart';
 import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_meal_token_print_worker.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_payer_mode.dart';
 
 /* Matches Android MessTokenQrHelper payload. */
@@ -23,6 +26,15 @@ class MessTokenQrHelper {
     final rand = Random.secure();
     final bytes = List<int>.generate(16, (_) => rand.nextInt(256));
     return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  }
+
+  /* Android MessTokenQrHelper.resolveMessType (+ 2nd coupon/token → Dinner). */
+  static String resolveMessType({int existingPrintsToday = 0}) {
+    if (existingPrintsToday == 1) return 'Dinner';
+    final hour = DateTime.now().hour;
+    if (hour >= 18) return 'Dinner';
+    if (hour >= 7) return 'Lunch';
+    return 'Meal';
   }
 
   static String buildPayload({
@@ -217,13 +229,16 @@ class MessController extends Notifier<AsyncValue<void>> {
                     memberName: Value(e.memberName),
                     messType: Value(e.messType),
                     messInvoiceDate:
-                        DateTime.tryParse(e.messInvoiceDate) ?? DateTime.now(),
+                        parseInvoiceDate(e.messInvoiceDate) ?? DateTime.now(),
                     messInvoiceNetworkStatus:
                         e.messInvoiceNetworkStatus?.trim().isNotEmpty == true
                         ? e.messInvoiceNetworkStatus!
                         : 'mi_${e.invoiceId}',
                     messInvoiceStatus: Value(
-                      e.messInvoiceStatus.isEmpty ? '1' : e.messInvoiceStatus,
+                      e.messInvoiceStatus.isEmpty ||
+                              e.messInvoiceStatus.toLowerCase() == 'active'
+                          ? '1'
+                          : e.messInvoiceStatus,
                     ),
                   ),
                 )
@@ -344,12 +359,61 @@ class MessController extends Notifier<AsyncValue<void>> {
         memberName: token.memberName,
         createdAt: token.createdAt,
         printStatus: token.printStatus.trim().isEmpty
-            ? 'RECEIVED'
+            ? 'PRINT_PENDING'
             : token.printStatus,
       );
       count++;
     }
+    if (count > 0) {
+      unawaited(ref.read(messMealTokenPrintWorkerProvider).kick());
+    }
     return count;
+  }
+
+  Future<void> deleteLocalMember(int memberId) async {
+    if (AppPlatform.requiresNetwork && !await ensureOnline()) {
+      throw StateError(kOnlineRequiredMessage);
+    }
+    final db = ref.read(appDatabaseProvider);
+    await db.deleteLocalMessMember(memberId);
+    final userId = ref.read(authControllerProvider).session?.userId;
+    if (userId != null && userId.isNotEmpty) {
+      try {
+        final member = await db.getMessMember(memberId);
+        if (member != null) {
+          final ok = await MessApi(ref.read(apiClientProvider)).insertMessMember(
+            userId: userId,
+            member: MessMemberDto(
+              memberId: member.memberId,
+              memberName: member.memberName,
+              memberMobileNumber: member.memberMobileNumber,
+              memberAltenetMobileNumber: member.memberAltenetMobileNumber,
+              memberAddress: member.memberAddress,
+              registrationNo: member.registrationNo,
+              memberType: member.memberType,
+              rollNo: member.rollNo,
+              college: member.college,
+              studentYear: member.studentYear,
+              company: member.company,
+              memberStatus: '2',
+              memberNetworkStatus: member.memberNetworkStatus,
+            ),
+          );
+          if (ok) {
+            await db.markMessMemberSynced(memberId);
+          } else if (AppPlatform.requiresNetwork) {
+            throw StateError(kWebApiSaveFailedMessage);
+          }
+        }
+      } catch (e) {
+        if (AppPlatform.requiresNetwork) {
+          if (e is StateError) rethrow;
+          throw StateError(kWebApiSaveFailedMessage);
+        }
+      }
+    } else if (AppPlatform.requiresNetwork) {
+      throw StateError('Please login to save on Web POS.');
+    }
   }
 
   Future<void> setShopPayerMode(bool institutePay) async {
@@ -509,22 +573,46 @@ class MessController extends Notifier<AsyncValue<void>> {
     }
   }
 
-  Future<({MessToken token, String payload})> issueMemberToken(
+  /* Prepare token without DB write — Android saves only after print success. */
+  ({String tokenCode, String payload, String messType}) prepareMemberToken(
     MessMember member, {
-    String messType = 'Lunch',
+    String? messType,
+  }) {
+    final userId = ref.read(authControllerProvider).session?.userId ?? '0';
+    final code = MessTokenQrHelper.generateTokenCode();
+    final type =
+        messType ?? MessTokenQrHelper.resolveMessType();
+    final payload = MessTokenQrHelper.buildPayload(
+      tokenCode: code,
+      userId: userId,
+      memberType: MessTokenQrHelper.memberTypeMember,
+    );
+    return (tokenCode: code, payload: payload, messType: type);
+  }
+
+  /* Persist token + twin mess invoice after successful print (Android twin). */
+  Future<MessToken> commitMemberToken({
+    required MessMember member,
+    required String tokenCode,
+    required String messType,
   }) async {
     if (AppPlatform.requiresNetwork && !await ensureOnline()) {
       throw StateError(kOnlineRequiredMessage);
     }
     final userId = ref.read(authControllerProvider).session?.userId ?? '0';
-    final code = MessTokenQrHelper.generateTokenCode();
     final db = ref.read(appDatabaseProvider);
     final token = await db.issueMessToken(
-      tokenCode: code,
+      tokenCode: tokenCode,
       memberId: '${member.memberId}',
       memberName: member.memberName,
       memberMobile: member.memberMobileNumber,
       memberType: MessTokenQrHelper.memberTypeMember,
+      messType: messType,
+    );
+    /* Android also saves mess_invoice for daily One/Two Time accounting. */
+    final invoiceId = await db.issueMessCoupon(
+      memberId: '${member.memberId}',
+      memberName: member.memberName,
       messType: messType,
     );
     if (userId != '0' && userId.isNotEmpty) {
@@ -552,15 +640,39 @@ class MessController extends Notifier<AsyncValue<void>> {
           throw StateError(kWebApiSaveFailedMessage);
         }
       }
+      try {
+        final row = await db.getMessInvoiceById(invoiceId);
+        if (row != null) {
+          final ok = await MessApi(ref.read(apiClientProvider)).insertMessInvoice(
+            userId: userId,
+            memberName: row.memberName,
+            messType: row.messType,
+            messInvoiceDate: DateFormat(
+              'yyyy-MM-dd HH:mm:ss',
+            ).format(row.messInvoiceDate),
+            messInvoiceNetworkStatus: row.messInvoiceNetworkStatus,
+            messInvoiceStatus: '0',
+          );
+          if (ok) await db.markMessInvoiceSynced(invoiceId);
+        }
+      } catch (_) {}
     } else if (AppPlatform.requiresNetwork) {
       throw StateError('Please login to save on Web POS.');
     }
-    final payload = MessTokenQrHelper.buildPayload(
-      tokenCode: code,
-      userId: userId,
-      memberType: MessTokenQrHelper.memberTypeMember,
+    return token;
+  }
+
+  Future<({MessToken token, String payload})> issueMemberToken(
+    MessMember member, {
+    String messType = 'Lunch',
+  }) async {
+    final prep = prepareMemberToken(member, messType: messType);
+    final token = await commitMemberToken(
+      member: member,
+      tokenCode: prep.tokenCode,
+      messType: prep.messType,
     );
-    return (token: token, payload: payload);
+    return (token: token, payload: prep.payload);
   }
 
   Future<({MessToken token, String payload})> issueWalkInToken({

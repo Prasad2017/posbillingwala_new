@@ -209,7 +209,8 @@ public class OfflineNetworkData {
                         columnOrEmpty(cursor, "kotPrefix").isEmpty() ? "KOT-" : columnOrEmpty(cursor, "kotPrefix"),
                         columnOrEmpty(cursor, "kotCopies").isEmpty() ? "1" : columnOrEmpty(cursor, "kotCopies"),
                         columnOrEmpty(cursor, "kotAutoPrint").isEmpty() ? "off" : columnOrEmpty(cursor, "kotAutoPrint"),
-                        columnOrEmpty(cursor, "kotPreview").isEmpty() ? "on" : columnOrEmpty(cursor, "kotPreview"));
+                        columnOrEmpty(cursor, "kotPreview").isEmpty() ? "on" : columnOrEmpty(cursor, "kotPreview"),
+                        columnOrEmpty(cursor, "printFastBill").isEmpty() ? "off" : columnOrEmpty(cursor, "printFastBill"));
             } while (cursor.moveToNext());
         }
         //getting all the unSynced Company Details
@@ -583,7 +584,7 @@ public class OfflineNetworkData {
         }
 }
 
-    public void savePrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String invoiceTermsCondition, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, String kotEnable, String kotPrefix, String kotCopies, String kotAutoPrint, String kotPreview) {
+    public void savePrinterSetting(String settingId, String printerName, String KOTPrinterName, String invoicePrefix, String invoiceTitle, String invoiceTermsCondition, String logoUse, String paymentUse, String customerUse, String productQuantityUpdate, String duplicateBillUse, String bluetoothAddress, String bluetoothKOTAddress, String printerFeedLines, String KotPrinterFeedLines, String kotEnable, String kotPrefix, String kotCopies, String kotAutoPrint, String kotPreview, String printFastBill) {
         Call<AllApiResponse> call = Api.getClient(activity).savePrinterSetting(MainActivity.userId,
                 nz(printerName), nz(KOTPrinterName), nz(invoicePrefix), nz(invoiceTitle), nz(invoiceTermsCondition),
                 nz(logoUse), nz(paymentUse), nz(customerUse), nz(productQuantityUpdate), nz(duplicateBillUse),
@@ -592,7 +593,8 @@ public class OfflineNetworkData {
                 nz(kotPrefix).isEmpty() ? "KOT-" : nz(kotPrefix),
                 nz(kotCopies).isEmpty() ? "1" : nz(kotCopies),
                 nz(kotAutoPrint).isEmpty() ? "off" : nz(kotAutoPrint),
-                nz(kotPreview).isEmpty() ? "on" : nz(kotPreview));
+                nz(kotPreview).isEmpty() ? "on" : nz(kotPreview),
+                nz(printFastBill).isEmpty() ? "off" : nz(printFastBill));
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSynchronizePrinterSetting(settingId, NAME_SYNCED_WITH_SERVER);
         }

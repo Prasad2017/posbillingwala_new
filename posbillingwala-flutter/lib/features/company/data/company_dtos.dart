@@ -148,6 +148,7 @@ class CompanyPrinterSettingDto {
     this.kotCopies = '1',
     this.kotAutoPrint = '0',
     this.kotPreview = '1',
+    this.printFastBill = '0',
     this.settingStatus = '1',
     this.paperSize = '2-Inch',
     this.kotPaperSize = '2-Inch',
@@ -179,6 +180,7 @@ class CompanyPrinterSettingDto {
   final String kotCopies;
   final String kotAutoPrint;
   final String kotPreview;
+  final String printFastBill;
   final String settingStatus;
   final String paperSize;
   final String kotPaperSize;
@@ -211,6 +213,7 @@ class CompanyPrinterSettingDto {
       kotCopies: parseString(json['kotCopies']) ?? '1',
       kotAutoPrint: parseString(json['kotAutoPrint']) ?? '0',
       kotPreview: parseString(json['kotPreview']) ?? '1',
+      printFastBill: parseString(json['printFastBill']) ?? '0',
       settingStatus: parseString(json['settingStatus']) ?? '1',
       paperSize: parseString(json['paperSize']) ?? '2-Inch',
       kotPaperSize:
@@ -248,6 +251,7 @@ class CompanyPrinterSettingDto {
     'kotCopies': kotCopies,
     'kotAutoPrint': kotAutoPrint,
     'kotPreview': kotPreview,
+    'printFastBill': printFastBill,
     'settingStatus': settingStatus,
     'paperSize': paperSize,
     'kotPaperSize': kotPaperSize,

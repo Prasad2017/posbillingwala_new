@@ -504,6 +504,26 @@
                         android:text="@string/ui_duplicate_bill_copy_hint"
                         android:textColor="@color/colorTextHint"
                         android:textSize="@dimen/text_caption" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/colorBorder" />
+
+                    <com.pos_billingwala.Extra.PosSwitchRowView
+                        android:id="@+id/printFastBillSwitch"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:psr_label="@string/ui_print_fast_bill" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/spacing_sm"
+                        android:fontFamily="@font/poppinsregular"
+                        android:text="@string/ui_print_fast_bill_hint"
+                        android:textColor="@color/colorTextHint"
+                        android:textSize="@dimen/text_caption" />
                 </LinearLayout>
             </com.pos_billingwala.Extra.PosCardView>
 

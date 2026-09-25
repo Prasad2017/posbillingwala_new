@@ -53,6 +53,7 @@ $i=0;
         $getdata["kotCopies"]=isset($row['kotCopies']) && $row['kotCopies']!=='' ? $row['kotCopies'] : "1";
         $getdata["kotAutoPrint"]=isset($row['kotAutoPrint']) && $row['kotAutoPrint']!=='' ? $row['kotAutoPrint'] : "off";
         $getdata["kotPreview"]=isset($row['kotPreview']) && $row['kotPreview']!=='' ? $row['kotPreview'] : "on";
+        $getdata["printFastBill"]=isset($row['printFastBill']) && $row['printFastBill']!=='' ? $row['printFastBill'] : "off";
         $getdata["paperSize"]=isset($row['paperSize']) ? pos_normalize_paper_size($row['paperSize']) : "2-Inch";
         $getdata["kotPaperSize"]=isset($row['kotPaperSize']) && $row['kotPaperSize']!==''
             ? pos_normalize_paper_size($row['kotPaperSize'])

@@ -793,6 +793,8 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
                 productQuantityUpdate: printerFlagOn(p.productQuantityUpdate),
                 kotAutoPrint: p.kotAutoPrint == '1' || p.kotAutoPrint == 'on',
                 kotPreview: p.kotPreview != '0' && p.kotPreview != 'off',
+                printFastBill:
+                    p.printFastBill == '1' || p.printFastBill == 'on',
                 kotCopies: int.tryParse(p.kotCopies) ?? current.kotCopies,
               ),
               fromCloud: true,
@@ -964,6 +966,7 @@ class FullSyncController extends Notifier<AsyncValue<FullSyncResult?>> {
         ),
         kotAutoPrint: settings.kotAutoPrint ? '1' : '0',
         kotPreview: settings.kotPreview ? '1' : '0',
+        printFastBill: settings.printFastBill ? '1' : '0',
         kotCopies: '${settings.kotCopies}',
         paperSize: settings.paperSize.dbValue,
         kotPaperSize: settings.kotPaperSize.dbValue,

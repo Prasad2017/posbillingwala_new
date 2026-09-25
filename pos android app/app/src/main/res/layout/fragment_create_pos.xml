@@ -119,10 +119,69 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
+        android:id="@+id/billingDateBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/appBarLayout"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/bg_billing_product_card"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_calendar"
+            app:tint="@color/colorTextHint" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsregular"
+                android:text="@string/ui_billing_date"
+                android:textColor="@color/colorTextHint"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/billingDateValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppinsmedium"
+                android:textColor="@color/colorPrimary"
+                android:textSize="13sp"
+                tools:text="24-Sep-2026" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/billingDateDropdown"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="@string/ui_select_billing_date"
+            android:src="@drawable/ic_chevron_right"
+            android:visibility="gone"
+            app:tint="@color/colorTextHint" />
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/cartLayout"
-        android:layout_below="@id/appBarLayout"
+        android:layout_below="@id/billingDateBar"
         android:orientation="vertical"
         android:paddingTop="8dp">
 

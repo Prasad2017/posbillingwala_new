@@ -35,6 +35,7 @@ class ExpenseReportPageState extends ConsumerState<ExpenseReportPage> {
   }
 
   List<ShopExpense> inPeriod(List<ShopExpense> rows, ReportPeriod period) {
+    if (period.kind == ReportPeriodKind.all) return rows;
     final range = period.range;
     return rows
         .where(

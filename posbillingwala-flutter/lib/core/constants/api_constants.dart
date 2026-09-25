@@ -71,6 +71,7 @@ abstract final class ApiEndpoints {
   static const String insertCompanyPrinterSetting =
       'insertCompanyPrinterSetting.php';
   static const String getHomeSalesOverview = 'getHomeSalesOverview.php';
+  static const String getHomeBannerList = 'getHomeBannerList.php';
 
   /* Tables / dining */
   static const String insertPosTable = 'insertPosTable.php';

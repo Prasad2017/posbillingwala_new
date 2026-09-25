@@ -11,6 +11,8 @@ $response = array(
     'message' => 'Invalid request',
     'tokens' => array(),
     'counts' => array(),
+    'messMealTokens' => array(),
+    'messSessionCounts' => array(),
 );
 mess_common_ensure_schema($con);
 date_default_timezone_set('Asia/Kolkata');
@@ -23,6 +25,7 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
     $date = date('Y-m-d');
 }
 
+/* DATE() so DATETIME token_date rows still match yyyy-MM-dd. */
 $rows = db_stmt_fetch_all(
     $con,
     'SELECT t.*,
@@ -30,12 +33,26 @@ $rows = db_stmt_fetch_all(
             m.member_altenet_mobile_number AS member_alt_mobile
      FROM mess_meal_token t
      LEFT JOIN mess_member m ON m.id = t.member_id
-     WHERE t.userId = ? AND t.token_date = ?
+     WHERE t.userId = ? AND DATE(t.token_date) = ?
      ORDER BY t.id DESC',
     'is',
     (int) $userId,
     $date
 );
+if (!is_array($rows)) {
+    $rows = db_stmt_fetch_all(
+        $con,
+        'SELECT * FROM mess_meal_token
+         WHERE userId = ? AND DATE(token_date) = ?
+         ORDER BY id DESC',
+        'is',
+        (int) $userId,
+        $date
+    );
+}
+if (!is_array($rows)) {
+    $rows = array();
+}
 
 $tokens = array();
 $bySession = array();
@@ -46,23 +63,28 @@ foreach ($rows as $row) {
     } elseif (!empty($row['member_alt_mobile'])) {
         $memberMobile = trim((string) $row['member_alt_mobile']);
     } elseif (!empty($row['registration_no'])) {
-        // Fallback: registration is often stored as mobile for QR flow.
         $memberMobile = trim((string) $row['registration_no']);
     }
+
+    $tokenDate = isset($row['token_date']) ? substr((string) $row['token_date'], 0, 10) : $date;
     $tokens[] = array(
-        'tokenId' => $row['public_id'],
-        'tokenNumber' => $row['token_number'],
-        'registrationNo' => $row['registration_no'],
-        'mealSession' => $row['session_name'],
-        'date' => $row['token_date'],
-        'printStatus' => $row['print_status'],
-        'createdAt' => $row['created_at'],
-        'printedAt' => $row['printed_at'],
-        'memberName' => $row['member_name'],
+        'tokenId' => isset($row['public_id']) ? (string) $row['public_id'] : '',
+        'tokenNumber' => isset($row['token_number']) ? (string) $row['token_number'] : '',
+        'registrationNo' => isset($row['registration_no']) ? (string) $row['registration_no'] : '',
+        'mealSession' => isset($row['session_name']) ? (string) $row['session_name'] : '',
+        'date' => $tokenDate,
+        'printStatus' => isset($row['print_status']) ? (string) $row['print_status'] : '',
+        'createdAt' => isset($row['created_at']) ? (string) $row['created_at'] : '',
+        'printedAt' => isset($row['printed_at']) ? (string) $row['printed_at'] : '',
+        'memberName' => isset($row['member_name']) ? (string) $row['member_name'] : '',
         'memberMobile' => $memberMobile,
+        'memberId' => isset($row['member_id']) ? (string) $row['member_id'] : '',
     );
 
-    $sn = $row['session_name'];
+    $sn = isset($row['session_name']) ? (string) $row['session_name'] : '';
+    if ($sn === '') {
+        $sn = 'Session';
+    }
     if (!isset($bySession[$sn])) {
         $bySession[$sn] = array(
             'sessionName' => $sn,
@@ -70,14 +92,17 @@ foreach ($rows as $row) {
             'printed' => 0,
             'pending' => 0,
             'failed' => 0,
+            'cancelled' => 0,
         );
     }
     $bySession[$sn]['generated']++;
-    $ps = strtoupper($row['print_status']);
+    $ps = strtoupper(isset($row['print_status']) ? (string) $row['print_status'] : '');
     if ($ps === 'PRINTED') {
         $bySession[$sn]['printed']++;
     } elseif ($ps === 'PRINT_FAILED') {
         $bySession[$sn]['failed']++;
+    } elseif ($ps === 'CANCELLED') {
+        $bySession[$sn]['cancelled']++;
     } else {
         $bySession[$sn]['pending']++;
     }
@@ -88,5 +113,8 @@ $response['message'] = 'ok';
 $response['date'] = $date;
 $response['tokens'] = $tokens;
 $response['counts'] = array_values($bySession);
+/* Android Gson / Flutter aliases. */
+$response['messMealTokens'] = $tokens;
+$response['messSessionCounts'] = $response['counts'];
 echo json_encode($response);
 mysqli_close($con);

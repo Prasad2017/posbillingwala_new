@@ -176,7 +176,8 @@ public interface ApiInterface {
                                             @Field("kotPrefix") String kotPrefix,
                                             @Field("kotCopies") String kotCopies,
                                             @Field("kotAutoPrint") String kotAutoPrint,
-                                            @Field("kotPreview") String kotPreview);
+                                            @Field("kotPreview") String kotPreview,
+                                            @Field("printFastBill") String printFastBill);
 
     @FormUrlEncoded
     @POST("insertCompanyDetail.php")

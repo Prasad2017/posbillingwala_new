@@ -273,6 +273,7 @@ CREATE TABLE `company_printer_setting` (
   `kotCopies` varchar(8) DEFAULT '1',
   `kotAutoPrint` varchar(10) DEFAULT 'off',
   `kotPreview` varchar(10) DEFAULT 'on',
+  `printFastBill` varchar(10) DEFAULT 'off',
   `paperSize` varchar(16) NOT NULL DEFAULT '2-Inch',
   `kotPaperSize` varchar(16) NOT NULL DEFAULT '2-Inch',
   `billConnectionType` varchar(16) NOT NULL DEFAULT 'BLUETOOTH',

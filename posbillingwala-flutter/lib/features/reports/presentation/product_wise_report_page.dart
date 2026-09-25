@@ -43,20 +43,21 @@ class ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
 
   Future<void> load() async {
     final period = ref.read(reportPeriodProvider);
+    final allRecords = period.kind == ReportPeriodKind.all;
     final (start, end) = period.range;
     setState(() => productWiseReportPageRows = const AsyncLoading());
     final result = await AsyncValue.guard(() async {
       await hydrateWebReportRange(
         ref,
-        start: start,
-        end: end,
+        start: allRecords ? null : start,
+        end: allRecords ? null : end,
         includeItems: true,
       );
       return ref
           .read(appDatabaseProvider)
           .getProductWiseSales(
-            start: start,
-            end: end,
+            start: allRecords ? null : start,
+            end: allRecords ? null : end,
             invoiceItemType: typeFilter == 'all' ? null : typeFilter,
             leastSold: productWiseReportPageLeastSold,
           );

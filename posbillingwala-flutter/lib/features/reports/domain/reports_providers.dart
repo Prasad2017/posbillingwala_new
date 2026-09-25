@@ -44,8 +44,9 @@ class ReportPeriod {
     final now = DateTime.now();
     switch (kind) {
       case ReportPeriodKind.all:
-        /* Wide window for API + local range queries. */
-        return (DateTime(2020, 1, 1), DateTime(now.year + 1, 1, 1));
+        /* Callers for All Records should skip range filters;
+           this sentinel remains only for APIs that still require bounds. */
+        return (DateTime(2018, 1, 1), DateTime(now.year + 1, 1, 1));
       case ReportPeriodKind.today:
         final start = DateTime(now.year, now.month, now.day);
         return (start, start.add(const Duration(days: 1)));
@@ -236,8 +237,25 @@ final reportPeriodProvider =
 /* Mobile: local Drift stream. Web: fetch from getPosSalesReport / getInvoiceList. */
 final periodInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
   final period = ref.watch(reportPeriodProvider);
-  final (start, end) = period.range;
   final staffId = resolvedStaffFilter(ref);
+  final db = ref.watch(appDatabaseProvider);
+
+  /* All Records: no date filter — local all-billable or cloud getInvoiceList. */
+  if (period.kind == ReportPeriodKind.all) {
+    if (AppPlatform.requiresNetwork) {
+      return Stream.fromFuture(
+        loadPeriodInvoicesFromApi(
+          userId: ref.read(authControllerProvider).session?.userId,
+          client: ref.read(apiClientProvider),
+          db: ref.read(appDatabaseProvider),
+          createdByStaffId: staffId,
+        ),
+      );
+    }
+    return db.watchAllBillableInvoices(createdByStaffId: staffId);
+  }
+
+  final (start, end) = period.range;
   if (AppPlatform.requiresNetwork) {
     return Stream.fromFuture(
       loadPeriodInvoicesFromApi(
@@ -250,22 +268,16 @@ final periodInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
       ),
     );
   }
-  if (period.kind == ReportPeriodKind.all) {
-    return ref
-        .watch(appDatabaseProvider)
-        .watchAllBillableInvoices(createdByStaffId: staffId);
-  }
-  return ref
-      .watch(appDatabaseProvider)
-      .watchInvoicesInRange(start, end, createdByStaffId: staffId);
+  return db.watchInvoicesInRange(start, end, createdByStaffId: staffId);
 });
 
+/* Omit [start]/[end] to load all invoices (no date filter on API or Drift). */
 Future<List<Invoice>> loadPeriodInvoicesFromApi({
   required String? userId,
   required ApiClient client,
   required AppDatabase db,
-  required DateTime start,
-  required DateTime end,
+  DateTime? start,
+  DateTime? end,
   bool includeItems = false,
   int? createdByStaffId,
 }) async {
@@ -273,29 +285,36 @@ Future<List<Invoice>> loadPeriodInvoicesFromApi({
   if (userId == null || userId.isEmpty) {
     throw StateError('Please login to view reports on Web POS.');
   }
-  final fmt = DateFormat('yyyy-MM-dd');
-  /* ReportPeriod.range uses exclusive end — convert to inclusive endDate. */
-  final inclusiveEnd = end.subtract(const Duration(days: 1));
-  final endDay = inclusiveEnd.isBefore(start) ? start : inclusiveEnd;
   final api = InvoiceSyncApi(client);
+  final staffScoped = createdByStaffId != null && createdByStaffId > 0;
+  final allRecords = start == null || end == null;
 
   List<CloudInvoiceDto> cloud = const [];
-  final staffScoped = createdByStaffId != null && createdByStaffId > 0;
-  try {
-    final report = await api.fetchPosSalesReport(
-      userId: userId,
-      startDate: fmt.format(start),
-      endDate: fmt.format(endDay),
-      staffScope: staffScoped,
-    );
-    cloud = report.invoices;
-  } catch (_) {
-    cloud = await api.fetchInvoices(
-      userId,
-      startDate: fmt.format(start),
-      endDate: fmt.format(endDay),
-      staffScope: staffScoped,
-    );
+  if (allRecords) {
+    cloud = await api.fetchInvoices(userId, staffScope: staffScoped);
+  } else {
+    final rangeStart = start!;
+    final rangeEnd = end!;
+    final fmt = DateFormat('yyyy-MM-dd');
+    /* ReportPeriod.range uses exclusive end — convert to inclusive endDate. */
+    final inclusiveEnd = rangeEnd.subtract(const Duration(days: 1));
+    final endDay = inclusiveEnd.isBefore(rangeStart) ? rangeStart : inclusiveEnd;
+    try {
+      final report = await api.fetchPosSalesReport(
+        userId: userId,
+        startDate: fmt.format(rangeStart),
+        endDate: fmt.format(endDay),
+        staffScope: staffScoped,
+      );
+      cloud = report.invoices;
+    } catch (_) {
+      cloud = await api.fetchInvoices(
+        userId,
+        startDate: fmt.format(rangeStart),
+        endDate: fmt.format(endDay),
+        staffScope: staffScoped,
+      );
+    }
   }
 
   /* Extra guard if server ignored staffScope. */
@@ -323,16 +342,20 @@ Future<List<Invoice>> loadPeriodInvoicesFromApi({
     );
   }
 
-  return (await db
-      .watchInvoicesInRange(start, end, createdByStaffId: createdByStaffId)
-      .first);
+  if (allRecords) {
+    return db.watchAllBillableInvoices(createdByStaffId: createdByStaffId).first;
+  }
+  return db
+      .watchInvoicesInRange(start!, end!, createdByStaffId: createdByStaffId)
+      .first;
 }
 
-/* Hydrate Drift from cloud for web report screens that query local aggregates. */
+/* Hydrate Drift from cloud for web report screens that query local aggregates.
+   Omit [start]/[end] for All Records (no date filter). */
 Future<void> hydrateWebReportRange(
   WidgetRef ref, {
-  required DateTime start,
-  required DateTime end,
+  DateTime? start,
+  DateTime? end,
   bool includeItems = false,
 }) async {
   if (!AppPlatform.requiresNetwork) return;

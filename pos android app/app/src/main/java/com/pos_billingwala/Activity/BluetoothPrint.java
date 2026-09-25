@@ -62,6 +62,7 @@ import com.pos_billingwala.Adapter.TwoPrintAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
+import com.pos_billingwala.Extra.BillingDateHelper;
 import com.pos_billingwala.Extra.BottomSheetUi;
 import com.pos_billingwala.Extra.PaymentSettlementHelper;
 import com.pos_billingwala.Extra.PaymentSettlementBinder;
@@ -474,20 +475,22 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         return true;
     }
 
+    /**
+     * Bill number for the working billing date (Print Fast Bill selected day, or today).
+     * Sequence is date-wise: returning to an older date continues that day's last number
+     * (18-Sep 1..10 then later 18-Sep → 11), it does not restart at 1.
+     */
     @SuppressLint("Range")
     public static String getInvoiceNumber() {
 
-        Date c = Calendar.getInstance().getTime();
-        System.out.println("Current time => " + c);
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        SimpleDateFormat todayDF = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        SimpleDateFormat invoiceNumberDateFormat = new SimpleDateFormat("dd-MM", Locale.getDefault());
-        invoiceDate = df.format(c);
-        String todayDate = todayDF.format(c);
-        String invoiceNumberDate = invoiceNumberDateFormat.format(c);
+        boolean printFastBillOn = BillingDateHelper.isPrintFastBillOn(posBillingWalaDatabase);
+        Date c = BillingDateHelper.resolveInvoiceDate(printFastBillOn);
+        System.out.println("Billing date => " + c);
+        invoiceDate = BillingDateHelper.formatInvoiceDateTime(c);
+        String dayKeyYmd = BillingDateHelper.formatDayKey(c);
+        String invoiceNumberDate = BillingDateHelper.formatNumberDayKey(c);
 
         String companyPrefix;
-        int invoiceId = 0;
         if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
             companyPrefix = printerSettingResponseList.get(0).getInvoicePrefix() + "/";
 
@@ -503,14 +506,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             companyPrefix = "";
         }
 
-        SQLiteDatabase database = posBillingWalaDatabase.getReadableDatabase();
-        Cursor cursor = database.rawQuery("SELECT COUNT(invoiceId) as invoiceId FROM " + POSBillingWalaDatabase.INVOICE_TABLE + " WHERE invoiceDate LIKE '%" + todayDate + "%'", null);
-        while (cursor.moveToNext()) {
-            invoiceId = Integer.parseInt(cursor.getString(cursor.getColumnIndex("invoiceId")));
-        }
-        database.close();
-
-        int lastInvoiceId = invoiceId + 1;
+        int lastInvoiceId = posBillingWalaDatabase != null
+                ? posBillingWalaDatabase.nextInvoiceSequenceForDate(dayKeyYmd)
+                : 1;
         if (lastInvoiceId < 1) {
             lastInvoiceId = 1;
         }
@@ -522,14 +520,22 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
     /**
      * Reserve one invoice number for this checkout and reuse it for print / KOT / PDF / save.
-     * Never regenerate mid-checkout (avoids printed number differing from saved number).
+     * Regenerates if billing date changed so sequence follows the selected bill date.
      */
     @NonNull
     public static String resolveInvoiceNumber() {
-        if (invoiceNumber == null || invoiceNumber.trim().isEmpty()) {
-            return getInvoiceNumber();
+        boolean printFastBillOn = BillingDateHelper.isPrintFastBillOn(posBillingWalaDatabase);
+        Date billingAt = BillingDateHelper.resolveInvoiceDate(printFastBillOn);
+        String expectedDayKey = BillingDateHelper.formatNumberDayKey(billingAt);
+        if (invoiceNumber != null && !invoiceNumber.trim().isEmpty()) {
+            /* Cached number must belong to the current billing day (e.g. /18-09/). */
+            if (invoiceNumber.contains("/" + expectedDayKey + "/")) {
+                return invoiceNumber;
+            }
+            invoiceNumber = null;
+            invoiceDate = null;
         }
-        return invoiceNumber;
+        return getInvoiceNumber();
     }
 
     @NonNull
@@ -756,6 +762,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        refreshPaymentBillingDateLabel();
 
         //Add runtime permissions
         PERMISSIONS = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_COARSE_LOCATION};
@@ -2412,6 +2420,51 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             threeKOTCompanyLogo.setVisibility(View.GONE);
             applyPaymentQr(0);
         }
+        refreshPaymentBillingDateLabel();
+    }
+
+    private void refreshPaymentBillingDateLabel() {
+        if (binding == null || binding.toolbarSubtitle == null) {
+            return;
+        }
+        boolean show = BillingDateHelper.isPrintFastBillOn(posBillingWalaDatabase);
+        if (!show) {
+            BillingDateHelper.resetToToday();
+            binding.toolbarSubtitle.setText(R.string.ui_invoice_preview_subtitle);
+            binding.toolbarSubtitle.setOnClickListener(null);
+            binding.toolbarSubtitle.setClickable(false);
+            return;
+        }
+        String dateLabel = getString(R.string.ui_billing_date) + ": "
+                + BillingDateHelper.formatDisplayDate();
+        binding.toolbarSubtitle.setText(dateLabel);
+        binding.toolbarSubtitle.setOnClickListener(v -> openPaymentBillingDatePicker());
+    }
+
+    private void openPaymentBillingDatePicker() {
+        Calendar day = BillingDateHelper.getSelectedDay();
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+        if (day.after(today)) {
+            day = (Calendar) today.clone();
+        }
+        android.app.DatePickerDialog dialog = new android.app.DatePickerDialog(
+                this,
+                (view, year, month, dayOfMonth) -> {
+                    BillingDateHelper.setSelectedDay(year, month, dayOfMonth);
+                    invoiceNumber = null;
+                    invoiceDate = null;
+                    refreshPaymentBillingDateLabel();
+                },
+                day.get(Calendar.YEAR),
+                day.get(Calendar.MONTH),
+                day.get(Calendar.DAY_OF_MONTH)
+        );
+        dialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+        dialog.show();
     }
 
     @Override

@@ -2,14 +2,20 @@
 include_once('config.php');
 require_once __DIR__ . '/pos_auth_guard.php';
 
-
-$response = array('messTokenResponse' => array());
+$response = array(
+    'status' => '1',
+    'message' => 'ok',
+    'messTokenResponse' => array(),
+);
 mysqli_query($con, 'set names utf8mb4');
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $__postedUserId = isset($_GET['userId']) ? trim($_GET['userId']) : '';
-    $userId = pos_require_auth($con, $__postedUserId, isset($response) ? $response : array('status'=>'0','message'=>'Unauthorized'));
-
+    $userId = pos_require_auth(
+        $con,
+        $__postedUserId,
+        isset($response) ? $response : array('status' => '0', 'message' => 'Unauthorized')
+    );
 
     if ($userId !== '') {
         $uid = (int) $userId;
@@ -27,6 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             if (mysqli_stmt_execute($stmt)) {
                 $result = mysqli_stmt_get_result($stmt);
                 while ($row = mysqli_fetch_assoc($result)) {
+                    $lifecycle = isset($row['tokenStatus']) ? (string) $row['tokenStatus'] : 'active';
+                    /* Flutter: tokenState=lifecycle, tokenStatus=sync (1=synced). */
                     $response['messTokenResponse'][] = array(
                         'tokenId' => $row['tokenId'],
                         'tokenCode' => $row['tokenCode'],
@@ -39,8 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                         'tokenDate' => $row['tokenDate'],
                         'verifiedDate' => $row['verifiedDate'],
                         'tokenNetworkStatus' => $row['tokenNetworkStatus'],
-                        'tokenState' => $row['tokenStatus'],
-                        'verifyNetworkStatus' => $row['verifyNetworkStatus']
+                        'tokenState' => $lifecycle,
+                        'tokenStatus' => '1',
+                        'verifyNetworkStatus' => $row['verifyNetworkStatus'],
                     );
                 }
             }

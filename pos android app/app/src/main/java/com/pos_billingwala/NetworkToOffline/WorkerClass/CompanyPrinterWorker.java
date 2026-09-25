@@ -53,6 +53,9 @@ public class CompanyPrinterWorker extends Worker {
                                 printerSettingResponse.getProductQuantityUpdate(),
                                 printerSettingResponse.getDuplicateBillUse() != null
                                         ? printerSettingResponse.getDuplicateBillUse() : "off",
+                                printerSettingResponse.getPrintFastBill() != null
+                                        && !printerSettingResponse.getPrintFastBill().isEmpty()
+                                        ? printerSettingResponse.getPrintFastBill() : "off",
                                 printerSettingResponse.getInvoiceTermsCondition(),
                                 printerSettingResponse.getBluetoothAddress(),
                                 printerSettingResponse.getBluetoothKOTAddress(),

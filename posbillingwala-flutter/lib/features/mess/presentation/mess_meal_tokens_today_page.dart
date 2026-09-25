@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/network/api_client.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
-import 'package:pos_billingwala_v2/features/auth/data/device_identity_service.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
-import 'package:pos_billingwala_v2/features/mess/presentation/mess_token_qr_page.dart';
-import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
-import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_meal_token_print_worker.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/cloud_screen_cache.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -41,6 +41,9 @@ class MessMealTokensTodayPageState
       });
       return;
     }
+    final day = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final db = ref.read(appDatabaseProvider);
+
     final cached = await CloudScreenCache.loadMapList(
       CloudScreenCache.mealTokensToday,
     );
@@ -55,59 +58,118 @@ class MessMealTokensTodayPageState
     } else if (mounted) {
       setState(() => state = const AsyncLoading());
     }
-    if (!await isDeviceOnline()) return;
-    final next = await AsyncValue.guard(
-      () => MessApi(ref.read(apiClientProvider)).fetchMealTokensToday(userId),
-    );
+
+    /* Android MessMealTokenTodayActivity — fall back to local print queue. */
+    Future<MessMealTokenTodayResult> fromLocalQueue() async {
+      final rows = await db.getMessMealTokenQueueForDate(day);
+      return MessMealTokenTodayResult(
+        tokens: rows
+            .map(
+              (e) => MessMealTokenDto(
+                tokenId: e.serverPublicId,
+                tokenNumber: e.tokenNumber ?? '',
+                registrationNo: e.registrationNo ?? '',
+                mealSession: e.mealSession ?? '',
+                date: e.tokenDate ?? day,
+                printStatus: e.printStatus,
+                createdAt: e.createdAt ?? '',
+                memberName: e.memberName ?? '',
+                memberMobile: e.registrationNo ?? '',
+              ),
+            )
+            .toList(),
+      );
+    }
+
+    if (!await isDeviceOnline()) {
+      final local = await fromLocalQueue();
+      if (!mounted) return;
+      setState(() => state = AsyncData(local));
+      return;
+    }
+
+    final next = await AsyncValue.guard(() async {
+      final remote = await MessApi(
+        ref.read(apiClientProvider),
+      ).fetchMealTokensToday(userId, date: day);
+      /* Keep local queue rows that API omitted (just printed / offline). */
+      if (remote.tokens.isEmpty) {
+        final local = await fromLocalQueue();
+        if (local.tokens.isNotEmpty) return local;
+      } else {
+        for (final t in remote.tokens) {
+          if (t.tokenId.isEmpty) continue;
+          await db.enqueueMessMealToken(
+            serverPublicId: t.tokenId,
+            tokenNumber: t.tokenNumber,
+            registrationNo: t.registrationNo,
+            mealSession: t.mealSession,
+            tokenDate: t.date.isNotEmpty ? t.date : day,
+            memberName: t.memberName,
+            createdAt: t.createdAt,
+            printStatus: t.printStatus.isNotEmpty
+                ? t.printStatus
+                : 'PRINT_PENDING',
+          );
+        }
+        await CloudScreenCache.saveJson(
+          CloudScreenCache.mealTokensToday,
+          remote.tokens
+              .map(
+                (e) => {
+                  'tokenId': e.tokenId,
+                  'tokenNumber': e.tokenNumber,
+                  'registrationNo': e.registrationNo,
+                  'mealSession': e.mealSession,
+                  'date': e.date,
+                  'printStatus': e.printStatus,
+                  'createdAt': e.createdAt,
+                  'printedAt': e.printedAt,
+                  'memberName': e.memberName,
+                  'memberMobile': e.memberMobile,
+                },
+              )
+              .toList(),
+        );
+      }
+      return remote;
+    });
     if (!mounted) return;
     if (next.hasError && state.hasValue) return;
+    if (next.hasError) {
+      final local = await fromLocalQueue();
+      if (!mounted) return;
+      setState(
+        () => state = local.tokens.isNotEmpty
+            ? AsyncData(local)
+            : AsyncError(next.error!, next.stackTrace!),
+      );
+      return;
+    }
     setState(() => state = next);
   }
 
   Future<void> printToken(MessMealTokenDto token) async {
-    final userId = ref.read(authControllerProvider).session?.userId;
-    if (userId == null) return;
-    final memberName = token.memberName.trim();
-    final memberMobile = messTokenDigits(token.memberMobile).isNotEmpty
-        ? messTokenDigits(token.memberMobile)
-        : messTokenDigits(token.registrationNo);
-    if (!messTokenHasRequiredIdentity(memberName, memberMobile)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.of(ref).tokenPrintNameMobileRequired),
-        ),
-      );
-      return;
-    }
+    final db = ref.read(appDatabaseProvider);
     setState(() => busy = true);
     try {
-      final text = StringBuffer()
-        ..writeln('MESS MEAL TOKEN')
-        ..writeln(token.tokenNumber)
-        ..writeln(token.mealSession)
-        ..writeln(memberName)
-        ..writeln(memberMobile)
-        ..writeln(token.date)
-        ..writeln();
-      final printResult = await ref
-          .read(printServiceProvider)
-          .printRawText(text.toString(), label: 'Mess meal token');
-      final device = await DeviceIdentityService().resolve();
-      final ok =
-          printResult.outcome != PrintOutcome.failed &&
-          printResult.outcome != PrintOutcome.previewOnly;
-      await MessApi(ref.read(apiClientProvider)).ackMealTokenPrint(
-        userId: userId,
-        tokenId: token.tokenId,
-        result: ok ? 'PRINTED' : 'PRINT_FAILED',
-        deviceId: device.deviceId,
-        deviceName: device.deviceName,
+      /* Android MessMealTokenTodayActivity — requeue then drain worker. */
+      await db.enqueueMessMealToken(
+        serverPublicId: token.tokenId,
+        tokenNumber: token.tokenNumber,
+        registrationNo: token.memberMobile.trim().isNotEmpty
+            ? token.memberMobile
+            : token.registrationNo,
+        mealSession: token.mealSession,
+        tokenDate: token.date,
+        memberName: token.memberName,
+        createdAt: token.createdAt,
+        printStatus: 'PRINT_PENDING',
       );
+      await ref.read(messMealTokenPrintWorkerProvider).kick();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(printResult.message ?? printResult.outcome.name),
-        ),
+        const SnackBar(content: Text('Print queued')),
       );
       await load();
     } catch (e) {
@@ -255,7 +317,7 @@ class MessMealTokensTodayPageState
                                 spacing: 0,
                                 children: [
                                   IconButton(
-                                    tooltip: 'Print',
+                                    tooltip: 'Retry print',
                                     onPressed: busy
                                         ? null
                                         : () => printToken(t),

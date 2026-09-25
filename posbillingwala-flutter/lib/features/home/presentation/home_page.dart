@@ -15,7 +15,9 @@ import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/user_session.dart';
+import 'package:pos_billingwala_v2/features/home/domain/home_banner_providers.dart';
 import 'package:pos_billingwala_v2/features/home/domain/home_sales_providers.dart';
+import 'package:pos_billingwala_v2/features/home/presentation/home_banner_carousel.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/notifications/domain/notification_providers.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
@@ -23,6 +25,8 @@ import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_host_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_meal_token_print_worker.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
 import 'package:pos_billingwala_v2/features/settings/domain/business_hours.dart';
@@ -76,6 +80,10 @@ class HomePageState extends ConsumerState<HomePage> {
         await refreshHoursLabels();
         await ref.read(permissionControllerProvider.notifier).hydrate();
         ref.read(printHostControllerProvider).start();
+        ref.read(messMealTokenPrintWorkerProvider).start();
+        unawaited(
+          ref.read(messControllerProvider.notifier).recoverPendingMealTokens(),
+        );
         if (!mounted) return;
         if (const bool.fromEnvironment('AUTO_TEST_PRINT')) {
           context.go('/settings/test-print?mode=invoice');
@@ -283,6 +291,7 @@ class HomePageState extends ConsumerState<HomePage> {
           ref.invalidate(monthSalesAggregateProvider);
           ref.invalidate(allTimeSalesAggregateProvider);
           ref.invalidate(homeSalesOverviewProvider);
+          ref.invalidate(homeBannersProvider);
           ref.invalidate(shopOpenNowProvider);
           await refreshPrinterChip();
           await refreshHoursLabels();
@@ -685,10 +694,7 @@ class HomeDashboardBody extends ConsumerWidget {
             );
           },
         ),
-        if (!AppPlatform.useDesktopShell) ...[
-          const SizedBox(height: 20),
-          const PromoBanner(),
-        ],
+        if (!AppPlatform.useDesktopShell) const HomeBannerCarousel(),
       ],
     );
   }
@@ -1451,103 +1457,3 @@ class BillingTile extends StatelessWidget {
   }
 }
 
-class PromoBanner extends StatelessWidget {
-  const PromoBanner({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF4E8),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: AppColors.orange.withValues(alpha: 0.28),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Serve Better\nSell Smarter!',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    height: 1.2,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Happy Customers\nStronger Business',
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 11.5,
-                    height: 1.25,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 108,
-            height: 88,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.65),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Positioned(
-                  top: 8,
-                  child: Text(
-                    'Keep Growing!',
-                    style: TextStyle(
-                      color: AppColors.orangeDark.withValues(alpha: 0.9),
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-                const Icon(
-                  Icons.storefront_rounded,
-                  size: 48,
-                  color: AppColors.primary,
-                ),
-                Positioned(
-                  bottom: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text(
-                      'Good Food Good Mood',
-                      style: TextStyle(
-                        fontSize: 7.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

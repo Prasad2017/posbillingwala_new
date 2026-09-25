@@ -12,15 +12,21 @@ import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_dtos.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_payment_args.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class MessPaymentsPage extends ConsumerStatefulWidget {
-  const MessPaymentsPage({super.key, this.member});
+  const MessPaymentsPage({
+    super.key,
+    this.member,
+    this.mode = MessPaymentOpenMode.list,
+  });
 
   final MessMember? member;
+  final MessPaymentOpenMode mode;
 
   @override
   ConsumerState<MessPaymentsPage> createState() => MessPaymentsPageState();
@@ -39,6 +45,14 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
         await refreshFromCloud();
       } else if (mounted) {
         setState(() => cloudLoaded = true);
+      }
+      if (!mounted) return;
+      if (widget.mode == MessPaymentOpenMode.newPayment &&
+          widget.member != null) {
+        await messPaymentsPageAddPayment();
+      } else if (widget.mode == MessPaymentOpenMode.payPending &&
+          widget.member != null) {
+        await payPending();
       }
     });
   }
@@ -126,7 +140,7 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
 
     final messAmt = TextEditingController();
     final paidAmt = TextEditingController();
-    var days = '30';
+    var days = 'Two Time';
     final month = DateFormat('yyyy-MM').format(DateTime.now());
     final nameCtrl = TextEditingController(text: selected.memberName);
     final mobileCtrl = TextEditingController(
@@ -174,8 +188,8 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                   required: true,
                   label: 'Mess days',
                   value: days,
-                  options: const ['15', '30', '45', '60'],
-                  onChanged: (v) => setLocal(() => days = v ?? '30'),
+                  options: const ['One Time', 'Two Time'],
+                  onChanged: (v) => setLocal(() => days = v ?? 'Two Time'),
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
@@ -215,6 +229,19 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
     );
 
     if (ok != true || selected == null || !mounted) return;
+    final messAmount = double.tryParse(messAmt.text.trim()) ?? 0;
+    final paidAmount = double.tryParse(paidAmt.text.trim()) ?? 0;
+    if (paidAmount > messAmount) {
+      messAmt.dispose();
+      paidAmt.dispose();
+      nameCtrl.dispose();
+      mobileCtrl.dispose();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Paid amount cannot exceed mess amount')),
+      );
+      return;
+    }
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null) return;
 
@@ -229,8 +256,6 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
     setState(() => busy = true);
     try {
       final network = 'pay_${DateTime.now().millisecondsSinceEpoch}';
-      final messAmount = double.tryParse(messAmt.text.trim()) ?? 0;
-      final paidAmount = double.tryParse(paidAmt.text.trim()) ?? 0;
       final db = ref.read(appDatabaseProvider);
       if (await db.hasMessPaymentForMonth(
         memberId: '${selected!.memberId}',
@@ -320,10 +345,10 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
       ),
     );
     var days = payment.messTotalDays.trim().isEmpty
-        ? '30'
+        ? 'Two Time'
         : payment.messTotalDays.trim();
-    if (!const ['15', '30', '45', '60'].contains(days)) {
-      days = '30';
+    if (!const ['One Time', 'Two Time'].contains(days)) {
+      days = 'Two Time';
     }
 
     void syncPending(void Function(void Function()) setLocal) {
@@ -353,8 +378,8 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                   required: true,
                   label: 'Mess Days',
                   value: days,
-                  options: const ['15', '30', '45', '60'],
-                  onChanged: (v) => setLocal(() => days = v ?? '30'),
+                  options: const ['One Time', 'Two Time'],
+                  onChanged: (v) => setLocal(() => days = v ?? 'Two Time'),
                 ),
                 const SizedBox(height: 12),
                 AppTextField(
@@ -415,6 +440,7 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
     final messAmount = double.tryParse(messAmt.text.trim()) ?? 0;
     final paidAmount = double.tryParse(paidAmt.text.trim()) ?? 0;
     final db = ref.read(appDatabaseProvider);
+    final userId = ref.read(authControllerProvider).session?.userId;
     setState(() => busy = true);
     try {
       final locals = await db.getLocalMessPayments(memberId: payment.memberId);
@@ -427,6 +453,10 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
           break;
         }
       }
+      final network =
+          payment.paymentNetworkStatus ??
+          local?.paymentNetworkStatus ??
+          'pay_${DateTime.now().millisecondsSinceEpoch}';
       if (local != null) {
         await db.updateLocalMessPayment(
           localPaymentId: local.localPaymentId,
@@ -442,15 +472,45 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
           paidAmount: paidAmount,
           messTotalDays: days,
           paymentDate: payment.paymentDate,
-          paymentNetworkStatus:
-              payment.paymentNetworkStatus ??
-              'pay_${DateTime.now().millisecondsSinceEpoch}',
+          paymentNetworkStatus: network,
         );
       }
+
+      var success = false;
+      if (userId != null && userId.isNotEmpty && await isDeviceOnline()) {
+        try {
+          success = await MessApi(ref.read(apiClientProvider)).insertMemberPayment(
+            userId: userId,
+            memberId: payment.memberId,
+            memberName: payment.memberName,
+            paymentMessAmount: messAmt.text.trim(),
+            paymentPaidAmount: paidAmt.text.trim(),
+            messTotalDays: days,
+            paymentDate: payment.paymentDate,
+            paymentNetworkStatus: network,
+          );
+          if (success) {
+            final pending = await db.getPendingMessPayments();
+            for (final row in pending) {
+              if (row.paymentNetworkStatus == network) {
+                await db.markMessPaymentSynced(row.localPaymentId);
+              }
+            }
+          }
+        } catch (_) {
+          success = false;
+        }
+      }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment saved')),
-      );
+      if (AppPlatform.requiresNetwork && !success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(kWebApiSaveFailedMessage)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment saved')),
+        );
+      }
     } finally {
       if (mounted) setState(() => busy = false);
       messAmt.dispose();
@@ -459,14 +519,144 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
     }
   }
 
+  /* Android UpdateMessPayment — pay toward current-month pending. */
+  Future<void> payPending() async {
+    final member = widget.member;
+    if (member == null) return;
+    final month = DateFormat('yyyy-MM').format(DateTime.now());
+    final db = ref.read(appDatabaseProvider);
+    final payment = await db.getMessPaymentForMonth(
+      memberId: '${member.memberId}',
+      yyyyMm: month,
+    );
+    if (payment == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No payment record for this month')),
+      );
+      return;
+    }
+    final pending =
+        (payment.paymentMessAmount - payment.paymentPaidAmount)
+            .clamp(0, double.infinity);
+    if (pending <= 0.009) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No pending amount')),
+      );
+      return;
+    }
+    if (!mounted) return;
+    final payCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pay Pending'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(member.memberName, style: const TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text('Mess: ₹${payment.paymentMessAmount.toStringAsFixed(2)}'),
+            Text('Paid: ₹${payment.paymentPaidAmount.toStringAsFixed(2)}'),
+            Text(
+              'Pending: ₹${pending.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFD97706),
+              ),
+            ),
+            const SizedBox(height: 12),
+            AppTextField(
+              required: true,
+              controller: payCtrl,
+              label: 'Amount to pay now',
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(AppStrings.of(ref).cancel),
+          ),
+          AppButton(
+            label: 'Pay',
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) {
+      payCtrl.dispose();
+      return;
+    }
+    final payNow = double.tryParse(payCtrl.text.trim()) ?? 0;
+    payCtrl.dispose();
+    if (payNow <= 0 || payNow > pending + 0.009) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter amount up to pending')),
+      );
+      return;
+    }
+    final newPaid = payment.paymentPaidAmount + payNow;
+    final userId = ref.read(authControllerProvider).session?.userId;
+    setState(() => busy = true);
+    try {
+      await db.updateLocalMessPayment(
+        localPaymentId: payment.localPaymentId,
+        messAmount: payment.paymentMessAmount,
+        paidAmount: newPaid,
+        messTotalDays: payment.messTotalDays,
+      );
+      var success = false;
+      if (userId != null && userId.isNotEmpty && await isDeviceOnline()) {
+        try {
+          success = await MessApi(ref.read(apiClientProvider)).insertMemberPayment(
+            userId: userId,
+            memberId: payment.memberId,
+            memberName: payment.memberName,
+            paymentMessAmount: payment.paymentMessAmount.toStringAsFixed(2),
+            paymentPaidAmount: newPaid.toStringAsFixed(2),
+            messTotalDays: payment.messTotalDays,
+            paymentDate: payment.paymentDate,
+            paymentNetworkStatus: payment.paymentNetworkStatus,
+          );
+          if (success) {
+            await db.markMessPaymentSynced(payment.localPaymentId);
+          }
+        } catch (_) {}
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppPlatform.requiresNetwork && !success
+                ? kWebApiSaveFailedMessage
+                : 'Payment updated',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
     final paymentsAsync = ref.watch(messPaymentsProvider(memberIdFilter));
+    final historyOnly = widget.mode == MessPaymentOpenMode.history;
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.member == null
+          historyOnly
+              ? '${widget.member?.memberName ?? ''} • History'
+              : widget.member == null
               ? AppStrings.of(ref).ui('ui_pending_payment')
               : '${widget.member!.memberName} • ${AppStrings.of(ref).ui('ui_paid_amount')}',
         ),
@@ -477,11 +667,13 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: busy ? null : messPaymentsPageAddPayment,
-        icon: const Icon(Icons.payments_rounded),
-        label: Text(AppStrings.of(ref).addPayment),
-      ),
+      floatingActionButton: historyOnly
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: busy ? null : messPaymentsPageAddPayment,
+              icon: const Icon(Icons.payments_rounded),
+              label: Text(AppStrings.of(ref).addPayment),
+            ),
       body: Column(
         children: [
           Expanded(
@@ -493,6 +685,86 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                       if (dtos.isEmpty) {
                         return Center(
                           child: Text(AppStrings.of(ref).noPaymentsYet),
+                        );
+                      }
+                      if (historyOnly) {
+                        /* Android MessMemberPaymentHistory — month rows. */
+                        final byMonth = <String, MessMemberPaymentDto>{};
+                        for (final p in dtos) {
+                          final key = p.paymentDate.length >= 7
+                              ? p.paymentDate.substring(0, 7)
+                              : p.paymentDate;
+                          final existing = byMonth[key];
+                          if (existing == null ||
+                              p.paymentId >= existing.paymentId) {
+                            byMonth[key] = p;
+                          }
+                        }
+                        final months = byMonth.keys.toList()
+                          ..sort((a, b) => b.compareTo(a));
+                        return ResponsiveScrollShell(
+                          dashboard: true,
+                          child: ListView.separated(
+                            padding: EdgeInsets.fromLTRB(
+                              AppBreakpoints.pagePaddingFor(context.widthClass),
+                              12,
+                              AppBreakpoints.pagePaddingFor(context.widthClass),
+                              24,
+                            ),
+                            itemCount: months.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final key = months[index];
+                              final p = byMonth[key]!;
+                              final pending =
+                                  (p.paymentMessAmount - p.paymentPaidAmount)
+                                      .clamp(0, double.infinity);
+                              final paid = pending <= 0.009;
+                              return AppCard(
+                                accentColor: paid
+                                    ? AppColors.green
+                                    : AppColors.orange,
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Text(
+                                      key,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Mess: ${currency.format(p.paymentMessAmount)}',
+                                    ),
+                                    Text(
+                                      'Paid: ${currency.format(p.paymentPaidAmount)}',
+                                    ),
+                                    Text(
+                                      paid
+                                          ? 'Status: Paid'
+                                          : 'Pending: ${currency.format(pending)}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: paid
+                                            ? AppColors.green
+                                            : const Color(0xFFD97706),
+                                      ),
+                                    ),
+                                    if (p.messTotalDays.isNotEmpty)
+                                      Text(
+                                        'Days: ${p.messTotalDays}',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                         );
                       }
                       return ResponsiveScrollShell(
@@ -529,7 +801,7 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
                                   ),
                                 ),
                                 subtitle: Text(
-                                  '${p.paymentDate} • ${p.messTotalDays} days • '
+                                  '${p.paymentDate} • ${p.messTotalDays} • '
                                   'Mess ${currency.format(p.paymentMessAmount)}',
                                 ),
                                 trailing: Text(

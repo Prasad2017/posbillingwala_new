@@ -161,6 +161,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             }
         }
 
+        setupBillingDateBar();
+
         view.setFocusableInTouchMode(true);
         view.requestFocus();
         view.setOnKeyListener(new View.OnKeyListener() {
@@ -862,6 +864,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         super.onResume();
         paymentScreenOpening = false;
         setPaymentControlsEnabled(true);
+        setupBillingDateBar();
         // Refresh cart when returning from Invoice Preview (print/save/clear).
         if (binding == null || tableNumber == null || cartOrderStatus == null || posBillingWalaDatabase == null) {
             return;
@@ -1473,6 +1476,14 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             binding.categoryRecyclerView.setVisibility(View.VISIBLE);
             binding.productLinearLayout.setVisibility(View.VISIBLE);
         });
+    }
+
+    /* Billing date picker lives on Invoice Preview header only — hide on POS. */
+    private void setupBillingDateBar() {
+        if (binding != null && binding.billingDateBar != null) {
+            binding.billingDateBar.setVisibility(View.GONE);
+            binding.billingDateBar.setOnClickListener(null);
+        }
     }
 
     private void showCatalogLoader() {

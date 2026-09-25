@@ -28,6 +28,7 @@ if (!function_exists('dine_in_ensure_printer_kot_columns')) {
             'billUsbName' => "ALTER TABLE `company_printer_setting` ADD COLUMN `billUsbName` VARCHAR(128) NULL DEFAULT NULL",
             'kotUsbIdentifier' => "ALTER TABLE `company_printer_setting` ADD COLUMN `kotUsbIdentifier` VARCHAR(191) NULL DEFAULT NULL",
             'kotUsbName' => "ALTER TABLE `company_printer_setting` ADD COLUMN `kotUsbName` VARCHAR(128) NULL DEFAULT NULL",
+            'printFastBill' => "ALTER TABLE `company_printer_setting` ADD COLUMN `printFastBill` VARCHAR(10) NULL DEFAULT 'off'",
         );
         foreach ($cols as $name => $alter) {
             try {

@@ -131,7 +131,7 @@ class AppDatabase extends _$AppDatabase {
   String get activeBranchId => scopeBranch;
 
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -347,6 +347,12 @@ class AppDatabase extends _$AppDatabase {
         await customStatement("UPDATE combos SET combo_sync_status = '0'");
         await customStatement(
           "UPDATE combo_items SET combo_item_sync_status = '0'",
+        );
+      }
+      if (from < 25) {
+        await m.addColumn(
+          companyPrinterSettings,
+          companyPrinterSettings.printFastBill,
         );
       }
     },
@@ -1282,6 +1288,17 @@ WHERE cart_id = 0;
     );
   }
 
+  /* Soft-delete like Android filter memberStatus != 2. */
+  Future<void> deleteLocalMessMember(int memberId) async {
+    await (update(messMembers)..where((t) => t.memberId.equals(memberId)))
+        .write(
+          const MessMembersCompanion(
+            memberStatus: Value('2'),
+            memberSyncStatus: Value('0'),
+          ),
+        );
+  }
+
   Future<int> insertLocalPortion({
     required int productId,
     required String portionName,
@@ -1415,18 +1432,25 @@ WHERE cart_id = 0;
   }
 
   Future<List<ProductSalesRow>> getProductWiseSales({
-    required DateTime start,
-    required DateTime end,
+    DateTime? start,
+    DateTime? end,
     String? invoiceItemType,
     bool leastSold = false,
   }) async {
     final headers =
         await (select(invoices)..where(
-              (t) =>
-                  t.invoiceDate.isBiggerOrEqualValue(start) &
-                  t.invoiceDate.isSmallerThanValue(end) &
-                  isBillableInvoice(t) &
-                  branchMatches(t.branchId),
+              (t) {
+                var predicate = isBillableInvoice(t) & branchMatches(t.branchId);
+                if (start != null) {
+                  predicate =
+                      predicate & t.invoiceDate.isBiggerOrEqualValue(start);
+                }
+                if (end != null) {
+                  predicate =
+                      predicate & t.invoiceDate.isSmallerThanValue(end);
+                }
+                return predicate;
+              },
             ))
             .get();
     final totals = <String, ({double qty, double amount, String type})>{};
@@ -2772,8 +2796,12 @@ WHERE $where
   }
 
   Stream<List<MessMember>> watchMessMembers() {
+    /* Active = 1 or legacy API "active"; hide soft-deleted (2/inactive). */
     return (select(messMembers)
-          ..where((t) => t.memberStatus.equals('1'))
+          ..where(
+            (t) =>
+                t.memberStatus.equals('1') | t.memberStatus.equals('active'),
+          )
           ..orderBy([(t) => OrderingTerm.asc(t.memberName)]))
         .watch();
   }
@@ -3957,11 +3985,27 @@ WHERE $where
   /* Android gerMessInvoiceUserWiseList — coupons printed for member on a calendar day. */
   Future<int> countMessCouponsForMemberOnDay(
     String memberName,
-    DateTime day,
-  ) async {
+    DateTime day, {
+    String? memberId,
+  }) async {
     final start = DateTime(day.year, day.month, day.day);
     final end = start.add(const Duration(days: 1));
     final count = countAll();
+    if (memberId != null && memberId.trim().isNotEmpty) {
+      final byId =
+          await (selectOnly(messInvoices)
+                ..addColumns([count])
+                ..where(
+                  messInvoices.memberId.equals(memberId) &
+                      messInvoices.messInvoiceDate.isBiggerOrEqualValue(
+                        start,
+                      ) &
+                      messInvoices.messInvoiceDate.isSmallerThanValue(end),
+                ))
+              .getSingle();
+      final n = byId.read(count) ?? 0;
+      if (n > 0) return n;
+    }
     final row =
         await (selectOnly(messInvoices)
               ..addColumns([count])
@@ -4014,6 +4058,57 @@ WHERE $where
               ))
             .getSingle();
     return row.read(count) ?? 0;
+  }
+
+  /* Android: coupons this month keyed by memberId (fallback name). */
+  Future<int> countMessCouponsForMemberMonth({
+    required String memberId,
+    required String memberName,
+    required String yyyyMm,
+  }) async {
+    final parts = yyyyMm.split('-');
+    if (parts.length != 2) return 0;
+    final year = int.tryParse(parts[0]) ?? DateTime.now().year;
+    final month = int.tryParse(parts[1]) ?? DateTime.now().month;
+    final start = DateTime(year, month, 1);
+    final end = DateTime(year, month + 1, 1);
+    final count = countAll();
+    final byId =
+        await (selectOnly(messInvoices)
+              ..addColumns([count])
+              ..where(
+                messInvoices.memberId.equals(memberId) &
+                    messInvoices.messInvoiceDate.isBiggerOrEqualValue(start) &
+                    messInvoices.messInvoiceDate.isSmallerThanValue(end),
+              ))
+            .getSingle();
+    var n = byId.read(count) ?? 0;
+    if (n == 0 && memberName.trim().isNotEmpty) {
+      final byName =
+          await (selectOnly(messInvoices)
+                ..addColumns([count])
+                ..where(
+                  messInvoices.memberName.equals(memberName) &
+                      messInvoices.messInvoiceDate.isBiggerOrEqualValue(
+                        start,
+                      ) &
+                      messInvoices.messInvoiceDate.isSmallerThanValue(end),
+                ))
+              .getSingle();
+      n = byName.read(count) ?? 0;
+    }
+    return n;
+  }
+
+  /* Local meal-token print queue for a calendar day (Android getMessMealTokenQueueToday). */
+  Future<List<MessMealTokenQueueData>> getMessMealTokenQueueForDate(
+    String yyyyMmDd,
+  ) {
+    final day = yyyyMmDd.trim();
+    return (select(messMealTokenQueue)
+          ..where((t) => t.tokenDate.equals(day))
+          ..orderBy([(t) => OrderingTerm.desc(t.id)]))
+        .get();
   }
 
   Future<MessMemberPayment?> getMessPaymentForMonth({
@@ -4189,13 +4284,16 @@ WHERE $where
         .watch();
   }
 
-  Stream<List<InvoiceItem>> watchInvoiceItemsByInvoiceId(int invoiceId) async* {
-    final invoice = await getInvoiceById(invoiceId);
-    if (invoice == null) {
-      yield const [];
-      return;
-    }
-    yield* watchInvoiceItems(invoice.invoiceNumber);
+  /* Re-binds when the invoice row changes so Add-Product qty stays live. */
+  Stream<List<InvoiceItem>> watchInvoiceItemsByInvoiceId(int invoiceId) {
+    return (select(invoices)..where((t) => t.invoiceId.equals(invoiceId)))
+        .watch()
+        .asyncExpand((rows) {
+          if (rows.isEmpty) {
+            return Stream<List<InvoiceItem>>.value(const []);
+          }
+          return watchInvoiceItems(rows.first.invoiceNumber);
+        });
   }
 
   /* Upserts cloud invoices as already-synced so they are not re-uploaded. */
@@ -4307,24 +4405,45 @@ WHERE $where
     );
   }
 
-  Future<String> nextInvoiceNumber({String prefix = 'PB'}) async {
-    final now = DateTime.now();
-    final dayKey = DateFormat('dd-MM').format(now);
-    final start = DateTime(now.year, now.month, now.day);
+  /* Date-wise bill numbers: sequence follows the billing calendar day, not device today.
+   * Example: 18-Sep has bills 1..10, then 20-Sep starts at 1; selecting 18-Sep again → 11.
+   * Uses max existing sequence for that day (not only COUNT) so gaps/deletes stay safe. */
+  Future<String> nextInvoiceNumber({
+    String prefix = 'PB',
+    DateTime? billingDate,
+  }) async {
+    final day = billingDate ?? DateTime.now();
+    final dayKey = DateFormat('dd-MM').format(day);
+    final start = DateTime(day.year, day.month, day.day);
     final end = start.add(const Duration(days: 1));
 
-    final countExp = invoices.invoiceId.count();
-    final query = selectOnly(invoices)
-      ..addColumns([countExp])
-      ..where(
-        invoices.invoiceDate.isBiggerOrEqualValue(start) &
-            invoices.invoiceDate.isSmallerThanValue(end) &
-            branchMatches(invoices.branchId),
-      );
-    final row = await query.getSingle();
-    final todayCount = row.read(countExp) ?? 0;
-    final seq = (todayCount + 1).toString().padLeft(5, '0');
-    return '$prefix/$dayKey/$seq';
+    final rows =
+        await (select(invoices)..where(
+              (t) =>
+                  t.invoiceDate.isBiggerOrEqualValue(start) &
+                  t.invoiceDate.isSmallerThanValue(end) &
+                  branchMatches(t.branchId),
+            ))
+            .get();
+
+    var maxSeq = 0;
+    for (final row in rows) {
+      final seq = invoiceSequenceFromNumber(row.invoiceNumber);
+      if (seq > maxSeq) maxSeq = seq;
+    }
+
+    final next = (maxSeq + 1).toString().padLeft(5, '0');
+    final cleanPrefix = prefix.trim().isEmpty ? 'PB' : prefix.trim();
+    return '$cleanPrefix/$dayKey/$next';
+  }
+
+  /* Parses trailing ##### from `PB/18-09/00011` → 11. */
+  static int invoiceSequenceFromNumber(String invoiceNumber) {
+    final raw = invoiceNumber.trim();
+    if (raw.isEmpty) return 0;
+    final parts = raw.split('/');
+    final tail = parts.isNotEmpty ? parts.last.trim() : raw;
+    return int.tryParse(tail) ?? 0;
   }
 
   String appDatabaseNetworkStatus({String prefix = ''}) {
@@ -4603,6 +4722,7 @@ WHERE $where
     bool updateInventory = true,
     int? createdByStaffId,
     String? createdByStaffName,
+    DateTime? billingDate,
   }) async {
     /* WithTable BluetoothPrint always deducts when stock exists; the printer */
     /* productQuantityUpdate switch is stored but not applied at save. */
@@ -4653,14 +4773,17 @@ WHERE $where
     }
 
     return transaction(() async {
-      final invoiceNumber = await nextInvoiceNumber(prefix: invoicePrefix);
-      final now = DateTime.now();
+      final invoiceAt = billingDate ?? DateTime.now();
+      final invoiceNumber = await nextInvoiceNumber(
+        prefix: invoicePrefix,
+        billingDate: invoiceAt,
+      );
 
       final invoiceId = await into(invoices).insert(
         stampInvoice(
           InvoicesCompanion.insert(
             invoiceNumber: invoiceNumber,
-            invoiceDate: now,
+            invoiceDate: invoiceAt,
             invoiceType: Value(invoiceType),
             subTotal: Value(subtotal),
             totalGstAmount: Value(taxTotal),
@@ -4784,7 +4907,7 @@ WHERE $where
                 productId: pid,
                 productName: c.productNameSnapshot ?? item.productName,
                 quantity: (comboQty * componentQty).toDouble(),
-                at: now,
+                at: invoiceAt,
               );
             }
           } else if (item.productId > 0) {
@@ -4792,7 +4915,7 @@ WHERE $where
               productId: item.productId,
               productName: item.productName,
               quantity: item.quantity.toDouble(),
-              at: now,
+              at: invoiceAt,
             );
           }
         }
@@ -5208,6 +5331,7 @@ WHERE $where
       productQuantityUpdate: flagOn(row.productQuantityUpdate),
       kotAutoPrint: flagOn(row.kotAutoPrint),
       kotPreview: previewOn(row.kotPreview),
+      printFastBill: flagOn(row.printFastBill),
       kotCopies: int.tryParse(text(row.kotCopies)) ?? prefs.kotCopies,
     );
   }
@@ -5255,6 +5379,11 @@ WHERE $where
           kotPreview: Value(
             dto.kotPreview == '0' || dto.kotPreview == 'off' ? 'off' : 'on',
           ),
+          printFastBill: Value(
+            dto.printFastBill == '1' || dto.printFastBill == 'on'
+                ? 'on'
+                : 'off',
+          ),
         ),
       );
     });
@@ -5286,6 +5415,7 @@ WHERE $where
         kotCopies: '${settings.kotCopies}',
         kotAutoPrint: settings.kotAutoPrint ? 'on' : 'off',
         kotPreview: settings.kotPreview ? 'on' : 'off',
+        printFastBill: settings.printFastBill ? 'on' : 'off',
       ),
     );
   }
@@ -5345,19 +5475,39 @@ WHERE $where
     int limit = 100,
   }) {
     return (select(messMealTokenQueue)
-          ..where((t) => t.printStatus.isNotValue('PRINTED'))
-          ..orderBy([(t) => OrderingTerm.desc(t.id)])
+          ..where(
+            (t) =>
+                t.printStatus.isIn([
+                  'PRINT_PENDING',
+                  'PRINT_FAILED',
+                  'RECEIVED',
+                  'CREATED',
+                ]),
+          )
+          ..orderBy([(t) => OrderingTerm.asc(t.id)])
           ..limit(limit))
         .get();
   }
 
-  Future<void> markMessMealTokenPrinted(int id) async {
+  Future<MessMealTokenQueueData?> getNextMessMealPrintJob() async {
+    final rows = await getPendingMessMealTokens(limit: 1);
+    return rows.isEmpty ? null : rows.first;
+  }
+
+  Future<void> updateMessMealTokenQueueStatus({
+    required int id,
+    required String printStatus,
+  }) async {
     await (update(messMealTokenQueue)..where((t) => t.id.equals(id))).write(
       MessMealTokenQueueCompanion(
-        printStatus: const Value('PRINTED'),
+        printStatus: Value(printStatus),
         localUpdatedAt: Value(DateTime.now().toIso8601String()),
       ),
     );
+  }
+
+  Future<void> markMessMealTokenPrinted(int id) async {
+    await updateMessMealTokenQueueStatus(id: id, printStatus: 'PRINTED');
   }
 }
 

@@ -107,6 +107,7 @@ class CompanyApi {
         'kotCopies': setting.kotCopies,
         'kotAutoPrint': setting.kotAutoPrint,
         'kotPreview': setting.kotPreview,
+        'printFastBill': setting.printFastBill,
         'paperSize': setting.paperSize,
         'kotPaperSize': setting.kotPaperSize,
         'billConnectionType': setting.billConnectionType,

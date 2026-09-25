@@ -8,9 +8,7 @@ class $FoodTypesTable extends FoodTypes
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $FoodTypesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _foodTypeIdMeta = const VerificationMeta(
     'foodTypeId',
   );
@@ -69,7 +67,6 @@ class $FoodTypesTable extends FoodTypes
     requiredDuringInsert: false,
     defaultValue: const Constant('1'),
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     foodTypeId,
@@ -78,14 +75,11 @@ class $FoodTypesTable extends FoodTypes
     foodTypeSortOrder,
     foodTypeStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'food_types';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<FoodType> instance, {
@@ -143,7 +137,6 @@ class $FoodTypesTable extends FoodTypes
 
   @override
   Set<GeneratedColumn> get $primaryKey => {foodTypeId};
-
   @override
   FoodType map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -183,7 +176,6 @@ class FoodType extends DataClass implements Insertable<FoodType> {
   final String? foodTypeCode;
   final int foodTypeSortOrder;
   final String foodTypeStatus;
-
   const FoodType({
     required this.foodTypeId,
     required this.foodTypeName,
@@ -191,7 +183,6 @@ class FoodType extends DataClass implements Insertable<FoodType> {
     required this.foodTypeSortOrder,
     required this.foodTypeStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -230,7 +221,6 @@ class FoodType extends DataClass implements Insertable<FoodType> {
       foodTypeStatus: serializer.fromJson<String>(json['foodTypeStatus']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -256,7 +246,6 @@ class FoodType extends DataClass implements Insertable<FoodType> {
     foodTypeSortOrder: foodTypeSortOrder ?? this.foodTypeSortOrder,
     foodTypeStatus: foodTypeStatus ?? this.foodTypeStatus,
   );
-
   FoodType copyWithCompanion(FoodTypesCompanion data) {
     return FoodType(
       foodTypeId: data.foodTypeId.present
@@ -297,7 +286,6 @@ class FoodType extends DataClass implements Insertable<FoodType> {
     foodTypeSortOrder,
     foodTypeStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -315,7 +303,6 @@ class FoodTypesCompanion extends UpdateCompanion<FoodType> {
   final Value<String?> foodTypeCode;
   final Value<int> foodTypeSortOrder;
   final Value<String> foodTypeStatus;
-
   const FoodTypesCompanion({
     this.foodTypeId = const Value.absent(),
     this.foodTypeName = const Value.absent(),
@@ -323,7 +310,6 @@ class FoodTypesCompanion extends UpdateCompanion<FoodType> {
     this.foodTypeSortOrder = const Value.absent(),
     this.foodTypeStatus = const Value.absent(),
   });
-
   FoodTypesCompanion.insert({
     this.foodTypeId = const Value.absent(),
     this.foodTypeName = const Value.absent(),
@@ -331,7 +317,6 @@ class FoodTypesCompanion extends UpdateCompanion<FoodType> {
     this.foodTypeSortOrder = const Value.absent(),
     this.foodTypeStatus = const Value.absent(),
   });
-
   static Insertable<FoodType> custom({
     Expression<int>? foodTypeId,
     Expression<String>? foodTypeName,
@@ -403,9 +388,7 @@ class $ProductCategoriesTable extends ProductCategories
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $ProductCategoriesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _categoryIdMeta = const VerificationMeta(
     'categoryId',
   );
@@ -510,7 +493,6 @@ class $ProductCategoriesTable extends ProductCategories
         requiredDuringInsert: false,
         defaultValue: const Constant('1'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     categoryId,
@@ -523,14 +505,11 @@ class $ProductCategoriesTable extends ProductCategories
     categoryStatus,
     categorySyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'product_categories';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<ProductCategory> instance, {
@@ -621,7 +600,6 @@ class $ProductCategoriesTable extends ProductCategories
 
   @override
   Set<GeneratedColumn> get $primaryKey => {categoryId};
-
   @override
   ProductCategory map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -681,7 +659,6 @@ class ProductCategory extends DataClass implements Insertable<ProductCategory> {
   final String? categoryNetworkStatus;
   final String categoryStatus;
   final String categorySyncStatus;
-
   const ProductCategory({
     required this.categoryId,
     required this.categoryName,
@@ -693,7 +670,6 @@ class ProductCategory extends DataClass implements Insertable<ProductCategory> {
     required this.categoryStatus,
     required this.categorySyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -758,7 +734,6 @@ class ProductCategory extends DataClass implements Insertable<ProductCategory> {
       ),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -800,7 +775,6 @@ class ProductCategory extends DataClass implements Insertable<ProductCategory> {
     categoryStatus: categoryStatus ?? this.categoryStatus,
     categorySyncStatus: categorySyncStatus ?? this.categorySyncStatus,
   );
-
   ProductCategory copyWithCompanion(ProductCategoriesCompanion data) {
     return ProductCategory(
       categoryId: data.categoryId.present
@@ -861,7 +835,6 @@ class ProductCategory extends DataClass implements Insertable<ProductCategory> {
     categoryStatus,
     categorySyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -887,7 +860,6 @@ class ProductCategoriesCompanion extends UpdateCompanion<ProductCategory> {
   final Value<String?> categoryNetworkStatus;
   final Value<String> categoryStatus;
   final Value<String> categorySyncStatus;
-
   const ProductCategoriesCompanion({
     this.categoryId = const Value.absent(),
     this.categoryName = const Value.absent(),
@@ -899,7 +871,6 @@ class ProductCategoriesCompanion extends UpdateCompanion<ProductCategory> {
     this.categoryStatus = const Value.absent(),
     this.categorySyncStatus = const Value.absent(),
   });
-
   ProductCategoriesCompanion.insert({
     this.categoryId = const Value.absent(),
     this.categoryName = const Value.absent(),
@@ -911,7 +882,6 @@ class ProductCategoriesCompanion extends UpdateCompanion<ProductCategory> {
     this.categoryStatus = const Value.absent(),
     this.categorySyncStatus = const Value.absent(),
   });
-
   static Insertable<ProductCategory> custom({
     Expression<int>? categoryId,
     Expression<String>? categoryName,
@@ -1024,9 +994,7 @@ class $ProductSubcategoriesTable extends ProductSubcategories
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $ProductSubcategoriesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _subcategoryIdMeta = const VerificationMeta(
     'subcategoryId',
   );
@@ -1131,7 +1099,6 @@ class $ProductSubcategoriesTable extends ProductSubcategories
         requiredDuringInsert: false,
         defaultValue: const Constant('1'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     subcategoryId,
@@ -1144,14 +1111,11 @@ class $ProductSubcategoriesTable extends ProductSubcategories
     subcategoryStatus,
     subcategorySyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'product_subcategories';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<ProductSubcategory> instance, {
@@ -1242,7 +1206,6 @@ class $ProductSubcategoriesTable extends ProductSubcategories
 
   @override
   Set<GeneratedColumn> get $primaryKey => {subcategoryId};
-
   @override
   ProductSubcategory map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -1303,7 +1266,6 @@ class ProductSubcategory extends DataClass
   final String subcategoryDeletedStatus;
   final String subcategoryStatus;
   final String subcategorySyncStatus;
-
   const ProductSubcategory({
     required this.subcategoryId,
     this.categoryId,
@@ -1315,7 +1277,6 @@ class ProductSubcategory extends DataClass
     required this.subcategoryStatus,
     required this.subcategorySyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1388,7 +1349,6 @@ class ProductSubcategory extends DataClass
       ),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -1437,7 +1397,6 @@ class ProductSubcategory extends DataClass
     subcategoryStatus: subcategoryStatus ?? this.subcategoryStatus,
     subcategorySyncStatus: subcategorySyncStatus ?? this.subcategorySyncStatus,
   );
-
   ProductSubcategory copyWithCompanion(ProductSubcategoriesCompanion data) {
     return ProductSubcategory(
       subcategoryId: data.subcategoryId.present
@@ -1498,7 +1457,6 @@ class ProductSubcategory extends DataClass
     subcategoryStatus,
     subcategorySyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1525,7 +1483,6 @@ class ProductSubcategoriesCompanion
   final Value<String> subcategoryDeletedStatus;
   final Value<String> subcategoryStatus;
   final Value<String> subcategorySyncStatus;
-
   const ProductSubcategoriesCompanion({
     this.subcategoryId = const Value.absent(),
     this.categoryId = const Value.absent(),
@@ -1537,7 +1494,6 @@ class ProductSubcategoriesCompanion
     this.subcategoryStatus = const Value.absent(),
     this.subcategorySyncStatus = const Value.absent(),
   });
-
   ProductSubcategoriesCompanion.insert({
     this.subcategoryId = const Value.absent(),
     this.categoryId = const Value.absent(),
@@ -1549,7 +1505,6 @@ class ProductSubcategoriesCompanion
     this.subcategoryStatus = const Value.absent(),
     this.subcategorySyncStatus = const Value.absent(),
   });
-
   static Insertable<ProductSubcategory> custom({
     Expression<int>? subcategoryId,
     Expression<int>? categoryId,
@@ -1669,9 +1624,7 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $ProductsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _productIdMeta = const VerificationMeta(
     'productId',
   );
@@ -1902,7 +1855,6 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         requiredDuringInsert: false,
         defaultValue: const Constant('1'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     productId,
@@ -1926,14 +1878,11 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     productStatus,
     productSyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'products';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<Product> instance, {
@@ -2111,7 +2060,6 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
 
   @override
   Set<GeneratedColumn> get $primaryKey => {productId};
-
   @override
   Product map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -2226,7 +2174,6 @@ class Product extends DataClass implements Insertable<Product> {
   final String? productNetworkStatus;
   final String productStatus;
   final String productSyncStatus;
-
   const Product({
     required this.productId,
     this.userId,
@@ -2249,7 +2196,6 @@ class Product extends DataClass implements Insertable<Product> {
     required this.productStatus,
     required this.productSyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2367,7 +2313,6 @@ class Product extends DataClass implements Insertable<Product> {
       productSyncStatus: serializer.fromJson<String>(json['productSyncStatus']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -2442,7 +2387,6 @@ class Product extends DataClass implements Insertable<Product> {
     productStatus: productStatus ?? this.productStatus,
     productSyncStatus: productSyncStatus ?? this.productSyncStatus,
   );
-
   Product copyWithCompanion(ProductsCompanion data) {
     return Product(
       productId: data.productId.present ? data.productId.value : this.productId,
@@ -2552,7 +2496,6 @@ class Product extends DataClass implements Insertable<Product> {
     productStatus,
     productSyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2600,7 +2543,6 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   final Value<String?> productNetworkStatus;
   final Value<String> productStatus;
   final Value<String> productSyncStatus;
-
   const ProductsCompanion({
     this.productId = const Value.absent(),
     this.userId = const Value.absent(),
@@ -2623,7 +2565,6 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     this.productStatus = const Value.absent(),
     this.productSyncStatus = const Value.absent(),
   });
-
   ProductsCompanion.insert({
     this.productId = const Value.absent(),
     this.userId = const Value.absent(),
@@ -2646,7 +2587,6 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     this.productStatus = const Value.absent(),
     this.productSyncStatus = const Value.absent(),
   });
-
   static Insertable<Product> custom({
     Expression<int>? productId,
     Expression<String>? userId,
@@ -2847,9 +2787,7 @@ class $ProductPortionsTable extends ProductPortions
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $ProductPortionsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _portionIdMeta = const VerificationMeta(
     'portionId',
   );
@@ -2967,7 +2905,6 @@ class $ProductPortionsTable extends ProductPortions
         requiredDuringInsert: false,
         defaultValue: const Constant('1'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     portionId,
@@ -2981,14 +2918,11 @@ class $ProductPortionsTable extends ProductPortions
     portionStatus,
     portionSyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'product_portions';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<ProductPortion> instance, {
@@ -3087,7 +3021,6 @@ class $ProductPortionsTable extends ProductPortions
 
   @override
   Set<GeneratedColumn> get $primaryKey => {portionId};
-
   @override
   ProductPortion map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -3152,7 +3085,6 @@ class ProductPortion extends DataClass implements Insertable<ProductPortion> {
   final String? portionNetworkStatus;
   final String portionStatus;
   final String portionSyncStatus;
-
   const ProductPortion({
     required this.portionId,
     required this.productId,
@@ -3165,7 +3097,6 @@ class ProductPortion extends DataClass implements Insertable<ProductPortion> {
     required this.portionStatus,
     required this.portionSyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3227,7 +3158,6 @@ class ProductPortion extends DataClass implements Insertable<ProductPortion> {
       portionSyncStatus: serializer.fromJson<String>(json['portionSyncStatus']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -3272,7 +3202,6 @@ class ProductPortion extends DataClass implements Insertable<ProductPortion> {
     portionStatus: portionStatus ?? this.portionStatus,
     portionSyncStatus: portionSyncStatus ?? this.portionSyncStatus,
   );
-
   ProductPortion copyWithCompanion(ProductPortionsCompanion data) {
     return ProductPortion(
       portionId: data.portionId.present ? data.portionId.value : this.portionId,
@@ -3334,7 +3263,6 @@ class ProductPortion extends DataClass implements Insertable<ProductPortion> {
     portionStatus,
     portionSyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3362,7 +3290,6 @@ class ProductPortionsCompanion extends UpdateCompanion<ProductPortion> {
   final Value<String?> portionNetworkStatus;
   final Value<String> portionStatus;
   final Value<String> portionSyncStatus;
-
   const ProductPortionsCompanion({
     this.portionId = const Value.absent(),
     this.productId = const Value.absent(),
@@ -3375,7 +3302,6 @@ class ProductPortionsCompanion extends UpdateCompanion<ProductPortion> {
     this.portionStatus = const Value.absent(),
     this.portionSyncStatus = const Value.absent(),
   });
-
   ProductPortionsCompanion.insert({
     this.portionId = const Value.absent(),
     required int productId,
@@ -3388,7 +3314,6 @@ class ProductPortionsCompanion extends UpdateCompanion<ProductPortion> {
     this.portionStatus = const Value.absent(),
     this.portionSyncStatus = const Value.absent(),
   }) : productId = Value(productId);
-
   static Insertable<ProductPortion> custom({
     Expression<int>? portionId,
     Expression<int>? productId,
@@ -3505,9 +3430,7 @@ class $CombosTable extends Combos with TableInfo<$CombosTable, Combo> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $CombosTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _comboIdMeta = const VerificationMeta(
     'comboId',
   );
@@ -3663,7 +3586,6 @@ class $CombosTable extends Combos with TableInfo<$CombosTable, Combo> {
     requiredDuringInsert: false,
     defaultValue: const Constant('1'),
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     comboId,
@@ -3680,14 +3602,11 @@ class $CombosTable extends Combos with TableInfo<$CombosTable, Combo> {
     comboSortOrder,
     comboSyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'combos';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<Combo> instance, {
@@ -3799,7 +3718,6 @@ class $CombosTable extends Combos with TableInfo<$CombosTable, Combo> {
 
   @override
   Set<GeneratedColumn> get $primaryKey => {comboId};
-
   @override
   Combo map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -3879,7 +3797,6 @@ class Combo extends DataClass implements Insertable<Combo> {
   final String comboStatus;
   final int comboSortOrder;
   final String comboSyncStatus;
-
   const Combo({
     required this.comboId,
     required this.comboName,
@@ -3895,7 +3812,6 @@ class Combo extends DataClass implements Insertable<Combo> {
     required this.comboSortOrder,
     required this.comboSyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3966,7 +3882,6 @@ class Combo extends DataClass implements Insertable<Combo> {
       comboSyncStatus: serializer.fromJson<String>(json['comboSyncStatus']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -4018,7 +3933,6 @@ class Combo extends DataClass implements Insertable<Combo> {
     comboSortOrder: comboSortOrder ?? this.comboSortOrder,
     comboSyncStatus: comboSyncStatus ?? this.comboSyncStatus,
   );
-
   Combo copyWithCompanion(CombosCompanion data) {
     return Combo(
       comboId: data.comboId.present ? data.comboId.value : this.comboId,
@@ -4089,7 +4003,6 @@ class Combo extends DataClass implements Insertable<Combo> {
     comboSortOrder,
     comboSyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4123,7 +4036,6 @@ class CombosCompanion extends UpdateCompanion<Combo> {
   final Value<String> comboStatus;
   final Value<int> comboSortOrder;
   final Value<String> comboSyncStatus;
-
   const CombosCompanion({
     this.comboId = const Value.absent(),
     this.comboName = const Value.absent(),
@@ -4139,7 +4051,6 @@ class CombosCompanion extends UpdateCompanion<Combo> {
     this.comboSortOrder = const Value.absent(),
     this.comboSyncStatus = const Value.absent(),
   });
-
   CombosCompanion.insert({
     this.comboId = const Value.absent(),
     this.comboName = const Value.absent(),
@@ -4155,7 +4066,6 @@ class CombosCompanion extends UpdateCompanion<Combo> {
     this.comboSortOrder = const Value.absent(),
     this.comboSyncStatus = const Value.absent(),
   });
-
   static Insertable<Combo> custom({
     Expression<int>? comboId,
     Expression<String>? comboName,
@@ -4293,9 +4203,7 @@ class $ComboItemsTable extends ComboItems
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $ComboItemsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _comboItemIdMeta = const VerificationMeta(
     'comboItemId',
   );
@@ -4443,7 +4351,6 @@ class $ComboItemsTable extends ComboItems
         requiredDuringInsert: false,
         defaultValue: const Constant('1'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     comboItemId,
@@ -4460,14 +4367,11 @@ class $ComboItemsTable extends ComboItems
     portionNetworkStatus,
     comboItemSyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'combo_items';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<ComboItem> instance, {
@@ -4590,7 +4494,6 @@ class $ComboItemsTable extends ComboItems
 
   @override
   Set<GeneratedColumn> get $primaryKey => {comboItemId};
-
   @override
   ComboItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -4670,7 +4573,6 @@ class ComboItem extends DataClass implements Insertable<ComboItem> {
   final String? productNetworkStatus;
   final String? portionNetworkStatus;
   final String comboItemSyncStatus;
-
   const ComboItem({
     required this.comboItemId,
     required this.comboId,
@@ -4686,7 +4588,6 @@ class ComboItem extends DataClass implements Insertable<ComboItem> {
     this.portionNetworkStatus,
     required this.comboItemSyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -4783,7 +4684,6 @@ class ComboItem extends DataClass implements Insertable<ComboItem> {
       ),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -4846,7 +4746,6 @@ class ComboItem extends DataClass implements Insertable<ComboItem> {
         : this.portionNetworkStatus,
     comboItemSyncStatus: comboItemSyncStatus ?? this.comboItemSyncStatus,
   );
-
   ComboItem copyWithCompanion(ComboItemsCompanion data) {
     return ComboItem(
       comboItemId: data.comboItemId.present
@@ -4921,7 +4820,6 @@ class ComboItem extends DataClass implements Insertable<ComboItem> {
     portionNetworkStatus,
     comboItemSyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4955,7 +4853,6 @@ class ComboItemsCompanion extends UpdateCompanion<ComboItem> {
   final Value<String?> productNetworkStatus;
   final Value<String?> portionNetworkStatus;
   final Value<String> comboItemSyncStatus;
-
   const ComboItemsCompanion({
     this.comboItemId = const Value.absent(),
     this.comboId = const Value.absent(),
@@ -4971,7 +4868,6 @@ class ComboItemsCompanion extends UpdateCompanion<ComboItem> {
     this.portionNetworkStatus = const Value.absent(),
     this.comboItemSyncStatus = const Value.absent(),
   });
-
   ComboItemsCompanion.insert({
     this.comboItemId = const Value.absent(),
     required int comboId,
@@ -4987,7 +4883,6 @@ class ComboItemsCompanion extends UpdateCompanion<ComboItem> {
     this.portionNetworkStatus = const Value.absent(),
     this.comboItemSyncStatus = const Value.absent(),
   }) : comboId = Value(comboId);
-
   static Insertable<ComboItem> custom({
     Expression<int>? comboItemId,
     Expression<int>? comboId,
@@ -5142,9 +5037,7 @@ class $CartItemsTable extends CartItems
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $CartItemsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _cartIdMeta = const VerificationMeta('cartId');
   @override
   late final GeneratedColumn<int> cartId = GeneratedColumn<int>(
@@ -5561,7 +5454,6 @@ class $CartItemsTable extends CartItems
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     cartId,
@@ -5601,14 +5493,11 @@ class $CartItemsTable extends CartItems
     comboNetworkStatus,
     updatedAt,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'cart_items';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<CartItem> instance, {
@@ -5902,7 +5791,6 @@ class $CartItemsTable extends CartItems
 
   @override
   Set<GeneratedColumn> get $primaryKey => {cartId};
-
   @override
   CartItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -6097,7 +5985,6 @@ class CartItem extends DataClass implements Insertable<CartItem> {
   final int? comboId;
   final String? comboNetworkStatus;
   final DateTime updatedAt;
-
   const CartItem({
     required this.cartId,
     required this.productId,
@@ -6136,7 +6023,6 @@ class CartItem extends DataClass implements Insertable<CartItem> {
     this.comboNetworkStatus,
     required this.updatedAt,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -6340,7 +6226,6 @@ class CartItem extends DataClass implements Insertable<CartItem> {
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -6477,7 +6362,6 @@ class CartItem extends DataClass implements Insertable<CartItem> {
         : this.comboNetworkStatus,
     updatedAt: updatedAt ?? this.updatedAt,
   );
-
   CartItem copyWithCompanion(CartItemsCompanion data) {
     return CartItem(
       cartId: data.cartId.present ? data.cartId.value : this.cartId,
@@ -6651,7 +6535,6 @@ class CartItem extends DataClass implements Insertable<CartItem> {
     comboNetworkStatus,
     updatedAt,
   ]);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -6731,7 +6614,6 @@ class CartItemsCompanion extends UpdateCompanion<CartItem> {
   final Value<int?> comboId;
   final Value<String?> comboNetworkStatus;
   final Value<DateTime> updatedAt;
-
   const CartItemsCompanion({
     this.cartId = const Value.absent(),
     this.productId = const Value.absent(),
@@ -6770,7 +6652,6 @@ class CartItemsCompanion extends UpdateCompanion<CartItem> {
     this.comboNetworkStatus = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
-
   CartItemsCompanion.insert({
     this.cartId = const Value.absent(),
     required int productId,
@@ -6809,7 +6690,6 @@ class CartItemsCompanion extends UpdateCompanion<CartItem> {
     this.comboNetworkStatus = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : productId = Value(productId);
-
   static Insertable<CartItem> custom({
     Expression<int>? cartId,
     Expression<int>? productId,
@@ -7141,9 +7021,7 @@ class $CartComboItemsTable extends CartComboItems
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $CartComboItemsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _cartComboItemIdMeta = const VerificationMeta(
     'cartComboItemId',
   );
@@ -7282,7 +7160,6 @@ class $CartComboItemsTable extends CartComboItems
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     cartComboItemId,
@@ -7298,14 +7175,11 @@ class $CartComboItemsTable extends CartComboItems
     quantity,
     sortOrder,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'cart_combo_items';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<CartComboItem> instance, {
@@ -7407,7 +7281,6 @@ class $CartComboItemsTable extends CartComboItems
 
   @override
   Set<GeneratedColumn> get $primaryKey => {cartComboItemId};
-
   @override
   CartComboItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -7482,7 +7355,6 @@ class CartComboItem extends DataClass implements Insertable<CartComboItem> {
   final String? portionNameSnapshot;
   final int quantity;
   final int sortOrder;
-
   const CartComboItem({
     required this.cartComboItemId,
     required this.cartId,
@@ -7497,7 +7369,6 @@ class CartComboItem extends DataClass implements Insertable<CartComboItem> {
     required this.quantity,
     required this.sortOrder,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -7577,7 +7448,6 @@ class CartComboItem extends DataClass implements Insertable<CartComboItem> {
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -7630,7 +7500,6 @@ class CartComboItem extends DataClass implements Insertable<CartComboItem> {
     quantity: quantity ?? this.quantity,
     sortOrder: sortOrder ?? this.sortOrder,
   );
-
   CartComboItem copyWithCompanion(CartComboItemsCompanion data) {
     return CartComboItem(
       cartComboItemId: data.cartComboItemId.present
@@ -7692,7 +7561,6 @@ class CartComboItem extends DataClass implements Insertable<CartComboItem> {
     quantity,
     sortOrder,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -7724,7 +7592,6 @@ class CartComboItemsCompanion extends UpdateCompanion<CartComboItem> {
   final Value<String?> portionNameSnapshot;
   final Value<int> quantity;
   final Value<int> sortOrder;
-
   const CartComboItemsCompanion({
     this.cartComboItemId = const Value.absent(),
     this.cartId = const Value.absent(),
@@ -7739,7 +7606,6 @@ class CartComboItemsCompanion extends UpdateCompanion<CartComboItem> {
     this.quantity = const Value.absent(),
     this.sortOrder = const Value.absent(),
   });
-
   CartComboItemsCompanion.insert({
     this.cartComboItemId = const Value.absent(),
     this.cartId = const Value.absent(),
@@ -7754,7 +7620,6 @@ class CartComboItemsCompanion extends UpdateCompanion<CartComboItem> {
     this.quantity = const Value.absent(),
     this.sortOrder = const Value.absent(),
   }) : productId = Value(productId);
-
   static Insertable<CartComboItem> custom({
     Expression<int>? cartComboItemId,
     Expression<int>? cartId,
@@ -7888,9 +7753,7 @@ class $InvoicesTable extends Invoices with TableInfo<$InvoicesTable, Invoice> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $InvoicesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _organizationIdMeta = const VerificationMeta(
     'organizationId',
   );
@@ -8268,7 +8131,6 @@ class $InvoicesTable extends Invoices with TableInfo<$InvoicesTable, Invoice> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     organizationId,
@@ -8304,14 +8166,11 @@ class $InvoicesTable extends Invoices with TableInfo<$InvoicesTable, Invoice> {
     itemCount,
     createdAt,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'invoices';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<Invoice> instance, {
@@ -8585,7 +8444,6 @@ class $InvoicesTable extends Invoices with TableInfo<$InvoicesTable, Invoice> {
 
   @override
   Set<GeneratedColumn> get $primaryKey => {invoiceId};
-
   @override
   Invoice map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -8760,7 +8618,6 @@ class Invoice extends DataClass implements Insertable<Invoice> {
   final String createdByStaffName;
   final int itemCount;
   final DateTime createdAt;
-
   const Invoice({
     required this.organizationId,
     required this.branchId,
@@ -8795,7 +8652,6 @@ class Invoice extends DataClass implements Insertable<Invoice> {
     required this.itemCount,
     required this.createdAt,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -8945,7 +8801,6 @@ class Invoice extends DataClass implements Insertable<Invoice> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -9062,7 +8917,6 @@ class Invoice extends DataClass implements Insertable<Invoice> {
     itemCount: itemCount ?? this.itemCount,
     createdAt: createdAt ?? this.createdAt,
   );
-
   Invoice copyWithCompanion(InvoicesCompanion data) {
     return Invoice(
       organizationId: data.organizationId.present
@@ -9218,7 +9072,6 @@ class Invoice extends DataClass implements Insertable<Invoice> {
     itemCount,
     createdAt,
   ]);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -9290,7 +9143,6 @@ class InvoicesCompanion extends UpdateCompanion<Invoice> {
   final Value<String> createdByStaffName;
   final Value<int> itemCount;
   final Value<DateTime> createdAt;
-
   const InvoicesCompanion({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -9325,7 +9177,6 @@ class InvoicesCompanion extends UpdateCompanion<Invoice> {
     this.itemCount = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
-
   InvoicesCompanion.insert({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -9362,7 +9213,6 @@ class InvoicesCompanion extends UpdateCompanion<Invoice> {
   }) : invoiceNumber = Value(invoiceNumber),
        invoiceDate = Value(invoiceDate),
        invoiceNetworkStatus = Value(invoiceNetworkStatus);
-
   static Insertable<Invoice> custom({
     Expression<String>? organizationId,
     Expression<String>? branchId,
@@ -9655,9 +9505,7 @@ class $InvoiceItemsTable extends InvoiceItems
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $InvoiceItemsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _organizationIdMeta = const VerificationMeta(
     'organizationId',
   );
@@ -9938,7 +9786,6 @@ class $InvoiceItemsTable extends InvoiceItems
         requiredDuringInsert: false,
         defaultValue: const Constant('0'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     organizationId,
@@ -9966,14 +9813,11 @@ class $InvoiceItemsTable extends InvoiceItems
     invoiceItemNetworkStatus,
     invoiceItemSyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'invoice_items';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<InvoiceItem> instance, {
@@ -10189,7 +10033,6 @@ class $InvoiceItemsTable extends InvoiceItems
 
   @override
   Set<GeneratedColumn> get $primaryKey => {invoiceItemId};
-
   @override
   InvoiceItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -10324,7 +10167,6 @@ class InvoiceItem extends DataClass implements Insertable<InvoiceItem> {
   final String productStatus;
   final String? invoiceItemNetworkStatus;
   final String invoiceItemSyncStatus;
-
   const InvoiceItem({
     required this.organizationId,
     required this.branchId,
@@ -10351,7 +10193,6 @@ class InvoiceItem extends DataClass implements Insertable<InvoiceItem> {
     this.invoiceItemNetworkStatus,
     required this.invoiceItemSyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -10501,7 +10342,6 @@ class InvoiceItem extends DataClass implements Insertable<InvoiceItem> {
       ),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -10596,7 +10436,6 @@ class InvoiceItem extends DataClass implements Insertable<InvoiceItem> {
         : this.invoiceItemNetworkStatus,
     invoiceItemSyncStatus: invoiceItemSyncStatus ?? this.invoiceItemSyncStatus,
   );
-
   InvoiceItem copyWithCompanion(InvoiceItemsCompanion data) {
     return InvoiceItem(
       organizationId: data.organizationId.present
@@ -10722,7 +10561,6 @@ class InvoiceItem extends DataClass implements Insertable<InvoiceItem> {
     invoiceItemNetworkStatus,
     invoiceItemSyncStatus,
   ]);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -10778,7 +10616,6 @@ class InvoiceItemsCompanion extends UpdateCompanion<InvoiceItem> {
   final Value<String> productStatus;
   final Value<String?> invoiceItemNetworkStatus;
   final Value<String> invoiceItemSyncStatus;
-
   const InvoiceItemsCompanion({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -10805,7 +10642,6 @@ class InvoiceItemsCompanion extends UpdateCompanion<InvoiceItem> {
     this.invoiceItemNetworkStatus = const Value.absent(),
     this.invoiceItemSyncStatus = const Value.absent(),
   });
-
   InvoiceItemsCompanion.insert({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -10832,7 +10668,6 @@ class InvoiceItemsCompanion extends UpdateCompanion<InvoiceItem> {
     this.invoiceItemNetworkStatus = const Value.absent(),
     this.invoiceItemSyncStatus = const Value.absent(),
   }) : invoiceNumber = Value(invoiceNumber);
-
   static Insertable<InvoiceItem> custom({
     Expression<String>? organizationId,
     Expression<String>? branchId,
@@ -11071,9 +10906,7 @@ class $InvoiceComboItemsTable extends InvoiceComboItems
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $InvoiceComboItemsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _invoiceComboItemIdMeta =
       const VerificationMeta('invoiceComboItemId');
   @override
@@ -11223,7 +11056,6 @@ class $InvoiceComboItemsTable extends InvoiceComboItems
         requiredDuringInsert: false,
         defaultValue: const Constant('0'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     invoiceComboItemId,
@@ -11240,14 +11072,11 @@ class $InvoiceComboItemsTable extends InvoiceComboItems
     invoiceComboItemNetworkStatus,
     invoiceComboItemStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'invoice_combo_items';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<InvoiceComboItem> instance, {
@@ -11362,7 +11191,6 @@ class $InvoiceComboItemsTable extends InvoiceComboItems
 
   @override
   Set<GeneratedColumn> get $primaryKey => {invoiceComboItemId};
-
   @override
   InvoiceComboItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -11443,7 +11271,6 @@ class InvoiceComboItem extends DataClass
   final int sortOrder;
   final String? invoiceComboItemNetworkStatus;
   final String invoiceComboItemStatus;
-
   const InvoiceComboItem({
     required this.invoiceComboItemId,
     this.invoiceNumber,
@@ -11459,7 +11286,6 @@ class InvoiceComboItem extends DataClass
     this.invoiceComboItemNetworkStatus,
     required this.invoiceComboItemStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -11572,7 +11398,6 @@ class InvoiceComboItem extends DataClass
       ),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -11641,7 +11466,6 @@ class InvoiceComboItem extends DataClass
     invoiceComboItemStatus:
         invoiceComboItemStatus ?? this.invoiceComboItemStatus,
   );
-
   InvoiceComboItem copyWithCompanion(InvoiceComboItemsCompanion data) {
     return InvoiceComboItem(
       invoiceComboItemId: data.invoiceComboItemId.present
@@ -11714,7 +11538,6 @@ class InvoiceComboItem extends DataClass
     invoiceComboItemNetworkStatus,
     invoiceComboItemStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -11750,7 +11573,6 @@ class InvoiceComboItemsCompanion extends UpdateCompanion<InvoiceComboItem> {
   final Value<int> sortOrder;
   final Value<String?> invoiceComboItemNetworkStatus;
   final Value<String> invoiceComboItemStatus;
-
   const InvoiceComboItemsCompanion({
     this.invoiceComboItemId = const Value.absent(),
     this.invoiceNumber = const Value.absent(),
@@ -11766,7 +11588,6 @@ class InvoiceComboItemsCompanion extends UpdateCompanion<InvoiceComboItem> {
     this.invoiceComboItemNetworkStatus = const Value.absent(),
     this.invoiceComboItemStatus = const Value.absent(),
   });
-
   InvoiceComboItemsCompanion.insert({
     this.invoiceComboItemId = const Value.absent(),
     this.invoiceNumber = const Value.absent(),
@@ -11782,7 +11603,6 @@ class InvoiceComboItemsCompanion extends UpdateCompanion<InvoiceComboItem> {
     this.invoiceComboItemNetworkStatus = const Value.absent(),
     this.invoiceComboItemStatus = const Value.absent(),
   });
-
   static Insertable<InvoiceComboItem> custom({
     Expression<int>? invoiceComboItemId,
     Expression<String>? invoiceNumber,
@@ -11944,9 +11764,7 @@ class $InvoiceProductDeleteQueueTable extends InvoiceProductDeleteQueue
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $InvoiceProductDeleteQueueTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _deleteIdMeta = const VerificationMeta(
     'deleteId',
   );
@@ -11984,21 +11802,17 @@ class $InvoiceProductDeleteQueueTable extends InvoiceProductDeleteQueue
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     deleteId,
     invoiceNumber,
     invoiceProductNetworkStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'invoice_product_delete_queue';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<InvoiceProductDeleteQueueData> instance, {
@@ -12035,7 +11849,6 @@ class $InvoiceProductDeleteQueueTable extends InvoiceProductDeleteQueue
 
   @override
   Set<GeneratedColumn> get $primaryKey => {deleteId};
-
   @override
   InvoiceProductDeleteQueueData map(
     Map<String, dynamic> data, {
@@ -12069,13 +11882,11 @@ class InvoiceProductDeleteQueueData extends DataClass
   final int deleteId;
   final String? invoiceNumber;
   final String? invoiceProductNetworkStatus;
-
   const InvoiceProductDeleteQueueData({
     required this.deleteId,
     this.invoiceNumber,
     this.invoiceProductNetworkStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -12117,7 +11928,6 @@ class InvoiceProductDeleteQueueData extends DataClass
       ),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -12143,7 +11953,6 @@ class InvoiceProductDeleteQueueData extends DataClass
         ? invoiceProductNetworkStatus.value
         : this.invoiceProductNetworkStatus,
   );
-
   InvoiceProductDeleteQueueData copyWithCompanion(
     InvoiceProductDeleteQueueCompanion data,
   ) {
@@ -12171,7 +11980,6 @@ class InvoiceProductDeleteQueueData extends DataClass
   @override
   int get hashCode =>
       Object.hash(deleteId, invoiceNumber, invoiceProductNetworkStatus);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -12187,19 +11995,16 @@ class InvoiceProductDeleteQueueCompanion
   final Value<int> deleteId;
   final Value<String?> invoiceNumber;
   final Value<String?> invoiceProductNetworkStatus;
-
   const InvoiceProductDeleteQueueCompanion({
     this.deleteId = const Value.absent(),
     this.invoiceNumber = const Value.absent(),
     this.invoiceProductNetworkStatus = const Value.absent(),
   });
-
   InvoiceProductDeleteQueueCompanion.insert({
     this.deleteId = const Value.absent(),
     this.invoiceNumber = const Value.absent(),
     this.invoiceProductNetworkStatus = const Value.absent(),
   });
-
   static Insertable<InvoiceProductDeleteQueueData> custom({
     Expression<int>? deleteId,
     Expression<String>? invoiceNumber,
@@ -12259,9 +12064,7 @@ class $PosTablesTable extends PosTables
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $PosTablesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _organizationIdMeta = const VerificationMeta(
     'organizationId',
   );
@@ -12444,7 +12247,6 @@ class $PosTablesTable extends PosTables
     requiredDuringInsert: false,
     defaultValue: const Constant('0'),
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     organizationId,
@@ -12464,14 +12266,11 @@ class $PosTablesTable extends PosTables
     posTableNetworkStatus,
     posTableStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'pos_tables';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<PosTable> instance, {
@@ -12606,7 +12405,6 @@ class $PosTablesTable extends PosTables
 
   @override
   Set<GeneratedColumn> get $primaryKey => {tableId};
-
   @override
   PosTable map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -12701,7 +12499,6 @@ class PosTable extends DataClass implements Insertable<PosTable> {
   final String? statusOverride;
   final String? posTableNetworkStatus;
   final String posTableStatus;
-
   const PosTable({
     required this.organizationId,
     required this.branchId,
@@ -12720,7 +12517,6 @@ class PosTable extends DataClass implements Insertable<PosTable> {
     this.posTableNetworkStatus,
     required this.posTableStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -12814,7 +12610,6 @@ class PosTable extends DataClass implements Insertable<PosTable> {
       posTableStatus: serializer.fromJson<String>(json['posTableStatus']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -12879,7 +12674,6 @@ class PosTable extends DataClass implements Insertable<PosTable> {
         : this.posTableNetworkStatus,
     posTableStatus: posTableStatus ?? this.posTableStatus,
   );
-
   PosTable copyWithCompanion(PosTablesCompanion data) {
     return PosTable(
       organizationId: data.organizationId.present
@@ -12959,7 +12753,6 @@ class PosTable extends DataClass implements Insertable<PosTable> {
     posTableNetworkStatus,
     posTableStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -12999,7 +12792,6 @@ class PosTablesCompanion extends UpdateCompanion<PosTable> {
   final Value<String?> statusOverride;
   final Value<String?> posTableNetworkStatus;
   final Value<String> posTableStatus;
-
   const PosTablesCompanion({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -13018,7 +12810,6 @@ class PosTablesCompanion extends UpdateCompanion<PosTable> {
     this.posTableNetworkStatus = const Value.absent(),
     this.posTableStatus = const Value.absent(),
   });
-
   PosTablesCompanion.insert({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -13037,7 +12828,6 @@ class PosTablesCompanion extends UpdateCompanion<PosTable> {
     this.posTableNetworkStatus = const Value.absent(),
     this.posTableStatus = const Value.absent(),
   }) : tableNumber = Value(tableNumber);
-
   static Insertable<PosTable> custom({
     Expression<String>? organizationId,
     Expression<String>? branchId,
@@ -13201,9 +12991,7 @@ class $DiningAreasTable extends DiningAreas
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $DiningAreasTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _organizationIdMeta = const VerificationMeta(
     'organizationId',
   );
@@ -13309,7 +13097,6 @@ class $DiningAreasTable extends DiningAreas
     requiredDuringInsert: false,
     defaultValue: const Constant('1'),
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     organizationId,
@@ -13322,14 +13109,11 @@ class $DiningAreasTable extends DiningAreas
     areaNetworkStatus,
     areaSyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'dining_areas';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<DiningArea> instance, {
@@ -13408,7 +13192,6 @@ class $DiningAreasTable extends DiningAreas
 
   @override
   Set<GeneratedColumn> get $primaryKey => {areaId};
-
   @override
   DiningArea map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -13468,7 +13251,6 @@ class DiningArea extends DataClass implements Insertable<DiningArea> {
   final String areaActive;
   final String? areaNetworkStatus;
   final String areaSyncStatus;
-
   const DiningArea({
     required this.organizationId,
     required this.branchId,
@@ -13480,7 +13262,6 @@ class DiningArea extends DataClass implements Insertable<DiningArea> {
     this.areaNetworkStatus,
     required this.areaSyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -13533,7 +13314,6 @@ class DiningArea extends DataClass implements Insertable<DiningArea> {
       areaSyncStatus: serializer.fromJson<String>(json['areaSyncStatus']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -13573,7 +13353,6 @@ class DiningArea extends DataClass implements Insertable<DiningArea> {
         : this.areaNetworkStatus,
     areaSyncStatus: areaSyncStatus ?? this.areaSyncStatus,
   );
-
   DiningArea copyWithCompanion(DiningAreasCompanion data) {
     return DiningArea(
       organizationId: data.organizationId.present
@@ -13626,7 +13405,6 @@ class DiningArea extends DataClass implements Insertable<DiningArea> {
     areaNetworkStatus,
     areaSyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -13652,7 +13430,6 @@ class DiningAreasCompanion extends UpdateCompanion<DiningArea> {
   final Value<String> areaActive;
   final Value<String?> areaNetworkStatus;
   final Value<String> areaSyncStatus;
-
   const DiningAreasCompanion({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -13664,7 +13441,6 @@ class DiningAreasCompanion extends UpdateCompanion<DiningArea> {
     this.areaNetworkStatus = const Value.absent(),
     this.areaSyncStatus = const Value.absent(),
   });
-
   DiningAreasCompanion.insert({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -13676,7 +13452,6 @@ class DiningAreasCompanion extends UpdateCompanion<DiningArea> {
     this.areaNetworkStatus = const Value.absent(),
     this.areaSyncStatus = const Value.absent(),
   });
-
   static Insertable<DiningArea> custom({
     Expression<String>? organizationId,
     Expression<String>? branchId,
@@ -13780,9 +13555,7 @@ class $TableTypesTable extends TableTypes
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $TableTypesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _organizationIdMeta = const VerificationMeta(
     'organizationId',
   );
@@ -13900,7 +13673,6 @@ class $TableTypesTable extends TableTypes
         requiredDuringInsert: false,
         defaultValue: const Constant('1'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     organizationId,
@@ -13914,14 +13686,11 @@ class $TableTypesTable extends TableTypes
     tableTypeNetworkStatus,
     tableTypeSyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'table_types';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<TableType> instance, {
@@ -14018,7 +13787,6 @@ class $TableTypesTable extends TableTypes
 
   @override
   Set<GeneratedColumn> get $primaryKey => {tableTypeId};
-
   @override
   TableType map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -14083,7 +13851,6 @@ class TableType extends DataClass implements Insertable<TableType> {
   final String tableTypeActive;
   final String? tableTypeNetworkStatus;
   final String tableTypeSyncStatus;
-
   const TableType({
     required this.organizationId,
     required this.branchId,
@@ -14096,7 +13863,6 @@ class TableType extends DataClass implements Insertable<TableType> {
     this.tableTypeNetworkStatus,
     required this.tableTypeSyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -14156,7 +13922,6 @@ class TableType extends DataClass implements Insertable<TableType> {
       ),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -14201,7 +13966,6 @@ class TableType extends DataClass implements Insertable<TableType> {
         : this.tableTypeNetworkStatus,
     tableTypeSyncStatus: tableTypeSyncStatus ?? this.tableTypeSyncStatus,
   );
-
   TableType copyWithCompanion(TableTypesCompanion data) {
     return TableType(
       organizationId: data.organizationId.present
@@ -14263,7 +14027,6 @@ class TableType extends DataClass implements Insertable<TableType> {
     tableTypeNetworkStatus,
     tableTypeSyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -14291,7 +14054,6 @@ class TableTypesCompanion extends UpdateCompanion<TableType> {
   final Value<String> tableTypeActive;
   final Value<String?> tableTypeNetworkStatus;
   final Value<String> tableTypeSyncStatus;
-
   const TableTypesCompanion({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -14304,7 +14066,6 @@ class TableTypesCompanion extends UpdateCompanion<TableType> {
     this.tableTypeNetworkStatus = const Value.absent(),
     this.tableTypeSyncStatus = const Value.absent(),
   });
-
   TableTypesCompanion.insert({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -14317,7 +14078,6 @@ class TableTypesCompanion extends UpdateCompanion<TableType> {
     this.tableTypeNetworkStatus = const Value.absent(),
     this.tableTypeSyncStatus = const Value.absent(),
   });
-
   static Insertable<TableType> custom({
     Expression<String>? organizationId,
     Expression<String>? branchId,
@@ -14437,9 +14197,7 @@ class $PortionMastersTable extends PortionMasters
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $PortionMastersTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _portionMasterIdMeta = const VerificationMeta(
     'portionMasterId',
   );
@@ -14498,7 +14256,6 @@ class $PortionMastersTable extends PortionMasters
         requiredDuringInsert: false,
         defaultValue: const Constant('1'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     portionMasterId,
@@ -14507,14 +14264,11 @@ class $PortionMastersTable extends PortionMasters
     portionMasterNetworkStatus,
     portionMasterSyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'portion_masters';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<PortionMaster> instance, {
@@ -14572,7 +14326,6 @@ class $PortionMastersTable extends PortionMasters
 
   @override
   Set<GeneratedColumn> get $primaryKey => {portionMasterId};
-
   @override
   PortionMaster map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -14612,7 +14365,6 @@ class PortionMaster extends DataClass implements Insertable<PortionMaster> {
   final String portionMasterDeletedStatus;
   final String? portionMasterNetworkStatus;
   final String portionMasterSyncStatus;
-
   const PortionMaster({
     required this.portionMasterId,
     required this.portionName,
@@ -14620,7 +14372,6 @@ class PortionMaster extends DataClass implements Insertable<PortionMaster> {
     this.portionMasterNetworkStatus,
     required this.portionMasterSyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -14672,7 +14423,6 @@ class PortionMaster extends DataClass implements Insertable<PortionMaster> {
       ),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -14708,7 +14458,6 @@ class PortionMaster extends DataClass implements Insertable<PortionMaster> {
     portionMasterSyncStatus:
         portionMasterSyncStatus ?? this.portionMasterSyncStatus,
   );
-
   PortionMaster copyWithCompanion(PortionMastersCompanion data) {
     return PortionMaster(
       portionMasterId: data.portionMasterId.present
@@ -14749,7 +14498,6 @@ class PortionMaster extends DataClass implements Insertable<PortionMaster> {
     portionMasterNetworkStatus,
     portionMasterSyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -14767,7 +14515,6 @@ class PortionMastersCompanion extends UpdateCompanion<PortionMaster> {
   final Value<String> portionMasterDeletedStatus;
   final Value<String?> portionMasterNetworkStatus;
   final Value<String> portionMasterSyncStatus;
-
   const PortionMastersCompanion({
     this.portionMasterId = const Value.absent(),
     this.portionName = const Value.absent(),
@@ -14775,7 +14522,6 @@ class PortionMastersCompanion extends UpdateCompanion<PortionMaster> {
     this.portionMasterNetworkStatus = const Value.absent(),
     this.portionMasterSyncStatus = const Value.absent(),
   });
-
   PortionMastersCompanion.insert({
     this.portionMasterId = const Value.absent(),
     this.portionName = const Value.absent(),
@@ -14783,7 +14529,6 @@ class PortionMastersCompanion extends UpdateCompanion<PortionMaster> {
     this.portionMasterNetworkStatus = const Value.absent(),
     this.portionMasterSyncStatus = const Value.absent(),
   });
-
   static Insertable<PortionMaster> custom({
     Expression<int>? portionMasterId,
     Expression<String>? portionName,
@@ -14867,9 +14612,7 @@ class $DiningSessionsTable extends DiningSessions
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $DiningSessionsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _organizationIdMeta = const VerificationMeta(
     'organizationId',
   );
@@ -15082,7 +14825,6 @@ class $DiningSessionsTable extends DiningSessions
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     organizationId,
@@ -15104,14 +14846,11 @@ class $DiningSessionsTable extends DiningSessions
     sessionSyncStatus,
     sessionVersion,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'dining_sessions';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<DiningSession> instance, {
@@ -15266,7 +15005,6 @@ class $DiningSessionsTable extends DiningSessions
 
   @override
   Set<GeneratedColumn> get $primaryKey => {sessionId};
-
   @override
   DiningSession map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -15371,7 +15109,6 @@ class DiningSession extends DataClass implements Insertable<DiningSession> {
   final String? sessionNetworkStatus;
   final String sessionSyncStatus;
   final int sessionVersion;
-
   const DiningSession({
     required this.organizationId,
     required this.branchId,
@@ -15392,7 +15129,6 @@ class DiningSession extends DataClass implements Insertable<DiningSession> {
     required this.sessionSyncStatus,
     required this.sessionVersion,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -15498,7 +15234,6 @@ class DiningSession extends DataClass implements Insertable<DiningSession> {
       sessionVersion: serializer.fromJson<int>(json['sessionVersion']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -15569,7 +15304,6 @@ class DiningSession extends DataClass implements Insertable<DiningSession> {
     sessionSyncStatus: sessionSyncStatus ?? this.sessionSyncStatus,
     sessionVersion: sessionVersion ?? this.sessionVersion,
   );
-
   DiningSession copyWithCompanion(DiningSessionsCompanion data) {
     return DiningSession(
       organizationId: data.organizationId.present
@@ -15665,7 +15399,6 @@ class DiningSession extends DataClass implements Insertable<DiningSession> {
     sessionSyncStatus,
     sessionVersion,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -15709,7 +15442,6 @@ class DiningSessionsCompanion extends UpdateCompanion<DiningSession> {
   final Value<String?> sessionNetworkStatus;
   final Value<String> sessionSyncStatus;
   final Value<int> sessionVersion;
-
   const DiningSessionsCompanion({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -15730,7 +15462,6 @@ class DiningSessionsCompanion extends UpdateCompanion<DiningSession> {
     this.sessionSyncStatus = const Value.absent(),
     this.sessionVersion = const Value.absent(),
   });
-
   DiningSessionsCompanion.insert({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -15752,7 +15483,6 @@ class DiningSessionsCompanion extends UpdateCompanion<DiningSession> {
     this.sessionVersion = const Value.absent(),
   }) : primaryTableNumber = Value(primaryTableNumber),
        startedAt = Value(startedAt);
-
   static Insertable<DiningSession> custom({
     Expression<String>? organizationId,
     Expression<String>? branchId,
@@ -15936,9 +15666,7 @@ class $OrderRoundsTable extends OrderRounds
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $OrderRoundsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _organizationIdMeta = const VerificationMeta(
     'organizationId',
   );
@@ -16033,7 +15761,6 @@ class $OrderRoundsTable extends OrderRounds
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     organizationId,
@@ -16045,14 +15772,11 @@ class $OrderRoundsTable extends OrderRounds
     kotId,
     createdAt,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'order_rounds';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<OrderRound> instance, {
@@ -16126,7 +15850,6 @@ class $OrderRoundsTable extends OrderRounds
 
   @override
   Set<GeneratedColumn> get $primaryKey => {orderRoundId};
-
   @override
   OrderRound map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -16181,7 +15904,6 @@ class OrderRound extends DataClass implements Insertable<OrderRound> {
   final int roundNumber;
   final int? kotId;
   final DateTime createdAt;
-
   const OrderRound({
     required this.organizationId,
     required this.branchId,
@@ -16192,7 +15914,6 @@ class OrderRound extends DataClass implements Insertable<OrderRound> {
     this.kotId,
     required this.createdAt,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -16240,7 +15961,6 @@ class OrderRound extends DataClass implements Insertable<OrderRound> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -16275,7 +15995,6 @@ class OrderRound extends DataClass implements Insertable<OrderRound> {
     kotId: kotId.present ? kotId.value : this.kotId,
     createdAt: createdAt ?? this.createdAt,
   );
-
   OrderRound copyWithCompanion(OrderRoundsCompanion data) {
     return OrderRound(
       organizationId: data.organizationId.present
@@ -16321,7 +16040,6 @@ class OrderRound extends DataClass implements Insertable<OrderRound> {
     kotId,
     createdAt,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -16345,7 +16063,6 @@ class OrderRoundsCompanion extends UpdateCompanion<OrderRound> {
   final Value<int> roundNumber;
   final Value<int?> kotId;
   final Value<DateTime> createdAt;
-
   const OrderRoundsCompanion({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -16356,7 +16073,6 @@ class OrderRoundsCompanion extends UpdateCompanion<OrderRound> {
     this.kotId = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
-
   OrderRoundsCompanion.insert({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -16368,7 +16084,6 @@ class OrderRoundsCompanion extends UpdateCompanion<OrderRound> {
     this.createdAt = const Value.absent(),
   }) : sessionId = Value(sessionId),
        roundNumber = Value(roundNumber);
-
   static Insertable<OrderRound> custom({
     Expression<String>? organizationId,
     Expression<String>? branchId,
@@ -16463,9 +16178,7 @@ class $KotsTable extends Kots with TableInfo<$KotsTable, Kot> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $KotsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _organizationIdMeta = const VerificationMeta(
     'organizationId',
   );
@@ -16595,7 +16308,6 @@ class $KotsTable extends Kots with TableInfo<$KotsTable, Kot> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     organizationId,
@@ -16610,14 +16322,11 @@ class $KotsTable extends Kots with TableInfo<$KotsTable, Kot> {
     kitchenName,
     createdAt,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'kots';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<Kot> instance, {
@@ -16719,7 +16428,6 @@ class $KotsTable extends Kots with TableInfo<$KotsTable, Kot> {
 
   @override
   Set<GeneratedColumn> get $primaryKey => {kotId};
-
   @override
   Kot map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -16789,7 +16497,6 @@ class Kot extends DataClass implements Insertable<Kot> {
   final String printStatus;
   final String kitchenName;
   final DateTime createdAt;
-
   const Kot({
     required this.organizationId,
     required this.branchId,
@@ -16803,7 +16510,6 @@ class Kot extends DataClass implements Insertable<Kot> {
     required this.kitchenName,
     required this.createdAt,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -16856,7 +16562,6 @@ class Kot extends DataClass implements Insertable<Kot> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -16900,7 +16605,6 @@ class Kot extends DataClass implements Insertable<Kot> {
     kitchenName: kitchenName ?? this.kitchenName,
     createdAt: createdAt ?? this.createdAt,
   );
-
   Kot copyWithCompanion(KotsCompanion data) {
     return Kot(
       organizationId: data.organizationId.present
@@ -16959,7 +16663,6 @@ class Kot extends DataClass implements Insertable<Kot> {
     kitchenName,
     createdAt,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -16989,7 +16692,6 @@ class KotsCompanion extends UpdateCompanion<Kot> {
   final Value<String> printStatus;
   final Value<String> kitchenName;
   final Value<DateTime> createdAt;
-
   const KotsCompanion({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -17003,7 +16705,6 @@ class KotsCompanion extends UpdateCompanion<Kot> {
     this.kitchenName = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
-
   KotsCompanion.insert({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -17020,7 +16721,6 @@ class KotsCompanion extends UpdateCompanion<Kot> {
        orderRoundId = Value(orderRoundId),
        kotNumber = Value(kotNumber),
        tableNumber = Value(tableNumber);
-
   static Insertable<Kot> custom({
     Expression<String>? organizationId,
     Expression<String>? branchId,
@@ -17139,9 +16839,7 @@ class $KotItemsTable extends KotItems with TableInfo<$KotItemsTable, KotItem> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $KotItemsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _organizationIdMeta = const VerificationMeta(
     'organizationId',
   );
@@ -17268,7 +16966,6 @@ class $KotItemsTable extends KotItems with TableInfo<$KotItemsTable, KotItem> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     organizationId,
@@ -17283,14 +16980,11 @@ class $KotItemsTable extends KotItems with TableInfo<$KotItemsTable, KotItem> {
     portionName,
     productUnit,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'kot_items';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<KotItem> instance, {
@@ -17386,7 +17080,6 @@ class $KotItemsTable extends KotItems with TableInfo<$KotItemsTable, KotItem> {
 
   @override
   Set<GeneratedColumn> get $primaryKey => {kotItemId};
-
   @override
   KotItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -17456,7 +17149,6 @@ class KotItem extends DataClass implements Insertable<KotItem> {
   final double productQuantity;
   final String? portionName;
   final String? productUnit;
-
   const KotItem({
     required this.organizationId,
     required this.branchId,
@@ -17470,7 +17162,6 @@ class KotItem extends DataClass implements Insertable<KotItem> {
     this.portionName,
     this.productUnit,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -17539,7 +17230,6 @@ class KotItem extends DataClass implements Insertable<KotItem> {
       productUnit: serializer.fromJson<String?>(json['productUnit']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -17583,7 +17273,6 @@ class KotItem extends DataClass implements Insertable<KotItem> {
     portionName: portionName.present ? portionName.value : this.portionName,
     productUnit: productUnit.present ? productUnit.value : this.productUnit,
   );
-
   KotItem copyWithCompanion(KotItemsCompanion data) {
     return KotItem(
       organizationId: data.organizationId.present
@@ -17642,7 +17331,6 @@ class KotItem extends DataClass implements Insertable<KotItem> {
     portionName,
     productUnit,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -17672,7 +17360,6 @@ class KotItemsCompanion extends UpdateCompanion<KotItem> {
   final Value<double> productQuantity;
   final Value<String?> portionName;
   final Value<String?> productUnit;
-
   const KotItemsCompanion({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -17686,7 +17373,6 @@ class KotItemsCompanion extends UpdateCompanion<KotItem> {
     this.portionName = const Value.absent(),
     this.productUnit = const Value.absent(),
   });
-
   KotItemsCompanion.insert({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -17700,7 +17386,6 @@ class KotItemsCompanion extends UpdateCompanion<KotItem> {
     this.portionName = const Value.absent(),
     this.productUnit = const Value.absent(),
   }) : kotId = Value(kotId);
-
   static Insertable<KotItem> custom({
     Expression<String>? organizationId,
     Expression<String>? branchId,
@@ -17820,9 +17505,7 @@ class $MessMembersTable extends MessMembers
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $MessMembersTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _memberIdMeta = const VerificationMeta(
     'memberId',
   );
@@ -17979,7 +17662,6 @@ class $MessMembersTable extends MessMembers
     requiredDuringInsert: false,
     defaultValue: const Constant('1'),
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     memberId,
@@ -17997,14 +17679,11 @@ class $MessMembersTable extends MessMembers
     memberNetworkStatus,
     memberSyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'mess_members';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<MessMember> instance, {
@@ -18125,7 +17804,6 @@ class $MessMembersTable extends MessMembers
 
   @override
   Set<GeneratedColumn> get $primaryKey => {memberId};
-
   @override
   MessMember map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -18210,7 +17888,6 @@ class MessMember extends DataClass implements Insertable<MessMember> {
   final String memberStatus;
   final String? memberNetworkStatus;
   final String memberSyncStatus;
-
   const MessMember({
     required this.memberId,
     required this.memberName,
@@ -18227,7 +17904,6 @@ class MessMember extends DataClass implements Insertable<MessMember> {
     this.memberNetworkStatus,
     required this.memberSyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -18334,7 +18010,6 @@ class MessMember extends DataClass implements Insertable<MessMember> {
       memberSyncStatus: serializer.fromJson<String>(json['memberSyncStatus']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -18399,7 +18074,6 @@ class MessMember extends DataClass implements Insertable<MessMember> {
         : this.memberNetworkStatus,
     memberSyncStatus: memberSyncStatus ?? this.memberSyncStatus,
   );
-
   MessMember copyWithCompanion(MessMembersCompanion data) {
     return MessMember(
       memberId: data.memberId.present ? data.memberId.value : this.memberId,
@@ -18477,7 +18151,6 @@ class MessMember extends DataClass implements Insertable<MessMember> {
     memberNetworkStatus,
     memberSyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -18513,7 +18186,6 @@ class MessMembersCompanion extends UpdateCompanion<MessMember> {
   final Value<String> memberStatus;
   final Value<String?> memberNetworkStatus;
   final Value<String> memberSyncStatus;
-
   const MessMembersCompanion({
     this.memberId = const Value.absent(),
     this.memberName = const Value.absent(),
@@ -18530,7 +18202,6 @@ class MessMembersCompanion extends UpdateCompanion<MessMember> {
     this.memberNetworkStatus = const Value.absent(),
     this.memberSyncStatus = const Value.absent(),
   });
-
   MessMembersCompanion.insert({
     this.memberId = const Value.absent(),
     this.memberName = const Value.absent(),
@@ -18547,7 +18218,6 @@ class MessMembersCompanion extends UpdateCompanion<MessMember> {
     this.memberNetworkStatus = const Value.absent(),
     this.memberSyncStatus = const Value.absent(),
   });
-
   static Insertable<MessMember> custom({
     Expression<int>? memberId,
     Expression<String>? memberName,
@@ -18699,9 +18369,7 @@ class $MessTokensTable extends MessTokens
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $MessTokensTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _tokenIdMeta = const VerificationMeta(
     'tokenId',
   );
@@ -18889,7 +18557,6 @@ class $MessTokensTable extends MessTokens
     requiredDuringInsert: false,
     defaultValue: const Constant('0'),
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     tokenId,
@@ -18909,14 +18576,11 @@ class $MessTokensTable extends MessTokens
     verifyNetworkStatus,
     verifyStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'mess_tokens';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<MessToken> instance, {
@@ -19053,7 +18717,6 @@ class $MessTokensTable extends MessTokens
 
   @override
   Set<GeneratedColumn> get $primaryKey => {tokenId};
-
   @override
   MessToken map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -19148,7 +18811,6 @@ class MessToken extends DataClass implements Insertable<MessToken> {
   final String tokenSyncStatus;
   final String? verifyNetworkStatus;
   final String verifyStatus;
-
   const MessToken({
     required this.tokenId,
     required this.tokenCode,
@@ -19167,7 +18829,6 @@ class MessToken extends DataClass implements Insertable<MessToken> {
     this.verifyNetworkStatus,
     required this.verifyStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -19263,7 +18924,6 @@ class MessToken extends DataClass implements Insertable<MessToken> {
       verifyStatus: serializer.fromJson<String>(json['verifyStatus']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -19326,7 +18986,6 @@ class MessToken extends DataClass implements Insertable<MessToken> {
         : this.verifyNetworkStatus,
     verifyStatus: verifyStatus ?? this.verifyStatus,
   );
-
   MessToken copyWithCompanion(MessTokensCompanion data) {
     return MessToken(
       tokenId: data.tokenId.present ? data.tokenId.value : this.tokenId,
@@ -19412,7 +19071,6 @@ class MessToken extends DataClass implements Insertable<MessToken> {
     verifyNetworkStatus,
     verifyStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -19452,7 +19110,6 @@ class MessTokensCompanion extends UpdateCompanion<MessToken> {
   final Value<String> tokenSyncStatus;
   final Value<String?> verifyNetworkStatus;
   final Value<String> verifyStatus;
-
   const MessTokensCompanion({
     this.tokenId = const Value.absent(),
     this.tokenCode = const Value.absent(),
@@ -19471,7 +19128,6 @@ class MessTokensCompanion extends UpdateCompanion<MessToken> {
     this.verifyNetworkStatus = const Value.absent(),
     this.verifyStatus = const Value.absent(),
   });
-
   MessTokensCompanion.insert({
     this.tokenId = const Value.absent(),
     required String tokenCode,
@@ -19491,7 +19147,6 @@ class MessTokensCompanion extends UpdateCompanion<MessToken> {
     this.verifyStatus = const Value.absent(),
   }) : tokenCode = Value(tokenCode),
        tokenDate = Value(tokenDate);
-
   static Insertable<MessToken> custom({
     Expression<int>? tokenId,
     Expression<String>? tokenCode,
@@ -19655,9 +19310,7 @@ class $MessMealTokenQueueTable extends MessMealTokenQueue
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $MessMealTokenQueueTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -19771,7 +19424,6 @@ class $MessMealTokenQueueTable extends MessMealTokenQueue
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -19785,14 +19437,11 @@ class $MessMealTokenQueueTable extends MessMealTokenQueue
     printStatus,
     localUpdatedAt,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'mess_meal_token_queue';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<MessMealTokenQueueData> instance, {
@@ -19882,7 +19531,6 @@ class $MessMealTokenQueueTable extends MessMealTokenQueue
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
-
   @override
   MessMealTokenQueueData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -19948,7 +19596,6 @@ class MessMealTokenQueueData extends DataClass
   final String? createdAt;
   final String printStatus;
   final String? localUpdatedAt;
-
   const MessMealTokenQueueData({
     required this.id,
     required this.serverPublicId,
@@ -19961,7 +19608,6 @@ class MessMealTokenQueueData extends DataClass
     required this.printStatus,
     this.localUpdatedAt,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -20039,7 +19685,6 @@ class MessMealTokenQueueData extends DataClass
       localUpdatedAt: serializer.fromJson<String?>(json['localUpdatedAt']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -20084,7 +19729,6 @@ class MessMealTokenQueueData extends DataClass
         ? localUpdatedAt.value
         : this.localUpdatedAt,
   );
-
   MessMealTokenQueueData copyWithCompanion(MessMealTokenQueueCompanion data) {
     return MessMealTokenQueueData(
       id: data.id.present ? data.id.value : this.id,
@@ -20144,7 +19788,6 @@ class MessMealTokenQueueData extends DataClass
     printStatus,
     localUpdatedAt,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -20173,7 +19816,6 @@ class MessMealTokenQueueCompanion
   final Value<String?> createdAt;
   final Value<String> printStatus;
   final Value<String?> localUpdatedAt;
-
   const MessMealTokenQueueCompanion({
     this.id = const Value.absent(),
     this.serverPublicId = const Value.absent(),
@@ -20186,7 +19828,6 @@ class MessMealTokenQueueCompanion
     this.printStatus = const Value.absent(),
     this.localUpdatedAt = const Value.absent(),
   });
-
   MessMealTokenQueueCompanion.insert({
     this.id = const Value.absent(),
     required String serverPublicId,
@@ -20199,7 +19840,6 @@ class MessMealTokenQueueCompanion
     this.printStatus = const Value.absent(),
     this.localUpdatedAt = const Value.absent(),
   }) : serverPublicId = Value(serverPublicId);
-
   static Insertable<MessMealTokenQueueData> custom({
     Expression<int>? id,
     Expression<String>? serverPublicId,
@@ -20311,9 +19951,7 @@ class $InventoryMovementsTable extends InventoryMovements
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $InventoryMovementsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _organizationIdMeta = const VerificationMeta(
     'organizationId',
   );
@@ -20495,7 +20133,6 @@ class $InventoryMovementsTable extends InventoryMovements
         requiredDuringInsert: false,
         defaultValue: const Constant('0'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     organizationId,
@@ -20514,14 +20151,11 @@ class $InventoryMovementsTable extends InventoryMovements
     inventoryNetworkStatus,
     inventorySyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'inventory_movements';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<InventoryMovement> instance, {
@@ -20663,7 +20297,6 @@ class $InventoryMovementsTable extends InventoryMovements
 
   @override
   Set<GeneratedColumn> get $primaryKey => {inventoryId};
-
   @override
   InventoryMovement map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -20754,7 +20387,6 @@ class InventoryMovement extends DataClass
   final DateTime inventoryDate;
   final String inventoryNetworkStatus;
   final String inventorySyncStatus;
-
   const InventoryMovement({
     required this.organizationId,
     required this.branchId,
@@ -20772,7 +20404,6 @@ class InventoryMovement extends DataClass
     required this.inventoryNetworkStatus,
     required this.inventorySyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -20851,7 +20482,6 @@ class InventoryMovement extends DataClass
       ),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -20916,7 +20546,6 @@ class InventoryMovement extends DataClass
         inventoryNetworkStatus ?? this.inventoryNetworkStatus,
     inventorySyncStatus: inventorySyncStatus ?? this.inventorySyncStatus,
   );
-
   InventoryMovement copyWithCompanion(InventoryMovementsCompanion data) {
     return InventoryMovement(
       organizationId: data.organizationId.present
@@ -20999,7 +20628,6 @@ class InventoryMovement extends DataClass
     inventoryNetworkStatus,
     inventorySyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -21037,7 +20665,6 @@ class InventoryMovementsCompanion extends UpdateCompanion<InventoryMovement> {
   final Value<DateTime> inventoryDate;
   final Value<String> inventoryNetworkStatus;
   final Value<String> inventorySyncStatus;
-
   const InventoryMovementsCompanion({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -21055,7 +20682,6 @@ class InventoryMovementsCompanion extends UpdateCompanion<InventoryMovement> {
     this.inventoryNetworkStatus = const Value.absent(),
     this.inventorySyncStatus = const Value.absent(),
   });
-
   InventoryMovementsCompanion.insert({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -21075,7 +20701,6 @@ class InventoryMovementsCompanion extends UpdateCompanion<InventoryMovement> {
   }) : productId = Value(productId),
        inventoryDate = Value(inventoryDate),
        inventoryNetworkStatus = Value(inventoryNetworkStatus);
-
   static Insertable<InventoryMovement> custom({
     Expression<String>? organizationId,
     Expression<String>? branchId,
@@ -21246,9 +20871,7 @@ class $ShopExpensesTable extends ShopExpenses
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $ShopExpensesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _organizationIdMeta = const VerificationMeta(
     'organizationId',
   );
@@ -21358,7 +20981,6 @@ class $ShopExpensesTable extends ShopExpenses
         requiredDuringInsert: false,
         defaultValue: const Constant('0'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     organizationId,
@@ -21371,14 +20993,11 @@ class $ShopExpensesTable extends ShopExpenses
     expensesNetworkStatus,
     expensesSyncStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'shop_expenses';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<ShopExpense> instance, {
@@ -21467,7 +21086,6 @@ class $ShopExpensesTable extends ShopExpenses
 
   @override
   Set<GeneratedColumn> get $primaryKey => {expensesId};
-
   @override
   ShopExpense map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -21527,7 +21145,6 @@ class ShopExpense extends DataClass implements Insertable<ShopExpense> {
   final DateTime expensesDate;
   final String expensesNetworkStatus;
   final String expensesSyncStatus;
-
   const ShopExpense({
     required this.organizationId,
     required this.branchId,
@@ -21539,7 +21156,6 @@ class ShopExpense extends DataClass implements Insertable<ShopExpense> {
     required this.expensesNetworkStatus,
     required this.expensesSyncStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -21590,7 +21206,6 @@ class ShopExpense extends DataClass implements Insertable<ShopExpense> {
       ),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -21628,7 +21243,6 @@ class ShopExpense extends DataClass implements Insertable<ShopExpense> {
     expensesNetworkStatus: expensesNetworkStatus ?? this.expensesNetworkStatus,
     expensesSyncStatus: expensesSyncStatus ?? this.expensesSyncStatus,
   );
-
   ShopExpense copyWithCompanion(ShopExpensesCompanion data) {
     return ShopExpense(
       organizationId: data.organizationId.present
@@ -21685,7 +21299,6 @@ class ShopExpense extends DataClass implements Insertable<ShopExpense> {
     expensesNetworkStatus,
     expensesSyncStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -21711,7 +21324,6 @@ class ShopExpensesCompanion extends UpdateCompanion<ShopExpense> {
   final Value<DateTime> expensesDate;
   final Value<String> expensesNetworkStatus;
   final Value<String> expensesSyncStatus;
-
   const ShopExpensesCompanion({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -21723,7 +21335,6 @@ class ShopExpensesCompanion extends UpdateCompanion<ShopExpense> {
     this.expensesNetworkStatus = const Value.absent(),
     this.expensesSyncStatus = const Value.absent(),
   });
-
   ShopExpensesCompanion.insert({
     this.organizationId = const Value.absent(),
     this.branchId = const Value.absent(),
@@ -21736,7 +21347,6 @@ class ShopExpensesCompanion extends UpdateCompanion<ShopExpense> {
     this.expensesSyncStatus = const Value.absent(),
   }) : expensesDate = Value(expensesDate),
        expensesNetworkStatus = Value(expensesNetworkStatus);
-
   static Insertable<ShopExpense> custom({
     Expression<String>? organizationId,
     Expression<String>? branchId,
@@ -21845,9 +21455,7 @@ class $MessMemberPaymentsTable extends MessMemberPayments
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $MessMemberPaymentsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _localPaymentIdMeta = const VerificationMeta(
     'localPaymentId',
   );
@@ -21983,7 +21591,6 @@ class $MessMemberPaymentsTable extends MessMemberPayments
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     localPaymentId,
@@ -21998,14 +21605,11 @@ class $MessMemberPaymentsTable extends MessMemberPayments
     paymentSyncStatus,
     createdAt,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'mess_member_payments';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<MessMemberPayment> instance, {
@@ -22114,7 +21718,6 @@ class $MessMemberPaymentsTable extends MessMemberPayments
 
   @override
   Set<GeneratedColumn> get $primaryKey => {localPaymentId};
-
   @override
   MessMemberPayment map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -22185,7 +21788,6 @@ class MessMemberPayment extends DataClass
   final String paymentStatus;
   final String paymentSyncStatus;
   final DateTime createdAt;
-
   const MessMemberPayment({
     required this.localPaymentId,
     required this.memberId,
@@ -22199,7 +21801,6 @@ class MessMemberPayment extends DataClass
     required this.paymentSyncStatus,
     required this.createdAt,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -22254,7 +21855,6 @@ class MessMemberPayment extends DataClass
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -22298,7 +21898,6 @@ class MessMemberPayment extends DataClass
     paymentSyncStatus: paymentSyncStatus ?? this.paymentSyncStatus,
     createdAt: createdAt ?? this.createdAt,
   );
-
   MessMemberPayment copyWithCompanion(MessMemberPaymentsCompanion data) {
     return MessMemberPayment(
       localPaymentId: data.localPaymentId.present
@@ -22365,7 +21964,6 @@ class MessMemberPayment extends DataClass
     paymentSyncStatus,
     createdAt,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -22395,7 +21993,6 @@ class MessMemberPaymentsCompanion extends UpdateCompanion<MessMemberPayment> {
   final Value<String> paymentStatus;
   final Value<String> paymentSyncStatus;
   final Value<DateTime> createdAt;
-
   const MessMemberPaymentsCompanion({
     this.localPaymentId = const Value.absent(),
     this.memberId = const Value.absent(),
@@ -22409,7 +22006,6 @@ class MessMemberPaymentsCompanion extends UpdateCompanion<MessMemberPayment> {
     this.paymentSyncStatus = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
-
   MessMemberPaymentsCompanion.insert({
     this.localPaymentId = const Value.absent(),
     required String memberId,
@@ -22425,7 +22021,6 @@ class MessMemberPaymentsCompanion extends UpdateCompanion<MessMemberPayment> {
   }) : memberId = Value(memberId),
        paymentDate = Value(paymentDate),
        paymentNetworkStatus = Value(paymentNetworkStatus);
-
   static Insertable<MessMemberPayment> custom({
     Expression<int>? localPaymentId,
     Expression<String>? memberId,
@@ -22548,9 +22143,7 @@ class $MessInvoicesTable extends MessInvoices
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $MessInvoicesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _invoiceIdMeta = const VerificationMeta(
     'invoiceId',
   );
@@ -22637,7 +22230,6 @@ class $MessInvoicesTable extends MessInvoices
         requiredDuringInsert: false,
         defaultValue: const Constant('0'),
       );
-
   @override
   List<GeneratedColumn> get $columns => [
     invoiceId,
@@ -22648,14 +22240,11 @@ class $MessInvoicesTable extends MessInvoices
     messInvoiceNetworkStatus,
     messInvoiceStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'mess_invoices';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<MessInvoice> instance, {
@@ -22723,7 +22312,6 @@ class $MessInvoicesTable extends MessInvoices
 
   @override
   Set<GeneratedColumn> get $primaryKey => {invoiceId};
-
   @override
   MessInvoice map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -22773,7 +22361,6 @@ class MessInvoice extends DataClass implements Insertable<MessInvoice> {
   final DateTime messInvoiceDate;
   final String messInvoiceNetworkStatus;
   final String messInvoiceStatus;
-
   const MessInvoice({
     required this.invoiceId,
     this.memberId,
@@ -22783,7 +22370,6 @@ class MessInvoice extends DataClass implements Insertable<MessInvoice> {
     required this.messInvoiceNetworkStatus,
     required this.messInvoiceStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -22832,7 +22418,6 @@ class MessInvoice extends DataClass implements Insertable<MessInvoice> {
       messInvoiceStatus: serializer.fromJson<String>(json['messInvoiceStatus']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -22867,7 +22452,6 @@ class MessInvoice extends DataClass implements Insertable<MessInvoice> {
         messInvoiceNetworkStatus ?? this.messInvoiceNetworkStatus,
     messInvoiceStatus: messInvoiceStatus ?? this.messInvoiceStatus,
   );
-
   MessInvoice copyWithCompanion(MessInvoicesCompanion data) {
     return MessInvoice(
       invoiceId: data.invoiceId.present ? data.invoiceId.value : this.invoiceId,
@@ -22912,7 +22496,6 @@ class MessInvoice extends DataClass implements Insertable<MessInvoice> {
     messInvoiceNetworkStatus,
     messInvoiceStatus,
   );
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -22934,7 +22517,6 @@ class MessInvoicesCompanion extends UpdateCompanion<MessInvoice> {
   final Value<DateTime> messInvoiceDate;
   final Value<String> messInvoiceNetworkStatus;
   final Value<String> messInvoiceStatus;
-
   const MessInvoicesCompanion({
     this.invoiceId = const Value.absent(),
     this.memberId = const Value.absent(),
@@ -22944,7 +22526,6 @@ class MessInvoicesCompanion extends UpdateCompanion<MessInvoice> {
     this.messInvoiceNetworkStatus = const Value.absent(),
     this.messInvoiceStatus = const Value.absent(),
   });
-
   MessInvoicesCompanion.insert({
     this.invoiceId = const Value.absent(),
     this.memberId = const Value.absent(),
@@ -22955,7 +22536,6 @@ class MessInvoicesCompanion extends UpdateCompanion<MessInvoice> {
     this.messInvoiceStatus = const Value.absent(),
   }) : messInvoiceDate = Value(messInvoiceDate),
        messInvoiceNetworkStatus = Value(messInvoiceNetworkStatus);
-
   static Insertable<MessInvoice> custom({
     Expression<int>? invoiceId,
     Expression<String>? memberId,
@@ -23047,9 +22627,7 @@ class $CompaniesTable extends Companies
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $CompaniesTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _companyIdMeta = const VerificationMeta(
     'companyId',
   );
@@ -23363,7 +22941,6 @@ class $CompaniesTable extends Companies
     requiredDuringInsert: false,
     defaultValue: const Constant('1'),
   );
-
   @override
   List<GeneratedColumn> get $columns => [
     companyId,
@@ -23395,14 +22972,11 @@ class $CompaniesTable extends Companies
     closingMinutes,
     companyStatus,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'companies';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<Company> instance, {
@@ -23631,7 +23205,6 @@ class $CompaniesTable extends Companies
 
   @override
   Set<GeneratedColumn> get $primaryKey => {companyId};
-
   @override
   Company map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -23786,7 +23359,6 @@ class Company extends DataClass implements Insertable<Company> {
   final String? openingMinutes;
   final String? closingMinutes;
   final String companyStatus;
-
   const Company({
     required this.companyId,
     this.companyName,
@@ -23817,7 +23389,6 @@ class Company extends DataClass implements Insertable<Company> {
     this.closingMinutes,
     required this.companyStatus,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -24025,7 +23596,6 @@ class Company extends DataClass implements Insertable<Company> {
       companyStatus: serializer.fromJson<String>(json['companyStatus']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -24128,7 +23698,6 @@ class Company extends DataClass implements Insertable<Company> {
         : this.closingMinutes,
     companyStatus: companyStatus ?? this.companyStatus,
   );
-
   Company copyWithCompanion(CompaniesCompanion data) {
     return Company(
       companyId: data.companyId.present ? data.companyId.value : this.companyId,
@@ -24260,7 +23829,6 @@ class Company extends DataClass implements Insertable<Company> {
     closingMinutes,
     companyStatus,
   ]);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -24324,7 +23892,6 @@ class CompaniesCompanion extends UpdateCompanion<Company> {
   final Value<String?> openingMinutes;
   final Value<String?> closingMinutes;
   final Value<String> companyStatus;
-
   const CompaniesCompanion({
     this.companyId = const Value.absent(),
     this.companyName = const Value.absent(),
@@ -24355,7 +23922,6 @@ class CompaniesCompanion extends UpdateCompanion<Company> {
     this.closingMinutes = const Value.absent(),
     this.companyStatus = const Value.absent(),
   });
-
   CompaniesCompanion.insert({
     this.companyId = const Value.absent(),
     this.companyName = const Value.absent(),
@@ -24386,7 +23952,6 @@ class CompaniesCompanion extends UpdateCompanion<Company> {
     this.closingMinutes = const Value.absent(),
     this.companyStatus = const Value.absent(),
   });
-
   static Insertable<Company> custom({
     Expression<int>? companyId,
     Expression<String>? companyName,
@@ -24642,9 +24207,7 @@ class $CompanyPrinterSettingsTable extends CompanyPrinterSettings
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-
   $CompanyPrinterSettingsTable(this.attachedDatabase, [this._alias]);
-
   static const VerificationMeta _settingIdMeta = const VerificationMeta(
     'settingId',
   );
@@ -24886,7 +24449,18 @@ class $CompanyPrinterSettingsTable extends CompanyPrinterSettings
     requiredDuringInsert: false,
     defaultValue: const Constant('on'),
   );
-
+  static const VerificationMeta _printFastBillMeta = const VerificationMeta(
+    'printFastBill',
+  );
+  @override
+  late final GeneratedColumn<String> printFastBill = GeneratedColumn<String>(
+    'print_fast_bill',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('off'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     settingId,
@@ -24910,15 +24484,13 @@ class $CompanyPrinterSettingsTable extends CompanyPrinterSettings
     kotCopies,
     kotAutoPrint,
     kotPreview,
+    printFastBill,
   ];
-
   @override
   String get aliasedName => _alias ?? actualTableName;
-
   @override
   String get actualTableName => $name;
   static const String $name = 'company_printer_settings';
-
   @override
   VerificationContext validateIntegrity(
     Insertable<CompanyPrinterSetting> instance, {
@@ -25094,12 +24666,20 @@ class $CompanyPrinterSettingsTable extends CompanyPrinterSettings
         kotPreview.isAcceptableOrUnknown(data['kot_preview']!, _kotPreviewMeta),
       );
     }
+    if (data.containsKey('print_fast_bill')) {
+      context.handle(
+        _printFastBillMeta,
+        printFastBill.isAcceptableOrUnknown(
+          data['print_fast_bill']!,
+          _printFastBillMeta,
+        ),
+      );
+    }
     return context;
   }
 
   @override
   Set<GeneratedColumn> get $primaryKey => {settingId};
-
   @override
   CompanyPrinterSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -25188,6 +24768,10 @@ class $CompanyPrinterSettingsTable extends CompanyPrinterSettings
         DriftSqlType.string,
         data['${effectivePrefix}kot_preview'],
       )!,
+      printFastBill: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}print_fast_bill'],
+      )!,
     );
   }
 
@@ -25220,7 +24804,7 @@ class CompanyPrinterSetting extends DataClass
   final String kotCopies;
   final String kotAutoPrint;
   final String kotPreview;
-
+  final String printFastBill;
   const CompanyPrinterSetting({
     required this.settingId,
     this.printerName,
@@ -25243,8 +24827,8 @@ class CompanyPrinterSetting extends DataClass
     required this.kotCopies,
     required this.kotAutoPrint,
     required this.kotPreview,
+    required this.printFastBill,
   });
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -25297,6 +24881,7 @@ class CompanyPrinterSetting extends DataClass
     map['kot_copies'] = Variable<String>(kotCopies);
     map['kot_auto_print'] = Variable<String>(kotAutoPrint);
     map['kot_preview'] = Variable<String>(kotPreview);
+    map['print_fast_bill'] = Variable<String>(printFastBill);
     return map;
   }
 
@@ -25351,6 +24936,7 @@ class CompanyPrinterSetting extends DataClass
       kotCopies: Value(kotCopies),
       kotAutoPrint: Value(kotAutoPrint),
       kotPreview: Value(kotPreview),
+      printFastBill: Value(printFastBill),
     );
   }
 
@@ -25389,9 +24975,9 @@ class CompanyPrinterSetting extends DataClass
       kotCopies: serializer.fromJson<String>(json['kotCopies']),
       kotAutoPrint: serializer.fromJson<String>(json['kotAutoPrint']),
       kotPreview: serializer.fromJson<String>(json['kotPreview']),
+      printFastBill: serializer.fromJson<String>(json['printFastBill']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
@@ -25421,6 +25007,7 @@ class CompanyPrinterSetting extends DataClass
       'kotCopies': serializer.toJson<String>(kotCopies),
       'kotAutoPrint': serializer.toJson<String>(kotAutoPrint),
       'kotPreview': serializer.toJson<String>(kotPreview),
+      'printFastBill': serializer.toJson<String>(printFastBill),
     };
   }
 
@@ -25446,6 +25033,7 @@ class CompanyPrinterSetting extends DataClass
     String? kotCopies,
     String? kotAutoPrint,
     String? kotPreview,
+    String? printFastBill,
   }) => CompanyPrinterSetting(
     settingId: settingId ?? this.settingId,
     printerName: printerName.present ? printerName.value : this.printerName,
@@ -25486,8 +25074,8 @@ class CompanyPrinterSetting extends DataClass
     kotCopies: kotCopies ?? this.kotCopies,
     kotAutoPrint: kotAutoPrint ?? this.kotAutoPrint,
     kotPreview: kotPreview ?? this.kotPreview,
+    printFastBill: printFastBill ?? this.printFastBill,
   );
-
   CompanyPrinterSetting copyWithCompanion(
     CompanyPrinterSettingsCompanion data,
   ) {
@@ -25545,6 +25133,9 @@ class CompanyPrinterSetting extends DataClass
       kotPreview: data.kotPreview.present
           ? data.kotPreview.value
           : this.kotPreview,
+      printFastBill: data.printFastBill.present
+          ? data.printFastBill.value
+          : this.printFastBill,
     );
   }
 
@@ -25571,7 +25162,8 @@ class CompanyPrinterSetting extends DataClass
           ..write('kotPrefix: $kotPrefix, ')
           ..write('kotCopies: $kotCopies, ')
           ..write('kotAutoPrint: $kotAutoPrint, ')
-          ..write('kotPreview: $kotPreview')
+          ..write('kotPreview: $kotPreview, ')
+          ..write('printFastBill: $printFastBill')
           ..write(')'))
         .toString();
   }
@@ -25599,8 +25191,8 @@ class CompanyPrinterSetting extends DataClass
     kotCopies,
     kotAutoPrint,
     kotPreview,
+    printFastBill,
   ]);
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -25625,7 +25217,8 @@ class CompanyPrinterSetting extends DataClass
           other.kotPrefix == this.kotPrefix &&
           other.kotCopies == this.kotCopies &&
           other.kotAutoPrint == this.kotAutoPrint &&
-          other.kotPreview == this.kotPreview);
+          other.kotPreview == this.kotPreview &&
+          other.printFastBill == this.printFastBill);
 }
 
 class CompanyPrinterSettingsCompanion
@@ -25651,7 +25244,7 @@ class CompanyPrinterSettingsCompanion
   final Value<String> kotCopies;
   final Value<String> kotAutoPrint;
   final Value<String> kotPreview;
-
+  final Value<String> printFastBill;
   const CompanyPrinterSettingsCompanion({
     this.settingId = const Value.absent(),
     this.printerName = const Value.absent(),
@@ -25674,8 +25267,8 @@ class CompanyPrinterSettingsCompanion
     this.kotCopies = const Value.absent(),
     this.kotAutoPrint = const Value.absent(),
     this.kotPreview = const Value.absent(),
+    this.printFastBill = const Value.absent(),
   });
-
   CompanyPrinterSettingsCompanion.insert({
     this.settingId = const Value.absent(),
     this.printerName = const Value.absent(),
@@ -25698,8 +25291,8 @@ class CompanyPrinterSettingsCompanion
     this.kotCopies = const Value.absent(),
     this.kotAutoPrint = const Value.absent(),
     this.kotPreview = const Value.absent(),
+    this.printFastBill = const Value.absent(),
   });
-
   static Insertable<CompanyPrinterSetting> custom({
     Expression<int>? settingId,
     Expression<String>? printerName,
@@ -25722,6 +25315,7 @@ class CompanyPrinterSettingsCompanion
     Expression<String>? kotCopies,
     Expression<String>? kotAutoPrint,
     Expression<String>? kotPreview,
+    Expression<String>? printFastBill,
   }) {
     return RawValuesInsertable({
       if (settingId != null) 'setting_id': settingId,
@@ -25749,6 +25343,7 @@ class CompanyPrinterSettingsCompanion
       if (kotCopies != null) 'kot_copies': kotCopies,
       if (kotAutoPrint != null) 'kot_auto_print': kotAutoPrint,
       if (kotPreview != null) 'kot_preview': kotPreview,
+      if (printFastBill != null) 'print_fast_bill': printFastBill,
     });
   }
 
@@ -25774,6 +25369,7 @@ class CompanyPrinterSettingsCompanion
     Value<String>? kotCopies,
     Value<String>? kotAutoPrint,
     Value<String>? kotPreview,
+    Value<String>? printFastBill,
   }) {
     return CompanyPrinterSettingsCompanion(
       settingId: settingId ?? this.settingId,
@@ -25799,6 +25395,7 @@ class CompanyPrinterSettingsCompanion
       kotCopies: kotCopies ?? this.kotCopies,
       kotAutoPrint: kotAutoPrint ?? this.kotAutoPrint,
       kotPreview: kotPreview ?? this.kotPreview,
+      printFastBill: printFastBill ?? this.printFastBill,
     );
   }
 
@@ -25876,6 +25473,9 @@ class CompanyPrinterSettingsCompanion
     if (kotPreview.present) {
       map['kot_preview'] = Variable<String>(kotPreview.value);
     }
+    if (printFastBill.present) {
+      map['print_fast_bill'] = Variable<String>(printFastBill.value);
+    }
     return map;
   }
 
@@ -25902,7 +25502,8 @@ class CompanyPrinterSettingsCompanion
           ..write('kotPrefix: $kotPrefix, ')
           ..write('kotCopies: $kotCopies, ')
           ..write('kotAutoPrint: $kotAutoPrint, ')
-          ..write('kotPreview: $kotPreview')
+          ..write('kotPreview: $kotPreview, ')
+          ..write('printFastBill: $printFastBill')
           ..write(')'))
         .toString();
   }
@@ -25910,7 +25511,6 @@ class CompanyPrinterSettingsCompanion
 
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
-
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $FoodTypesTable foodTypes = $FoodTypesTable(this);
   late final $ProductCategoriesTable productCategories =
@@ -25952,11 +25552,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CompaniesTable companies = $CompaniesTable(this);
   late final $CompanyPrinterSettingsTable companyPrinterSettings =
       $CompanyPrinterSettingsTable(this);
-
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
-
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     foodTypes,
@@ -26018,7 +25616,6 @@ class $$FoodTypesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get foodTypeId => $composableBuilder(
     column: $table.foodTypeId,
     builder: (column) => ColumnFilters(column),
@@ -26054,7 +25651,6 @@ class $$FoodTypesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get foodTypeId => $composableBuilder(
     column: $table.foodTypeId,
     builder: (column) => ColumnOrderings(column),
@@ -26090,7 +25686,6 @@ class $$FoodTypesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get foodTypeId => $composableBuilder(
     column: $table.foodTypeId,
     builder: (column) => column,
@@ -26236,7 +25831,6 @@ class $$ProductCategoriesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get categoryId => $composableBuilder(
     column: $table.categoryId,
     builder: (column) => ColumnFilters(column),
@@ -26292,7 +25886,6 @@ class $$ProductCategoriesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get categoryId => $composableBuilder(
     column: $table.categoryId,
     builder: (column) => ColumnOrderings(column),
@@ -26348,7 +25941,6 @@ class $$ProductCategoriesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get categoryId => $composableBuilder(
     column: $table.categoryId,
     builder: (column) => column,
@@ -26545,7 +26137,6 @@ class $$ProductSubcategoriesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get subcategoryId => $composableBuilder(
     column: $table.subcategoryId,
     builder: (column) => ColumnFilters(column),
@@ -26601,7 +26192,6 @@ class $$ProductSubcategoriesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get subcategoryId => $composableBuilder(
     column: $table.subcategoryId,
     builder: (column) => ColumnOrderings(column),
@@ -26657,7 +26247,6 @@ class $$ProductSubcategoriesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get subcategoryId => $composableBuilder(
     column: $table.subcategoryId,
     builder: (column) => column,
@@ -26885,7 +26474,6 @@ class $$ProductsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get productId => $composableBuilder(
     column: $table.productId,
     builder: (column) => ColumnFilters(column),
@@ -26996,7 +26584,6 @@ class $$ProductsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get productId => $composableBuilder(
     column: $table.productId,
     builder: (column) => ColumnOrderings(column),
@@ -27107,7 +26694,6 @@ class $$ProductsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get productId =>
       $composableBuilder(column: $table.productId, builder: (column) => column);
 
@@ -27384,7 +26970,6 @@ class $$ProductPortionsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get portionId => $composableBuilder(
     column: $table.portionId,
     builder: (column) => ColumnFilters(column),
@@ -27445,7 +27030,6 @@ class $$ProductPortionsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get portionId => $composableBuilder(
     column: $table.portionId,
     builder: (column) => ColumnOrderings(column),
@@ -27506,7 +27090,6 @@ class $$ProductPortionsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get portionId =>
       $composableBuilder(column: $table.portionId, builder: (column) => column);
 
@@ -27713,7 +27296,6 @@ class $$CombosTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get comboId => $composableBuilder(
     column: $table.comboId,
     builder: (column) => ColumnFilters(column),
@@ -27789,7 +27371,6 @@ class $$CombosTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get comboId => $composableBuilder(
     column: $table.comboId,
     builder: (column) => ColumnOrderings(column),
@@ -27865,7 +27446,6 @@ class $$CombosTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get comboId =>
       $composableBuilder(column: $table.comboId, builder: (column) => column);
 
@@ -28081,7 +27661,6 @@ class $$ComboItemsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get comboItemId => $composableBuilder(
     column: $table.comboItemId,
     builder: (column) => ColumnFilters(column),
@@ -28157,7 +27736,6 @@ class $$ComboItemsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get comboItemId => $composableBuilder(
     column: $table.comboItemId,
     builder: (column) => ColumnOrderings(column),
@@ -28233,7 +27811,6 @@ class $$ComboItemsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get comboItemId => $composableBuilder(
     column: $table.comboItemId,
     builder: (column) => column,
@@ -28502,7 +28079,6 @@ class $$CartItemsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get cartId => $composableBuilder(
     column: $table.cartId,
     builder: (column) => ColumnFilters(column),
@@ -28693,7 +28269,6 @@ class $$CartItemsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get cartId => $composableBuilder(
     column: $table.cartId,
     builder: (column) => ColumnOrderings(column),
@@ -28884,7 +28459,6 @@ class $$CartItemsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get cartId =>
       $composableBuilder(column: $table.cartId, builder: (column) => column);
 
@@ -29293,7 +28867,6 @@ class $$CartComboItemsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get cartComboItemId => $composableBuilder(
     column: $table.cartComboItemId,
     builder: (column) => ColumnFilters(column),
@@ -29364,7 +28937,6 @@ class $$CartComboItemsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get cartComboItemId => $composableBuilder(
     column: $table.cartComboItemId,
     builder: (column) => ColumnOrderings(column),
@@ -29435,7 +29007,6 @@ class $$CartComboItemsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get cartComboItemId => $composableBuilder(
     column: $table.cartComboItemId,
     builder: (column) => column,
@@ -29684,7 +29255,6 @@ class $$InvoicesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnFilters(column),
@@ -29855,7 +29425,6 @@ class $$InvoicesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnOrderings(column),
@@ -30026,7 +29595,6 @@ class $$InvoicesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => column,
@@ -30425,7 +29993,6 @@ class $$InvoiceItemsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnFilters(column),
@@ -30556,7 +30123,6 @@ class $$InvoiceItemsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnOrderings(column),
@@ -30687,7 +30253,6 @@ class $$InvoiceItemsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => column,
@@ -31008,7 +30573,6 @@ class $$InvoiceComboItemsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get invoiceComboItemId => $composableBuilder(
     column: $table.invoiceComboItemId,
     builder: (column) => ColumnFilters(column),
@@ -31084,7 +30648,6 @@ class $$InvoiceComboItemsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get invoiceComboItemId => $composableBuilder(
     column: $table.invoiceComboItemId,
     builder: (column) => ColumnOrderings(column),
@@ -31161,7 +30724,6 @@ class $$InvoiceComboItemsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get invoiceComboItemId => $composableBuilder(
     column: $table.invoiceComboItemId,
     builder: (column) => column,
@@ -31381,7 +30943,6 @@ class $$InvoiceProductDeleteQueueTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get deleteId => $composableBuilder(
     column: $table.deleteId,
     builder: (column) => ColumnFilters(column),
@@ -31407,7 +30968,6 @@ class $$InvoiceProductDeleteQueueTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get deleteId => $composableBuilder(
     column: $table.deleteId,
     builder: (column) => ColumnOrderings(column),
@@ -31433,7 +30993,6 @@ class $$InvoiceProductDeleteQueueTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get deleteId =>
       $composableBuilder(column: $table.deleteId, builder: (column) => column);
 
@@ -31603,7 +31162,6 @@ class $$PosTablesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnFilters(column),
@@ -31694,7 +31252,6 @@ class $$PosTablesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnOrderings(column),
@@ -31785,7 +31342,6 @@ class $$PosTablesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => column,
@@ -32014,7 +31570,6 @@ class $$DiningAreasTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnFilters(column),
@@ -32070,7 +31625,6 @@ class $$DiningAreasTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnOrderings(column),
@@ -32126,7 +31680,6 @@ class $$DiningAreasTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => column,
@@ -32308,7 +31861,6 @@ class $$TableTypesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnFilters(column),
@@ -32369,7 +31921,6 @@ class $$TableTypesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnOrderings(column),
@@ -32430,7 +31981,6 @@ class $$TableTypesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => column,
@@ -32612,7 +32162,6 @@ class $$PortionMastersTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get portionMasterId => $composableBuilder(
     column: $table.portionMasterId,
     builder: (column) => ColumnFilters(column),
@@ -32648,7 +32197,6 @@ class $$PortionMastersTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get portionMasterId => $composableBuilder(
     column: $table.portionMasterId,
     builder: (column) => ColumnOrderings(column),
@@ -32684,7 +32232,6 @@ class $$PortionMastersTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get portionMasterId => $composableBuilder(
     column: $table.portionMasterId,
     builder: (column) => column,
@@ -32858,7 +32405,6 @@ class $$DiningSessionsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnFilters(column),
@@ -32959,7 +32505,6 @@ class $$DiningSessionsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnOrderings(column),
@@ -33060,7 +32605,6 @@ class $$DiningSessionsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => column,
@@ -33319,7 +32863,6 @@ class $$OrderRoundsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnFilters(column),
@@ -33370,7 +32913,6 @@ class $$OrderRoundsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnOrderings(column),
@@ -33421,7 +32963,6 @@ class $$OrderRoundsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => column,
@@ -33593,7 +33134,6 @@ class $$KotsTableFilterComposer extends Composer<_$AppDatabase, $KotsTable> {
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnFilters(column),
@@ -33658,7 +33198,6 @@ class $$KotsTableOrderingComposer extends Composer<_$AppDatabase, $KotsTable> {
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnOrderings(column),
@@ -33724,7 +33263,6 @@ class $$KotsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => column,
@@ -33912,7 +33450,6 @@ class $$KotItemsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnFilters(column),
@@ -33978,7 +33515,6 @@ class $$KotItemsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnOrderings(column),
@@ -34044,7 +33580,6 @@ class $$KotItemsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => column,
@@ -34242,7 +33777,6 @@ class $$MessMembersTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get memberId => $composableBuilder(
     column: $table.memberId,
     builder: (column) => ColumnFilters(column),
@@ -34323,7 +33857,6 @@ class $$MessMembersTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get memberId => $composableBuilder(
     column: $table.memberId,
     builder: (column) => ColumnOrderings(column),
@@ -34404,7 +33937,6 @@ class $$MessMembersTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get memberId =>
       $composableBuilder(column: $table.memberId, builder: (column) => column);
 
@@ -34643,7 +34175,6 @@ class $$MessTokensTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get tokenId => $composableBuilder(
     column: $table.tokenId,
     builder: (column) => ColumnFilters(column),
@@ -34734,7 +34265,6 @@ class $$MessTokensTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get tokenId => $composableBuilder(
     column: $table.tokenId,
     builder: (column) => ColumnOrderings(column),
@@ -34825,7 +34355,6 @@ class $$MessTokensTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get tokenId =>
       $composableBuilder(column: $table.tokenId, builder: (column) => column);
 
@@ -35065,7 +34594,6 @@ class $$MessMealTokenQueueTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -35126,7 +34654,6 @@ class $$MessMealTokenQueueTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -35187,7 +34714,6 @@ class $$MessMealTokenQueueTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -35405,7 +34931,6 @@ class $$InventoryMovementsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnFilters(column),
@@ -35491,7 +35016,6 @@ class $$InventoryMovementsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnOrderings(column),
@@ -35577,7 +35101,6 @@ class $$InventoryMovementsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => column,
@@ -35826,7 +35349,6 @@ class $$ShopExpensesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnFilters(column),
@@ -35882,7 +35404,6 @@ class $$ShopExpensesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => ColumnOrderings(column),
@@ -35938,7 +35459,6 @@ class $$ShopExpensesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<String> get organizationId => $composableBuilder(
     column: $table.organizationId,
     builder: (column) => column,
@@ -36126,7 +35646,6 @@ class $$MessMemberPaymentsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get localPaymentId => $composableBuilder(
     column: $table.localPaymentId,
     builder: (column) => ColumnFilters(column),
@@ -36192,7 +35711,6 @@ class $$MessMemberPaymentsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get localPaymentId => $composableBuilder(
     column: $table.localPaymentId,
     builder: (column) => ColumnOrderings(column),
@@ -36258,7 +35776,6 @@ class $$MessMemberPaymentsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get localPaymentId => $composableBuilder(
     column: $table.localPaymentId,
     builder: (column) => column,
@@ -36471,7 +35988,6 @@ class $$MessInvoicesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get invoiceId => $composableBuilder(
     column: $table.invoiceId,
     builder: (column) => ColumnFilters(column),
@@ -36517,7 +36033,6 @@ class $$MessInvoicesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get invoiceId => $composableBuilder(
     column: $table.invoiceId,
     builder: (column) => ColumnOrderings(column),
@@ -36563,7 +36078,6 @@ class $$MessInvoicesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get invoiceId =>
       $composableBuilder(column: $table.invoiceId, builder: (column) => column);
 
@@ -36765,7 +36279,6 @@ class $$CompaniesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get companyId => $composableBuilder(
     column: $table.companyId,
     builder: (column) => ColumnFilters(column),
@@ -36916,7 +36429,6 @@ class $$CompaniesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get companyId => $composableBuilder(
     column: $table.companyId,
     builder: (column) => ColumnOrderings(column),
@@ -37067,7 +36579,6 @@ class $$CompaniesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get companyId =>
       $composableBuilder(column: $table.companyId, builder: (column) => column);
 
@@ -37385,6 +36896,7 @@ typedef $$CompanyPrinterSettingsTableCreateCompanionBuilder =
       Value<String> kotCopies,
       Value<String> kotAutoPrint,
       Value<String> kotPreview,
+      Value<String> printFastBill,
     });
 typedef $$CompanyPrinterSettingsTableUpdateCompanionBuilder =
     CompanyPrinterSettingsCompanion Function({
@@ -37409,6 +36921,7 @@ typedef $$CompanyPrinterSettingsTableUpdateCompanionBuilder =
       Value<String> kotCopies,
       Value<String> kotAutoPrint,
       Value<String> kotPreview,
+      Value<String> printFastBill,
     });
 
 class $$CompanyPrinterSettingsTableFilterComposer
@@ -37420,7 +36933,6 @@ class $$CompanyPrinterSettingsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnFilters<int> get settingId => $composableBuilder(
     column: $table.settingId,
     builder: (column) => ColumnFilters(column),
@@ -37525,6 +37037,11 @@ class $$CompanyPrinterSettingsTableFilterComposer
     column: $table.kotPreview,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get printFastBill => $composableBuilder(
+    column: $table.printFastBill,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$CompanyPrinterSettingsTableOrderingComposer
@@ -37536,7 +37053,6 @@ class $$CompanyPrinterSettingsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   ColumnOrderings<int> get settingId => $composableBuilder(
     column: $table.settingId,
     builder: (column) => ColumnOrderings(column),
@@ -37641,6 +37157,11 @@ class $$CompanyPrinterSettingsTableOrderingComposer
     column: $table.kotPreview,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get printFastBill => $composableBuilder(
+    column: $table.printFastBill,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CompanyPrinterSettingsTableAnnotationComposer
@@ -37652,7 +37173,6 @@ class $$CompanyPrinterSettingsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-
   GeneratedColumn<int> get settingId =>
       $composableBuilder(column: $table.settingId, builder: (column) => column);
 
@@ -37747,6 +37267,11 @@ class $$CompanyPrinterSettingsTableAnnotationComposer
     column: $table.kotPreview,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get printFastBill => $composableBuilder(
+    column: $table.printFastBill,
+    builder: (column) => column,
+  );
 }
 
 class $$CompanyPrinterSettingsTableTableManager
@@ -37816,6 +37341,7 @@ class $$CompanyPrinterSettingsTableTableManager
                 Value<String> kotCopies = const Value.absent(),
                 Value<String> kotAutoPrint = const Value.absent(),
                 Value<String> kotPreview = const Value.absent(),
+                Value<String> printFastBill = const Value.absent(),
               }) => CompanyPrinterSettingsCompanion(
                 settingId: settingId,
                 printerName: printerName,
@@ -37838,6 +37364,7 @@ class $$CompanyPrinterSettingsTableTableManager
                 kotCopies: kotCopies,
                 kotAutoPrint: kotAutoPrint,
                 kotPreview: kotPreview,
+                printFastBill: printFastBill,
               ),
           createCompanionCallback:
               ({
@@ -37862,6 +37389,7 @@ class $$CompanyPrinterSettingsTableTableManager
                 Value<String> kotCopies = const Value.absent(),
                 Value<String> kotAutoPrint = const Value.absent(),
                 Value<String> kotPreview = const Value.absent(),
+                Value<String> printFastBill = const Value.absent(),
               }) => CompanyPrinterSettingsCompanion.insert(
                 settingId: settingId,
                 printerName: printerName,
@@ -37884,6 +37412,7 @@ class $$CompanyPrinterSettingsTableTableManager
                 kotCopies: kotCopies,
                 kotAutoPrint: kotAutoPrint,
                 kotPreview: kotPreview,
+                printFastBill: printFastBill,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -37929,98 +37458,67 @@ typedef $$CompanyPrinterSettingsTableProcessedTableManager =
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
-
   $AppDatabaseManager(this._db);
-
   $$FoodTypesTableTableManager get foodTypes =>
       $$FoodTypesTableTableManager(_db, _db.foodTypes);
-
   $$ProductCategoriesTableTableManager get productCategories =>
       $$ProductCategoriesTableTableManager(_db, _db.productCategories);
-
   $$ProductSubcategoriesTableTableManager get productSubcategories =>
       $$ProductSubcategoriesTableTableManager(_db, _db.productSubcategories);
-
   $$ProductsTableTableManager get products =>
       $$ProductsTableTableManager(_db, _db.products);
-
   $$ProductPortionsTableTableManager get productPortions =>
       $$ProductPortionsTableTableManager(_db, _db.productPortions);
-
   $$CombosTableTableManager get combos =>
       $$CombosTableTableManager(_db, _db.combos);
-
   $$ComboItemsTableTableManager get comboItems =>
       $$ComboItemsTableTableManager(_db, _db.comboItems);
-
   $$CartItemsTableTableManager get cartItems =>
       $$CartItemsTableTableManager(_db, _db.cartItems);
-
   $$CartComboItemsTableTableManager get cartComboItems =>
       $$CartComboItemsTableTableManager(_db, _db.cartComboItems);
-
   $$InvoicesTableTableManager get invoices =>
       $$InvoicesTableTableManager(_db, _db.invoices);
-
   $$InvoiceItemsTableTableManager get invoiceItems =>
       $$InvoiceItemsTableTableManager(_db, _db.invoiceItems);
-
   $$InvoiceComboItemsTableTableManager get invoiceComboItems =>
       $$InvoiceComboItemsTableTableManager(_db, _db.invoiceComboItems);
-
   $$InvoiceProductDeleteQueueTableTableManager get invoiceProductDeleteQueue =>
       $$InvoiceProductDeleteQueueTableTableManager(
         _db,
         _db.invoiceProductDeleteQueue,
       );
-
   $$PosTablesTableTableManager get posTables =>
       $$PosTablesTableTableManager(_db, _db.posTables);
-
   $$DiningAreasTableTableManager get diningAreas =>
       $$DiningAreasTableTableManager(_db, _db.diningAreas);
-
   $$TableTypesTableTableManager get tableTypes =>
       $$TableTypesTableTableManager(_db, _db.tableTypes);
-
   $$PortionMastersTableTableManager get portionMasters =>
       $$PortionMastersTableTableManager(_db, _db.portionMasters);
-
   $$DiningSessionsTableTableManager get diningSessions =>
       $$DiningSessionsTableTableManager(_db, _db.diningSessions);
-
   $$OrderRoundsTableTableManager get orderRounds =>
       $$OrderRoundsTableTableManager(_db, _db.orderRounds);
-
   $$KotsTableTableManager get kots => $$KotsTableTableManager(_db, _db.kots);
-
   $$KotItemsTableTableManager get kotItems =>
       $$KotItemsTableTableManager(_db, _db.kotItems);
-
   $$MessMembersTableTableManager get messMembers =>
       $$MessMembersTableTableManager(_db, _db.messMembers);
-
   $$MessTokensTableTableManager get messTokens =>
       $$MessTokensTableTableManager(_db, _db.messTokens);
-
   $$MessMealTokenQueueTableTableManager get messMealTokenQueue =>
       $$MessMealTokenQueueTableTableManager(_db, _db.messMealTokenQueue);
-
   $$InventoryMovementsTableTableManager get inventoryMovements =>
       $$InventoryMovementsTableTableManager(_db, _db.inventoryMovements);
-
   $$ShopExpensesTableTableManager get shopExpenses =>
       $$ShopExpensesTableTableManager(_db, _db.shopExpenses);
-
   $$MessMemberPaymentsTableTableManager get messMemberPayments =>
       $$MessMemberPaymentsTableTableManager(_db, _db.messMemberPayments);
-
   $$MessInvoicesTableTableManager get messInvoices =>
       $$MessInvoicesTableTableManager(_db, _db.messInvoices);
-
   $$CompaniesTableTableManager get companies =>
       $$CompaniesTableTableManager(_db, _db.companies);
-
   $$CompanyPrinterSettingsTableTableManager get companyPrinterSettings =>
       $$CompanyPrinterSettingsTableTableManager(
         _db,

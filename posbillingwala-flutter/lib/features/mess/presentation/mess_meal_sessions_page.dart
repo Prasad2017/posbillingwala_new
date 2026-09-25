@@ -272,14 +272,6 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(AppStrings.of(ref).mealSessions)),
-      floatingActionButton: FloatingActionButton(
-        onPressed: saving
-            ? null
-            : () => edit(
-                const MessMealSessionDto(sessionId: '', sessionName: ''),
-              ),
-        child: const Icon(Icons.add),
-      ),
       body: Column(
         children: [
           Expanded(
@@ -304,11 +296,11 @@ class MessMealSessionsPageState extends ConsumerState<MessMealSessionsPage> {
                 return ResponsiveScrollShell(
                   dashboard: true,
                   child: ListView.separated(
-                    padding: EdgeInsets.fromLTRB(
+                      padding: EdgeInsets.fromLTRB(
                       AppBreakpoints.pagePaddingFor(context.widthClass),
                       12,
                       AppBreakpoints.pagePaddingFor(context.widthClass),
-                      88,
+                      24,
                     ),
                     itemCount: rows.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 8),

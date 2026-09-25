@@ -77,6 +77,10 @@
     <string name="ui_duplicate_invoice_print">डुप्लिकेट इनवॉइस प्रिंट</string>
     <string name="ui_duplicate_bill_copy">डुप्लिकेट बिल कॉपी (इनवॉइस सूची)</string>
     <string name="ui_duplicate_bill_copy_hint">चालू होने पर इनवॉइस सूची से प्रिंट किए गए बिल Duplicate Copy दिखेंगे। नई बिलिंग पर असर नहीं पड़ेगा।</string>
+    <string name="ui_print_fast_bill">प्रिंट फास्ट बिल</string>
+    <string name="ui_print_fast_bill_hint">चालू होने पर बिल बनाते समय बिलिंग तारीख चुनें। वही तारीख सेव, प्रिंट, नंबरिंग और रिपोर्ट में लगेगी।</string>
+    <string name="ui_billing_date">बिलिंग तारीख</string>
+    <string name="ui_select_billing_date">तारीख चुनें</string>
     <string name="ui_enter_pin">PIN दर्ज करें*</string>
     <string name="ui_enter_quantity">मात्रा दर्ज करें*</string>
     <string name="ui_expense">खर्च</string>

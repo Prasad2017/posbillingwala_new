@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_page.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_token_qr_page.dart';
@@ -94,17 +96,44 @@ class MessMembersPageState extends ConsumerState<MessMembersPage> {
     if (result.messAmount != null || result.messPaidAmount != null) {
       final month = DateFormat('yyyy-MM').format(DateTime.now());
       final network = 'pay_${DateTime.now().millisecondsSinceEpoch}';
-      await ref
-          .read(appDatabaseProvider)
-          .upsertLocalMessPayment(
+      final messAmount = result.messAmount ?? 0;
+      final paidAmount = result.messPaidAmount ?? 0;
+      final messDays = result.messDays ?? 'Two Time';
+      final db = ref.read(appDatabaseProvider);
+      await db.upsertLocalMessPayment(
+        memberId: '$memberId',
+        memberName: result.name,
+        messAmount: messAmount,
+        paidAmount: paidAmount,
+        messTotalDays: messDays,
+        paymentDate: month,
+        paymentNetworkStatus: network,
+      );
+      final userId = ref.read(authControllerProvider).session?.userId;
+      if (userId != null && userId.isNotEmpty) {
+        try {
+          final ok = await MessApi(ref.read(apiClientProvider)).insertMemberPayment(
+            userId: userId,
             memberId: '$memberId',
             memberName: result.name,
-            messAmount: result.messAmount ?? 0,
-            paidAmount: result.messPaidAmount ?? 0,
-            messTotalDays: result.messDays ?? 'Two Time',
+            paymentMessAmount: messAmount.toStringAsFixed(2),
+            paymentPaidAmount: paidAmount.toStringAsFixed(2),
+            messTotalDays: messDays,
             paymentDate: month,
             paymentNetworkStatus: network,
           );
+          if (ok) {
+            final pending = await db.getPendingMessPayments();
+            for (final row in pending) {
+              if (row.paymentNetworkStatus == network) {
+                await db.markMessPaymentSynced(row.localPaymentId);
+              }
+            }
+          }
+        } catch (_) {
+          /* Local row remains pending for sync. */
+        }
+      }
     }
     if (!mounted) return;
     ScaffoldMessenger.of(
