@@ -191,7 +191,8 @@
             android:name=".Activity.SplashScreen"
             android:configChanges="keyboardHidden|fontScale|density"
             android:exported="true"
-            android:screenOrientation="fullUser">
+            android:screenOrientation="fullUser"
+            android:theme="@style/SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

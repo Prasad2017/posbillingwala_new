@@ -2,6 +2,7 @@ package com.pos_billingwala.Retrofit;
 
 
 import com.pos_billingwala.Model.AllApiResponse;
+import com.pos_billingwala.Model.AppSplashResponse;
 import com.pos_billingwala.Model.LoginResponse;
 
 import retrofit2.Call;
@@ -84,6 +85,9 @@ public interface ApiInterface {
     @GET("getHomeSalesOverview.php")
     Call<AllApiResponse> getHomeSalesOverview(@Query("userId") String userId,
                                                 @Query("period") String period);
+
+    @GET("getAppSplash.php")
+    Call<AppSplashResponse> getAppSplash();
 
     @GET("getCompanyPrinterSetting.php")
     Call<AllApiResponse> getCompanyPrinterSetting(@Query("userId") String userId);

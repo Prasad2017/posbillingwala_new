@@ -15,9 +15,8 @@ import 'package:pos_billingwala_v2/features/settings/domain/in_app_update_servic
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /*
- * Always: native logo first.
- * Dynamic splash (admin): first from net → cache; later from cache;
- * when online again refresh from server and update cache.
+ * App logo while resolving splash; admin image when available (3s).
+ * No separate OS/Flutter double-logo — logo only on this Flutter page.
  */
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -27,12 +26,10 @@ class SplashPage extends ConsumerStatefulWidget {
 }
 
 class SplashPageState extends ConsumerState<SplashPage> {
-  static const nativeLogoHold = Duration(milliseconds: 700);
   static const dynamicSplashHold = Duration(seconds: 3);
 
   String? webOfflineMessage;
   AppSplashArt? splashArt;
-  bool showNativeOnly = true;
 
   @override
   void initState() {
@@ -52,44 +49,25 @@ class SplashPageState extends ConsumerState<SplashPage> {
   Future<void> startBootstrap() async {
     final store = AppSplashStore(ref.read(apiClientProvider));
     final online = await isDeviceOnline();
-    final nativeHold = Future<void>.delayed(nativeLogoHold);
 
-    /* 1) Always keep native logo on screen first. */
-    if (mounted) setState(() => showNativeOnly = true);
-
-    /* 2) Prepare cached splash (if any) while native logo shows. */
     final cached = await store.readCachedArt();
-
-    await nativeHold;
     if (!mounted) return;
 
-    /* 3) After native logo: show cache if we have it. */
     if (cached != null && !cached.isEmpty) {
-      setState(() {
-        splashArt = cached;
-        showNativeOnly = false;
-      });
+      setState(() => splashArt = cached);
     }
 
-    /* 4) Online → fetch from server and refresh cache (first load or update). */
     if (online) {
       final fresh = await store.fetchAndCache();
       if (!mounted) return;
       if (fresh != null && !fresh.isEmpty) {
-        setState(() {
-          splashArt = fresh;
-          showNativeOnly = false;
-        });
+        setState(() => splashArt = fresh);
       } else {
-        /* Admin removed splash — stay / return to native logo only. */
-        setState(() {
-          splashArt = null;
-          showNativeOnly = true;
-        });
+        setState(() => splashArt = null);
       }
     }
 
-    final hasDynamic = !showNativeOnly && splashArt != null && !splashArt!.isEmpty;
+    final hasDynamic = splashArt != null && !splashArt!.isEmpty;
     if (hasDynamic) {
       await Future<void>.delayed(dynamicSplashHold);
     }
@@ -142,7 +120,7 @@ class SplashPageState extends ConsumerState<SplashPage> {
     final bottomPad = MediaQuery.paddingOf(context).bottom;
     final size = MediaQuery.sizeOf(context);
     final art = splashArt;
-    final showDynamic = !showNativeOnly && art != null && !art.isEmpty;
+    final showDynamic = art != null && !art.isEmpty;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -153,7 +131,7 @@ class SplashPageState extends ConsumerState<SplashPage> {
           if (showDynamic)
             _DynamicSplashImage(art: art)
           else
-            _NativeLogo(size: size),
+            _AppLogo(size: size),
           if (webOfflineMessage != null)
             Align(
               alignment: Alignment.bottomCenter,
@@ -180,8 +158,8 @@ class _DynamicSplashImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final url = art.networkUrl?.trim() ?? '';
     final path = art.localPath?.trim() ?? '';
+    final size = MediaQuery.sizeOf(context);
 
-    /* Prefer network when URL exists (Flutter disk/memory cache); file for offline. */
     if (url.isNotEmpty) {
       return Image.network(
         url,
@@ -201,11 +179,10 @@ class _DynamicSplashImage extends StatelessWidget {
               alignment: Alignment.center,
               filterQuality: FilterQuality.high,
               gaplessPlayback: true,
-              errorBuilder: (_, _, _) =>
-                  _NativeLogo(size: MediaQuery.sizeOf(context)),
+              errorBuilder: (_, _, _) => _AppLogo(size: size),
             );
           }
-          return _NativeLogo(size: MediaQuery.sizeOf(context));
+          return _AppLogo(size: size);
         },
       );
     }
@@ -219,18 +196,16 @@ class _DynamicSplashImage extends StatelessWidget {
         alignment: Alignment.center,
         filterQuality: FilterQuality.high,
         gaplessPlayback: true,
-        errorBuilder: (_, _, _) =>
-            _NativeLogo(size: MediaQuery.sizeOf(context)),
+        errorBuilder: (_, _, _) => _AppLogo(size: size),
       );
     }
 
-    return _NativeLogo(size: MediaQuery.sizeOf(context));
+    return _AppLogo(size: size);
   }
 }
 
-/* Same look as native splash: app_logo.png centered, as-is (not circular). */
-class _NativeLogo extends StatelessWidget {
-  const _NativeLogo({required this.size});
+class _AppLogo extends StatelessWidget {
+  const _AppLogo({required this.size});
 
   final Size size;
 

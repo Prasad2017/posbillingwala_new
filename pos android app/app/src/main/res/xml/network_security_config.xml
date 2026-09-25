@@ -8,5 +8,6 @@
     </base-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">posbillingwala.com</domain>
+        <domain includeSubdomains="true">admin.posbillingwala.com</domain>
     </domain-config>
 </network-security-config>
