@@ -15,7 +15,8 @@ List<T> mapJsonList<T>(Object? raw, T Function(Map<String, dynamic> json) map) {
 }
 
 bool isApiSuccess(Map<String, dynamic> json) {
-  return json['status']?.toString() == '1';
+  final s = json['status']?.toString().toLowerCase().trim() ?? '';
+  return s == '1' || s == 'true';
 }
 
 class StatusMessage {

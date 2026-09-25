@@ -240,6 +240,9 @@ Route::middleware(['auth'])->group(function () {
 	Route::get('settings/pos-banners/toggle/{id}', [PosHomeBannerController::class, 'toggle']);
 	Route::get('settings/pos-banners/move/{id}/{direction}', [PosHomeBannerController::class, 'move']);
 	Route::get('settings/pos-banners/delete/{id}', [PosHomeBannerController::class, 'destroy']);
+	Route::get('settings/pos-splash', [\App\Http\Controllers\PosAppSplashController::class, 'index']);
+	Route::post('settings/pos-splash', [\App\Http\Controllers\PosAppSplashController::class, 'store']);
+	Route::post('settings/pos-splash/delete', [\App\Http\Controllers\PosAppSplashController::class, 'destroy']);
 
 	Route::get('users', [\App\Http\Controllers\UsersController::class, 'hub']);
 

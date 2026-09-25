@@ -19,6 +19,7 @@ abstract final class ApiConstants {
   );
 
   /* Resolves a relative shop/company image path to an absolute URL. */
+  /* Keeps http:// and https:// as-is — app supports both. */
   static String? mediaUrl(String? path) {
     final p = path?.trim() ?? '';
     if (p.isEmpty) return null;
@@ -72,6 +73,7 @@ abstract final class ApiEndpoints {
       'insertCompanyPrinterSetting.php';
   static const String getHomeSalesOverview = 'getHomeSalesOverview.php';
   static const String getHomeBannerList = 'getHomeBannerList.php';
+  static const String getAppSplash = 'getAppSplash.php';
 
   /* Tables / dining */
   static const String insertPosTable = 'insertPosTable.php';

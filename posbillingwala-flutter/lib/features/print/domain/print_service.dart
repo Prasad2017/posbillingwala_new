@@ -111,18 +111,21 @@ class PrintService {
     bool duplicate = false,
   }) async {
     syncSavedEndpoints(isKot: false);
-    final text = builder.billText(
-      invoice: invoice,
-      items: items,
-      shopName: shopName,
-      duplicate: duplicate,
-    );
     final bytes = await builder.billPrintBytes(
       invoice: invoice,
       items: items,
       shopName: shopName,
       duplicate: duplicate,
     );
+    /* Text layout only needed for share / web — thermal path uses raster bytes. */
+    final text = (preferShare || kIsWeb)
+        ? builder.billText(
+            invoice: invoice,
+            items: items,
+            shopName: shopName,
+            duplicate: duplicate,
+          )
+        : '';
     return dispatch(
       text: text,
       bytes: bytes,

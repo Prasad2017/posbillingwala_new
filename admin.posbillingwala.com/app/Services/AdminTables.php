@@ -206,6 +206,15 @@ class AdminTables
             });
         }
 
+        if (!Schema::hasTable('pos_app_splash')) {
+            Schema::create('pos_app_splash', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('image_path', 255)->nullable();
+                $table->string('image_url', 500)->nullable();
+                $table->dateTime('updated_at')->useCurrent();
+            });
+        }
+
         if (!Schema::hasTable('website_settings')) {
             Schema::create('website_settings', function (Blueprint $table) {
                 $table->string('setting_key', 80)->primary();

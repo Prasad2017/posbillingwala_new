@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/painting.dart';
+import 'package:pos_billingwala_v2/core/logging/error_report_service.dart';
 import 'package:pos_billingwala_v2/core/logging/file_log_store.dart';
 import 'package:pos_billingwala_v2/core/security/screenshot_config.dart';
 import 'package:pos_billingwala_v2/features/notifications/domain/fcm_service.dart';
@@ -34,5 +35,7 @@ abstract final class AppStartup {
     try {
       await FcmService().initialize();
     } catch (_) {}
+    unawaited(ErrorReportService.collectProcessExits());
+    unawaited(ErrorReportService.flushQueue());
   }
 }

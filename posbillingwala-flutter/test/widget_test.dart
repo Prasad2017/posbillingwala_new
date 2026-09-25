@@ -15,8 +15,10 @@ void main() {
 
     expect(find.text('Billingwala'), findsWidgets);
 
-    // Splash delay + SharedPreferences bootstrap + redirect frames.
+    // Native logo hold + optional dynamic splash + bootstrap.
     await tester.pump(const Duration(milliseconds: 700));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     await tester.pump();

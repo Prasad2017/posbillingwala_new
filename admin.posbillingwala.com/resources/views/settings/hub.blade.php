@@ -21,6 +21,10 @@
             <span class="hub-icon kpi-icon blue"><i class='bx bx-images'></i></span>
             <div><h6>Banner Upload</h6><p>Upload one or more banners for the POS app home screen</p></div>
         </a>
+        <a class="hub-row" href="{{ url('settings/pos-splash') }}">
+            <span class="hub-icon kpi-icon green"><i class='bx bx-landscape'></i></span>
+            <div><h6>Splash Screen Upload</h6><p>Full-screen image shown when the POS app starts</p></div>
+        </a>
         <a class="hub-row" href="{{ url('settings/logo') }}">
             <span class="hub-icon kpi-icon purple"><i class='bx bx-image'></i></span>
             <div><h6>Logo Update</h6><p>Admin panel, website header/footer, and login page</p></div>

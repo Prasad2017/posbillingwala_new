@@ -86,6 +86,11 @@
             <div><h6>POS App Banner Upload</h6><p>Home-screen banners for the POS mobile app (one or many)</p></div>
             <i class='bx bx-chevron-right hub-chevron'></i>
         </a>
+        <a class="hub-row hub-row--card" href="{{ url('settings/pos-splash') }}">
+            <span class="hub-icon kpi-icon green"><i class='bx bx-landscape'></i></span>
+            <div><h6>POS App Splash Upload</h6><p>Startup splash image for the POS mobile app</p></div>
+            <i class='bx bx-chevron-right hub-chevron'></i>
+        </a>
         <a class="hub-row hub-row--card hub-row--wide" href="{{ url('website/contacts') }}">
             <span class="hub-icon kpi-icon orange"><i class='bx bx-envelope'></i></span>
             <div><h6>Contact Enquiries</h6><p>{{ $contactCount }} total · {{ $newContactCount }} new from website form</p></div>

@@ -324,11 +324,14 @@ class AuthController extends Notifier<AuthState> {
     DeviceIdentity? device,
   }) async {
     final resolved = device ?? await DeviceIdentityService().resolve();
+    final staff = await StaffStore().read();
     ErrorReportService.setSession(
       userId: session.userId,
       shopName: session.shopName ?? session.displayName,
       deviceId: resolved.deviceId,
       deviceName: resolved.deviceName,
+      userLabel: staff?.name ?? session.displayName,
+      branchLabel: session.branchLabel,
     );
   }
 

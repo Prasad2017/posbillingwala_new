@@ -76,33 +76,19 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     );
     Future.microtask(() async {
       await loadPrinterCloud();
-      await syncHubAndAutoConnect();
+      await syncHubAddresses();
       await refreshBtStatus();
     });
   }
 
-  Future<void> syncHubAndAutoConnect() async {
+  Future<void> syncHubAddresses() async {
     final s = ref.read(printerSettingsProvider);
     hub.updateSavedAddresses(
       billMac: s.billBluetoothAddress,
       kotMac: s.kotBluetoothAddress,
     );
     usbHub.updateSavedUsb(identifier: s.billUsbIdentifier, name: s.billUsbName);
-    if (s.billTransport == PosPrinterTransport.bluetooth) {
-      await hub.autoConnect(PrinterChannelKind.bill);
-    } else if (s.billTransport == PosPrinterTransport.usb &&
-        s.billUsbIdentifier.isNotEmpty) {
-      await usbHub.connectUsb(
-        identifier: s.billUsbIdentifier,
-        name: s.billUsbName,
-      );
-    }
-    if (s.kotTransport == PosPrinterTransport.bluetooth &&
-        s.kotBluetoothAddress.trim().isNotEmpty &&
-        s.kotBluetoothAddress.trim().toLowerCase() !=
-            s.billBluetoothAddress.trim().toLowerCase()) {
-      await hub.autoConnect(PrinterChannelKind.kot);
-    }
+    /* Do not auto-connect BT — connect only on Print / Connect button. */
   }
 
   Future<void> refreshBtStatus() async {
@@ -442,7 +428,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           billMac: updated.billBluetoothAddress,
           kotMac: updated.kotBluetoothAddress,
         );
-        await hub.autoConnect(PrinterChannelKind.bill);
       }
     } catch (_) {
       /* Keep local fields if cloud load fails. */

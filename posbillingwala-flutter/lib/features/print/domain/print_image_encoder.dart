@@ -115,3 +115,27 @@ class PrintImageEncoder {
     }
   }
 }
+
+/* Isolate payload for [encodeRgbaIsolate] (must be top-level / sendable). */
+class EncodeRgbaArgs {
+  const EncodeRgbaArgs({
+    required this.rgba,
+    required this.width,
+    required this.height,
+    this.brightValue = 128,
+  });
+
+  final Uint8List rgba;
+  final int width;
+  final int height;
+  final int brightValue;
+}
+
+List<int> encodeRgbaIsolate(EncodeRgbaArgs args) {
+  return PrintImageEncoder.encodeRgba(
+    rgba: args.rgba,
+    width: args.width,
+    height: args.height,
+    brightValue: args.brightValue,
+  );
+}

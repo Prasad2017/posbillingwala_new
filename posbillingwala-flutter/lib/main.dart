@@ -8,7 +8,7 @@ import 'package:pos_billingwala_v2/language/locale_catalog.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  installFlutterCrashReporting();
+  await ErrorReportService.bootstrap();
   /* Keep status + nav bars always visible (no immersive hide/show). */
   await SystemChrome.setEnabledSystemUIMode(
     SystemUiMode.manual,

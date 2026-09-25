@@ -52,7 +52,7 @@ class PrintJobDispatcher {
     }
     try {
       final api = ref.read(storePrinterApiProvider);
-      final printers = await api.list(session.licenceUserId);
+      final printers = await api.listCached(session.licenceUserId);
       final enabled = printers.where((p) => p.enabled).toList();
       if (enabled.isEmpty) {
         return await service.printKot(ticket);
@@ -145,7 +145,8 @@ class PrintJobDispatcher {
   }) async {
     final session = ref.read(authControllerProvider).session;
     final service = ref.read(printServiceProvider);
-    if (session == null) {
+    /* Hot path: local BT/USB/network already set — skip store-printer HTTP. */
+    if (_hasLocalBillEndpoint(service.settings) || session == null) {
       return await service.printBill(
         invoice: invoice,
         items: items,
@@ -156,7 +157,7 @@ class PrintJobDispatcher {
     try {
       final printers = await ref
           .read(storePrinterApiProvider)
-          .list(session.licenceUserId);
+          .listCached(session.licenceUserId);
       final billPrinters = printers
           .where(
             (p) => p.enabled && (p.purpose == 'BILL' || p.area == 'COUNTER'),
@@ -176,12 +177,6 @@ class PrintJobDispatcher {
       );
       final device = await DeviceIdentityService().resolve();
       final builder = receiptBuilderFor(service, printer);
-      final text = builder.billText(
-        invoice: invoice,
-        items: items,
-        shopName: shopName,
-        duplicate: duplicate,
-      );
       final bytes = await builder.billPrintBytes(
         invoice: invoice,
         items: items,
@@ -192,7 +187,7 @@ class PrintJobDispatcher {
           printer.deviceId.isEmpty || printer.deviceId == device.deviceId;
       if (local && !kIsWeb) {
         return await service.dispatchToEndpoint(
-          text: text,
+          text: '',
           bytes: bytes,
           label: duplicate ? 'Duplicate bill' : 'Bill',
           transport: transportOf(printer.connectionType),
@@ -203,6 +198,12 @@ class PrintJobDispatcher {
           networkPort: printer.port,
         );
       }
+      final text = builder.billText(
+        invoice: invoice,
+        items: items,
+        shopName: shopName,
+        duplicate: duplicate,
+      );
       await ref.read(storePrinterApiProvider).createJob(session.licenceUserId, {
         'printerId': printer.id,
         'documentType': 'BILL',
@@ -225,6 +226,17 @@ class PrintJobDispatcher {
         shopName: shopName,
         duplicate: duplicate,
       );
+    }
+  }
+
+  static bool _hasLocalBillEndpoint(PrinterSettings settings) {
+    switch (settings.billTransport) {
+      case PosPrinterTransport.bluetooth:
+        return settings.billBluetoothAddress.trim().isNotEmpty;
+      case PosPrinterTransport.usb:
+        return settings.billUsbIdentifier.trim().isNotEmpty;
+      case PosPrinterTransport.network:
+        return settings.networkHost.trim().isNotEmpty;
     }
   }
 

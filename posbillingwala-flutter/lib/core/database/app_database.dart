@@ -4417,18 +4417,21 @@ WHERE $where
     final start = DateTime(day.year, day.month, day.day);
     final end = start.add(const Duration(days: 1));
 
+    /* Only pull invoice_number — avoid loading full invoice rows for numbering. */
     final rows =
-        await (select(invoices)..where(
-              (t) =>
-                  t.invoiceDate.isBiggerOrEqualValue(start) &
-                  t.invoiceDate.isSmallerThanValue(end) &
-                  branchMatches(t.branchId),
-            ))
+        await (selectOnly(invoices)
+              ..addColumns([invoices.invoiceNumber])
+              ..where(
+                invoices.invoiceDate.isBiggerOrEqualValue(start) &
+                    invoices.invoiceDate.isSmallerThanValue(end) &
+                    branchMatches(invoices.branchId),
+              ))
             .get();
 
     var maxSeq = 0;
     for (final row in rows) {
-      final seq = invoiceSequenceFromNumber(row.invoiceNumber);
+      final number = row.read(invoices.invoiceNumber) ?? '';
+      final seq = invoiceSequenceFromNumber(number);
       if (seq > maxSeq) maxSeq = seq;
     }
 

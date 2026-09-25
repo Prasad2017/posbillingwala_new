@@ -44,7 +44,7 @@ class ReceiptRasterizer {
       logoPath: logoPath,
       useAssetLogoFallback: useAssetLogoFallback,
     );
-    return _escPosRaster(
+    return await _escPosRaster(
       rendered,
       charsPerLine: settings.charsPerLine,
       feedLines: feedLinesOverride ?? settings.feedLines,
@@ -70,7 +70,7 @@ class ReceiptRasterizer {
       qrMarker: qrMarker,
       useAssetLogoFallback: useAssetLogoFallback,
     );
-    return _escPosRaster(
+    return await _escPosRaster(
       rendered,
       charsPerLine: settings.charsPerLine,
       feedLines: feedLinesOverride ?? settings.feedLines,
@@ -115,7 +115,7 @@ class ReceiptRasterizer {
       logoPath: logoPath,
       useAssetLogoFallback: useAssetLogoFallback,
     );
-    return _escPosRaster(
+    return await _escPosRaster(
       rendered,
       charsPerLine: settings.charsPerLine,
       feedLines: feedLinesOverride ?? settings.feedLines,
@@ -292,16 +292,20 @@ class ReceiptRasterizer {
     return data.buffer.asUint8List();
   }
 
-  List<int> _escPosRaster(
+  Future<List<int>> _escPosRaster(
     RenderedImage rendered, {
     required int charsPerLine,
     required int feedLines,
-  }) {
-    final raster = PrintImageEncoder.encodeRgba(
-      rgba: rendered.rgba,
-      width: rendered.width,
-      height: rendered.height,
-      brightValue: 128,
+  }) async {
+    /* Floyd–Steinberg is CPU-heavy — keep it off the UI isolate. */
+    final raster = await compute(
+      encodeRgbaIsolate,
+      EncodeRgbaArgs(
+        rgba: rendered.rgba,
+        width: rendered.width,
+        height: rendered.height,
+        brightValue: 128,
+      ),
     );
     final out = EscPosEncoder(charsPerLine: charsPerLine)
       ..init()

@@ -10,6 +10,7 @@ import 'package:pos_billingwala_v2/features/pos/domain/billing_date.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_mode.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/staff/data/staff_store.dart';
+import 'package:pos_billingwala_v2/features/staff/domain/staff_user.dart';
 
 class PaymentCheckoutState {
   const PaymentCheckoutState({
@@ -219,11 +220,16 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
 
       final session = ref.read(billingSessionProvider);
       final printer = ref.read(printerSettingsProvider);
-      final invoiceCount = await ref
-          .read(appDatabaseProvider)
-          .countTotalInvoices();
       final authSession = ref.read(authControllerProvider).session;
-      final device = await DeviceIdentityService().resolve();
+      /* Parallel prep — avoid serial I/O before the local save. */
+      final prep = await Future.wait<Object?>([
+        ref.read(appDatabaseProvider).countTotalInvoices(),
+        DeviceIdentityService().resolve(),
+        StaffStore().read(),
+      ]);
+      final invoiceCount = prep[0]! as int;
+      final device = prep[1]! as DeviceIdentity;
+      final staff = prep[2] as StaffUser?;
       final licence = await LicenseValidator.validate(
         deviceId: device.deviceId,
         licenceKey: authSession?.licenceKey ?? '',
@@ -243,7 +249,6 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
       final prefix = printer.invoicePrefix.trim().isNotEmpty
           ? printer.invoicePrefix.trim()
           : session.invoicePrefix;
-      final staff = await StaffStore().read();
       final staffId = int.tryParse(staff?.id ?? '');
       final result = await ref
           .read(appDatabaseProvider)

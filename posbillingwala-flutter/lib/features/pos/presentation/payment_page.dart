@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
-import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
@@ -351,22 +350,21 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
           printResult.outcome != PrintOutcome.failed &&
           printResult.outcome != PrintOutcome.previewOnly;
       if (requirePrintSuccess && !printedOk) {
-        await ref
-            .read(appDatabaseProvider)
-            .voidInvoiceLocally(result.invoiceId);
+        /* Keep local bill (Android parity) — reprint from Invoice List. */
         if (!mounted) return;
         ref.read(paymentCheckoutControllerProvider.notifier).reset();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               printResult.message?.trim().isNotEmpty == true
-                  ? '${printResult.message} Invoice not saved.'
-                  : 'Print failed — invoice not saved. Try again.',
+                  ? '${printResult.message} Bill saved — reprint from Invoice List.'
+                  : 'Print failed — bill saved. Reprint from Invoice List.',
             ),
-            backgroundColor: AppColors.danger,
+            backgroundColor: AppColors.orange,
           ),
         );
         if (!mounted) return;
+        unawaited(_uploadBillInBackground(result.invoiceId));
         context.go(session.billingRoute);
         return;
       }
@@ -390,42 +388,59 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     /* Payment display must never block save/print. */
     unawaited(tryAutoShowPaymentDisplayAfterBill(ref, result));
 
-    final online = await isDeviceOnline();
-    var retryAutoSync = !online;
-    if (AppPlatform.requiresNetwork || online) {
+    /* Web still awaits cloud confirm; mobile returns to billing immediately. */
+    if (AppPlatform.requiresNetwork) {
+      final online = await isDeviceOnline();
+      if (!online) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(kOnlineRequiredMessage),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+        return;
+      }
       final sync = await ref
           .read(invoiceSyncControllerProvider.notifier)
           .uploadPending(onlyInvoiceId: result.invoiceId);
       if (!mounted) return;
       if (sync.failed > 0 || sync.uploaded < 1) {
-        retryAutoSync = true;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               sync.message?.trim().isNotEmpty == true
                   ? sync.message!
-                  : AppPlatform.requiresNetwork
-                  ? kWebApiSaveFailedMessage
-                  : 'Bill saved',
+                  : kWebApiSaveFailedMessage,
             ),
-            backgroundColor: AppPlatform.requiresNetwork
-                ? AppColors.danger
-                : AppColors.orange,
+            backgroundColor: AppColors.danger,
           ),
         );
-        if (AppPlatform.requiresNetwork) return;
+        return;
       }
-    } else if (AppPlatform.requiresNetwork) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(kOnlineRequiredMessage),
-          backgroundColor: AppColors.danger,
-        ),
-      );
-      return;
+    } else {
+      unawaited(_uploadBillInBackground(result.invoiceId));
     }
 
+    if (!mounted) return;
+    ref.read(paymentCheckoutControllerProvider.notifier).reset();
+    /* Return to Fast Billing / Takeaway / Table billing for the next order. */
+    context.go(session.billingRoute);
+  }
+
+  Future<void> _uploadBillInBackground(int invoiceId) async {
+    final online = await isDeviceOnline();
+    var retryAutoSync = !online;
+    if (online) {
+      try {
+        final sync = await ref
+            .read(invoiceSyncControllerProvider.notifier)
+            .uploadPending(onlyInvoiceId: invoiceId);
+        if (sync.failed > 0 || sync.uploaded < 1) retryAutoSync = true;
+      } catch (_) {
+        retryAutoSync = true;
+      }
+    }
     if (AppPlatform.supportsOfflineSync) {
       unawaited(
         ref
@@ -433,11 +448,6 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
             .syncNow(force: retryAutoSync, reason: 'after-bill'),
       );
     }
-
-    if (!mounted) return;
-    ref.read(paymentCheckoutControllerProvider.notifier).reset();
-    /* Return to Fast Billing / Takeaway / Table billing for the next order. */
-    context.go(session.billingRoute);
   }
 
   @override

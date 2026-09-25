@@ -69,12 +69,10 @@ class HomePageState extends ConsumerState<HomePage> {
           await service.requestAll();
         }
         final settings = ref.read(printerSettingsProvider);
-        final hub = BluetoothPrinterHub.instance
-          ..updateSavedAddresses(
-            billMac: settings.billBluetoothAddress,
-            kotMac: settings.kotBluetoothAddress,
-          );
-        await hub.autoConnect(PrinterChannelKind.bill);
+        BluetoothPrinterHub.instance.updateSavedAddresses(
+          billMac: settings.billBluetoothAddress,
+          kotMac: settings.kotBluetoothAddress,
+        );
         if (!mounted) return;
         await refreshPrinterChip();
         await refreshHoursLabels();

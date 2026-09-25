@@ -30,6 +30,35 @@ class StorePrinterApi {
     return mapJsonList(data['printerResponse'], StorePrinter.fromJson);
   }
 
+  /* Short TTL cache so bill/KOT routing does not hit the API every print. */
+  Future<List<StorePrinter>> listCached(
+    String userId, {
+    Duration ttl = const Duration(seconds: 45),
+  }) async {
+    final now = DateTime.now();
+    if (_listCacheUserId == userId &&
+        _listCache != null &&
+        _listCacheAt != null &&
+        now.difference(_listCacheAt!) < ttl) {
+      return _listCache!;
+    }
+    final list = await this.list(userId);
+    _listCacheUserId = userId;
+    _listCache = list;
+    _listCacheAt = now;
+    return list;
+  }
+
+  void invalidateListCache() {
+    _listCache = null;
+    _listCacheAt = null;
+    _listCacheUserId = null;
+  }
+
+  static String? _listCacheUserId;
+  static List<StorePrinter>? _listCache;
+  static DateTime? _listCacheAt;
+
   Future<StorePrinter> save(
     String userId,
     Map<String, dynamic> fields, {
@@ -41,6 +70,7 @@ class StorePrinterApi {
         ? ApiEndpoints.insertStorePrinter
         : ApiEndpoints.updateStorePrinter;
     final data = await post(path, fields);
+    invalidateListCache();
     if (!isApiSuccess(data) || data['printer'] is! Map) {
       throw Exception(data['message']?.toString() ?? 'Unable to save printer');
     }
@@ -59,6 +89,7 @@ class StorePrinterApi {
         data['message']?.toString() ?? 'Unable to disable printer',
       );
     }
+    invalidateListCache();
   }
 
   Future<List<PrinterRouteRule>> routes(String userId) async {
