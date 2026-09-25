@@ -32,6 +32,8 @@ public class ProductSubcategoryResponse {
     @SerializedName("subcategorySortOrder")
     @Expose
     private String subcategorySortOrder;
+    /** Resolved from category table for list UI (not always from API). */
+    private String categoryName;
 
     public String getSubcategoryId() {
         return subcategoryId;
@@ -95,5 +97,13 @@ public class ProductSubcategoryResponse {
 
     public void setSubcategorySortOrder(String subcategorySortOrder) {
         this.subcategorySortOrder = subcategorySortOrder;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
     }
 }

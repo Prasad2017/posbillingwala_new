@@ -13,7 +13,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
@@ -54,13 +54,11 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
         SweetAlertDialog loader = ListLoader.show(activity);
         try {
             subcategoryResponseList.clear();
-            if (selectedCategoryId != null) {
-                subcategoryResponseList = posBillingWalaDatabase.getProductSubcategoryList(selectedCategoryId);
-            }
+            // Always show all subcategories (with category name); category dropdown is only for add.
+            subcategoryResponseList = posBillingWalaDatabase.getProductSubcategoryList(null);
             if (!subcategoryResponseList.isEmpty()) {
                 subcategoryAdapter = new SubcategoryAdapter(activity, subcategoryResponseList);
-                subcategoryRecyclerview.setLayoutManager(new GridLayoutManager(activity,
-                        MasterListTabletUi.listColumnCount(activity)));
+                subcategoryRecyclerview.setLayoutManager(new LinearLayoutManager(activity));
                 subcategoryRecyclerview.setAdapter(subcategoryAdapter);
 
                 subcategoryListCardView.setVisibility(View.VISIBLE);
@@ -186,7 +184,6 @@ public class AddSubcategory extends Fragment implements View.OnClickListener {
             categoryId = categoryIdList[position];
             categoryName = categoryNameList[position];
             selectedCategoryId = categoryId;
-            getSubcategoryList();
         });
 
         getSubcategoryList();

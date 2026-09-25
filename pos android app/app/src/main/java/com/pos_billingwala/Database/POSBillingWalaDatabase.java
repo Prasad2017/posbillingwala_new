@@ -2007,13 +2007,28 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     }
 
     public void updateProductSubcategory(String subcategoryId, String subcategoryName, int subcategoryStatus) {
+        updateProductSubcategory(subcategoryId, null, null, subcategoryName, subcategoryStatus);
+    }
+
+    public void updateProductSubcategory(String subcategoryId, String categoryId, String categoryName,
+                                         String subcategoryName, int subcategoryStatus) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("subcategoryName", subcategoryName);
         values.put("subcategoryStatus", 0);
+        if (categoryId != null && !categoryId.trim().isEmpty()) {
+            values.put("categoryId", categoryId.trim());
+        }
         db.update(PRODUCT_SUBCATEGORY_TABLE, values, "subcategoryId=?", new String[]{subcategoryId});
+
         ContentValues productDirty = new ContentValues();
         productDirty.put("productStatus", 0);
+        if (categoryId != null && !categoryId.trim().isEmpty()) {
+            productDirty.put("categoryId", categoryId.trim());
+            if (categoryName != null && !categoryName.trim().isEmpty()) {
+                productDirty.put("categoryName", categoryName.trim());
+            }
+        }
         db.update(PRODUCT_TABLE, productDirty, "subcategoryId=?", new String[]{subcategoryId});
         db.close();
     }
@@ -2057,16 +2072,19 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = null;
         try {
+            String baseSql = "SELECT ps.*, pc.categoryName AS categoryName FROM " + PRODUCT_SUBCATEGORY_TABLE + " ps"
+                    + " LEFT JOIN " + PRODUCT_CATEGORY_TABLE + " pc"
+                    + " ON CAST(pc.categoryId AS TEXT) = CAST(ps.categoryId AS TEXT)"
+                    + " WHERE IFNULL(ps.subcategoryDeletedStatus, '0') = '0'";
             if (categoryId == null || categoryId.trim().isEmpty()) {
                 cursor = db.rawQuery(
-                        "SELECT * FROM " + PRODUCT_SUBCATEGORY_TABLE
-                                + " WHERE subcategoryDeletedStatus = '0' ORDER BY subcategorySortOrder ASC, subcategoryId ASC",
+                        baseSql + " ORDER BY pc.categoryName COLLATE NOCASE ASC,"
+                                + " ps.subcategorySortOrder ASC, ps.subcategoryId ASC",
                         null);
             } else {
                 cursor = db.rawQuery(
-                        "SELECT * FROM " + PRODUCT_SUBCATEGORY_TABLE
-                                + " WHERE subcategoryDeletedStatus = '0' AND categoryId = ?"
-                                + " ORDER BY subcategorySortOrder ASC, subcategoryId ASC",
+                        baseSql + " AND CAST(ps.categoryId AS TEXT) = ?"
+                                + " ORDER BY ps.subcategorySortOrder ASC, ps.subcategoryId ASC",
                         new String[]{categoryId});
             }
             while (cursor.moveToNext()) {
@@ -2080,6 +2098,10 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 int sortCol = cursor.getColumnIndex("subcategorySortOrder");
                 if (sortCol >= 0 && !cursor.isNull(sortCol)) {
                     item.setSubcategorySortOrder(cursor.getString(sortCol));
+                }
+                int catNameCol = cursor.getColumnIndex("categoryName");
+                if (catNameCol >= 0 && !cursor.isNull(catNameCol)) {
+                    item.setCategoryName(cursor.getString(catNameCol));
                 }
                 list.add(item);
             }

@@ -24,6 +24,14 @@
             android:textColor="@color/colorTextSecondary"
             android:textSize="@dimen/text_caption" />
 
+        <com.pos_billingwala.Extra.SearchableDropdownView
+            android:id="@+id/categoryDropdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_md"
+            app:sdd_dialog_title="@string/category_name"
+            app:sdd_hint="@string/category_name" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/subcategoryNameLayout"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
