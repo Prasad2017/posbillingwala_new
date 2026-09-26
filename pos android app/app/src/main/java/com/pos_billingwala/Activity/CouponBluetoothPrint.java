@@ -60,6 +60,9 @@ import java.util.Random;
 @SuppressLint({"Range", "SetTextI18n, NewApi, StaticFieldLeak"})
 public class CouponBluetoothPrint extends BaseActivity implements View.OnClickListener {
 
+    public static final String EXTRA_AUTO_PRINT = "autoPrint";
+    public static final String EXTRA_PREVIEW_ONLY = "previewOnly";
+
     public static TextView shopName, shopDetails, invoiceDetails, invoiceMemberName, couponCount;
     public static ImageView companyLogo;
     public static TextView twoShopName, twoShopDetails, twoInvoiceDetails, twoInvoiceMemberName, twoCouponCount;
@@ -74,6 +77,8 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
     public static POSBillingWalaDatabase posBillingWalaDatabase;
     public static String inr, cartOrderStatus, invoiceRunningStatus, memberId, memberName, memberMobileNumber, messType, messDays, messInvoiceResponseListSize;
     ProgressDialog progressDialog;
+    private boolean autoPrint;
+    private boolean previewOnly;
     //********************* Bluetooth Printer Start ************************//
     int PERMISSION_ALL = 1;
     int REQUEST_ENABLE_BT = 4, REQUEST_CONNECT_DEVICE = 6;
@@ -128,6 +133,8 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
                 memberMobileNumber = intent.getStringExtra("memberMobileNumber");
                 messDays = intent.getStringExtra("messDays");
                 messInvoiceResponseListSize = intent.getStringExtra("messInvoiceResponseList");
+                autoPrint = intent.getBooleanExtra(EXTRA_AUTO_PRINT, false);
+                previewOnly = intent.getBooleanExtra(EXTRA_PREVIEW_ONLY, false);
             }
 
         } catch (Exception e) {
@@ -251,6 +258,9 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
         PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
         printImage.PrepareImage(com.pos_billingwala.Print.PrintImage.dither.floyd_steinberg, 128);
         if (!PrinterConnectionHelper.safeWriteBill(activity, printImage.getPrintImageData())) {
+            if (autoPrint) {
+                revealPreviewChrome();
+            }
             String addr = printerSettingResponseList.isEmpty() ? "" : printerSettingResponseList.get(0).getBluetoothAddress();
             WoosimPrnMng.connect(activity, addr != null ? addr : "", CouponBluetoothPrint.this);
             return;
@@ -261,6 +271,11 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
     }
 
     public void saveMessInvoice() {
+
+        if (previewOnly) {
+            Toast.makeText(this, getString(R.string.ui_test_print), Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         Date c = Calendar.getInstance().getTime();
         System.out.println("Current time => " + c);
@@ -391,6 +406,50 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
         getPrinterSettingDetails();
         getInvoiceDetails();
 
+        if (autoPrint) {
+            applyAutoPrintChrome();
+            com.pos_billingwala.Extra.AppExecutors.get().postMainDelayed(this::triggerAutoPrint, 450L);
+        }
+    }
+
+    private void applyAutoPrintChrome() {
+        try {
+            if (nestedScrollView != null) nestedScrollView.setVisibility(View.INVISIBLE);
+            if (twoNestedScrollView != null) twoNestedScrollView.setVisibility(View.INVISIBLE);
+            if (threeNestedScrollView != null) threeNestedScrollView.setVisibility(View.INVISIBLE);
+            if (binding != null && binding.printInvoiceCardView != null) {
+                binding.printInvoiceCardView.setVisibility(View.GONE);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void revealPreviewChrome() {
+        try {
+            if (nestedScrollView != null) nestedScrollView.setVisibility(View.VISIBLE);
+            if (twoNestedScrollView != null) twoNestedScrollView.setVisibility(View.VISIBLE);
+            if (threeNestedScrollView != null) threeNestedScrollView.setVisibility(View.VISIBLE);
+            if (binding != null && binding.printInvoiceCardView != null) {
+                binding.printInvoiceCardView.setVisibility(View.VISIBLE);
+            }
+        } catch (Exception ignored) {
+        }
+        autoPrint = false;
+    }
+
+    private void triggerAutoPrint() {
+        if (isFinishing()) {
+            return;
+        }
+        if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            Toast.makeText(activity, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
+            revealPreviewChrome();
+            return;
+        }
+        String addr = printerSettingResponseList.get(0).getBluetoothAddress();
+        PrinterConnectionHelper.ensureBillPrinterAsync(activity,
+                addr != null ? addr : "",
+                this::runCouponPrintAfterPrinterReady);
     }
 
     public void getCompanyDetails() {

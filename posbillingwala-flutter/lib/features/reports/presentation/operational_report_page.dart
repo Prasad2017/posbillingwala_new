@@ -157,7 +157,7 @@ class OperationalReportPageState extends ConsumerState<OperationalReportPage> {
         title: Text(title),
         actions: [
           IconButton(
-            tooltip: 'Export CSV',
+            tooltip: 'Export Excel',
             onPressed: filtered.isEmpty
                 ? null
                 : () => shareInvoicesCsv(

@@ -214,6 +214,24 @@ public final class ReportExcelHelper {
         return rows;
     }
 
+    public static List<List<String>> messReportRows(@NonNull List<com.pos_billingwala.Model.MessReportItem> list) {
+        List<List<String>> rows = new ArrayList<>();
+        rows.add(listOf("SR No", "Source", "Date", "Member", "Meal Type", "Detail"));
+        int sr = 1;
+        for (com.pos_billingwala.Model.MessReportItem m : list) {
+            if (m == null) {
+                continue;
+            }
+            rows.add(listOf(String.valueOf(sr++),
+                    m.isQr() ? "QR Token" : "Coupon",
+                    safe(m.getDateTime()),
+                    safe(m.getMemberName()),
+                    safe(m.getMessType()),
+                    safe(m.getDetail())));
+        }
+        return rows;
+    }
+
     public static List<List<String>> memberRows(@NonNull List<MemberResponse> members) {
         List<List<String>> rows = new ArrayList<>();
         rows.add(listOf("SR No", "Member Name", "Mobile", "Type"));

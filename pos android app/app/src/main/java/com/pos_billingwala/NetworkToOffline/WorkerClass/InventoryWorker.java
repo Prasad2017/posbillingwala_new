@@ -45,6 +45,7 @@ public class InventoryWorker extends Worker {
                         // Insert each inventory record into the database
                         posBillingWalaDatabase.addInventory(
                                 inventoryResponse.getProductId(),
+                                inventoryResponse.getProductName(),
                                 inventoryResponse.getProductInventoryQuantity(),
                                 inventoryResponse.getAfterSaleInventoryQuantity(),
                                 inventoryResponse.getSaleInventoryQuantity(),

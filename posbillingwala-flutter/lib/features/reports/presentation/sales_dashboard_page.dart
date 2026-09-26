@@ -9,6 +9,7 @@ import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/reports/domain/report_export.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_period_controls.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
@@ -83,6 +84,21 @@ class SalesDashboardPage extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Export Excel',
+            onPressed: () {
+              final invoices = ref.read(filteredPeriodInvoicesProvider);
+              if (invoices.isEmpty) return;
+              shareInvoicesCsv(
+                invoices: invoices,
+                title: 'Sales Dashboard',
+                subtitle: periodLabel,
+              );
+            },
+            icon: const Icon(Icons.ios_share_rounded),
+          ),
+        ],
       ),
       body: ResponsiveScrollShell(
         dashboard: true,

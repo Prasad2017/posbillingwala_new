@@ -3319,6 +3319,18 @@ WHERE $where
     );
   }
 
+  Future<List<MessToken>> getAllMessTokens() {
+    return (select(messTokens)
+          ..orderBy([(t) => OrderingTerm.desc(t.tokenDate)]))
+        .get();
+  }
+
+  Stream<List<MessToken>> watchAllMessTokens() {
+    return (select(messTokens)
+          ..orderBy([(t) => OrderingTerm.desc(t.tokenDate)]))
+        .watch();
+  }
+
   Stream<List<MessToken>> watchTodayMessTokens() {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day);
@@ -3331,6 +3343,32 @@ WHERE $where
           )
           ..orderBy([(t) => OrderingTerm.desc(t.tokenDate)]))
         .watch();
+  }
+
+  Future<List<MessToken>> getMessTokensForDay(DateTime day) {
+    final start = DateTime(day.year, day.month, day.day);
+    final end = start.add(const Duration(days: 1));
+    return (select(messTokens)
+          ..where(
+            (t) =>
+                t.tokenDate.isBiggerOrEqualValue(start) &
+                t.tokenDate.isSmallerThanValue(end),
+          )
+          ..orderBy([(t) => OrderingTerm.desc(t.tokenDate)]))
+        .get();
+  }
+
+  Future<List<MessInvoice>> getMessInvoicesForDay(DateTime day) {
+    final start = DateTime(day.year, day.month, day.day);
+    final end = start.add(const Duration(days: 1));
+    return (select(messInvoices)
+          ..where(
+            (t) =>
+                t.messInvoiceDate.isBiggerOrEqualValue(start) &
+                t.messInvoiceDate.isSmallerThanValue(end),
+          )
+          ..orderBy([(t) => OrderingTerm.desc(t.messInvoiceDate)]))
+        .get();
   }
 
   Stream<List<CartItem>> watchAllCartItems() {
@@ -5095,6 +5133,50 @@ WHERE $where
         .watch();
   }
 
+  /* Id → name for stock list; includes soft-deleted so old inventory rows still resolve. */
+  Stream<Map<int, String>> watchProductNameMap() {
+    return select(products).watch().map((rows) {
+      final map = <int, String>{};
+      for (final p in rows) {
+        final name = p.productName.trim();
+        if (name.isNotEmpty) {
+          map[p.productId] = name;
+        }
+      }
+      return map;
+    });
+  }
+
+  /* Fill blank / "Product {id}" names on inventory ledger from products master. */
+  Future<int> backfillInventoryProductNames() async {
+    final nameRows = await select(products).get();
+    final nameById = <int, String>{
+      for (final p in nameRows)
+        if (p.productName.trim().isNotEmpty) p.productId: p.productName.trim(),
+    };
+    if (nameById.isEmpty) return 0;
+
+    final rows = await (select(inventoryMovements)
+          ..where((t) => branchMatches(t.branchId)))
+        .get();
+    var updated = 0;
+    for (final row in rows) {
+      final current = row.productName.trim();
+      final looksLikeIdFallback = RegExp(
+        r'^Product\s+\d+$',
+        caseSensitive: false,
+      ).hasMatch(current);
+      if (current.isNotEmpty && !looksLikeIdFallback) continue;
+      final resolved = nameById[row.productId];
+      if (resolved == null || resolved.isEmpty) continue;
+      await (update(inventoryMovements)
+            ..where((t) => t.inventoryId.equals(row.inventoryId)))
+          .write(InventoryMovementsCompanion(productName: Value(resolved)));
+      updated++;
+    }
+    return updated;
+  }
+
   Future<List<InventoryMovement>> getPendingInventory({int limit = 100}) {
     return (select(inventoryMovements)
           ..where(
@@ -5731,12 +5813,16 @@ class ProductStockBalance {
   const ProductStockBalance({
     required this.productId,
     required this.productName,
+    required this.totalQty,
+    required this.saleQty,
     required this.remaining,
     this.lowStock = false,
   });
 
   final int productId;
   final String productName;
+  final double totalQty;
+  final double saleQty;
   final double remaining;
   final bool lowStock;
 }

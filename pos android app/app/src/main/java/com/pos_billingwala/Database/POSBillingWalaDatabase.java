@@ -28,8 +28,9 @@ import com.pos_billingwala.Model.KotResponse;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.Model.MemberPaymentMonthItem;
 import com.pos_billingwala.Model.MessInvoiceResponse;
-import com.pos_billingwala.Model.MessMealTokenItem;
+import com.pos_billingwala.Model.MessReportItem;
 import com.pos_billingwala.Model.MessTokenResponse;
+import com.pos_billingwala.Model.MessMealTokenItem;
 import com.pos_billingwala.Model.PosTableResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Model.ProductCartResponse;
@@ -261,7 +262,8 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String COMPANY_QUERY = "CREATE TABLE IF NOT EXISTS " + COMPANY_TABLE + "(companyId INTEGER PRIMARY KEY AUTOINCREMENT, companyName VARCHAR, cashierName VARCHAR, companyMobile VARCHAR, " + "companyAddress VARCHAR, shopName1 VARCHAR, shopName2 VARCHAR, addressLine1 VARCHAR, addressLine2 VARCHAR, addressLine3 VARCHAR, phoneNo1 VARCHAR, phoneNo2 VARCHAR, currencyName VARCHAR, countryName VARCHAR, stateName VARCHAR, tableStatus VARCHAR, noOfTable VARCHAR,gstStatus VARCHAR, gstNumber VARCHAR, shopCGST VARCHAR, shopSGST VARCHAR, panNumber VARCHAR, companyFssis VARCHAR, companyLogo VARCHAR, paymentLogo VARCHAR, openingMinutes VARCHAR, closingMinutes VARCHAR, companyStatus TINYINT)";
 
     public final String INVENTORY_QUERY = "CREATE TABLE IF NOT EXISTS " + INVENTORY_TABLE
-            + "(inventoryId INTEGER PRIMARY KEY AUTOINCREMENT, productId VARCHAR, productInventoryQuantity VARCHAR,"
+            + "(inventoryId INTEGER PRIMARY KEY AUTOINCREMENT, productId VARCHAR, productName VARCHAR,"
+            + " productInventoryQuantity VARCHAR,"
             + " afterSaleInventoryQuantity VARCHAR, saleInventoryQuantity VARCHAR, inventoryDate VARCHAR,"
             + " inventoryNetworkStatus VARCHAR, inventoryStatus TINYINT,"
             + " organizationId VARCHAR, branchId VARCHAR, deviceId VARCHAR)";
@@ -487,6 +489,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public final String ALTER_COMPANY_OPENING_MINUTES_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN openingMinutes VARCHAR";
     public final String ALTER_COMPANY_CLOSING_MINUTES_QUERY = "ALTER TABLE " + COMPANY_TABLE + " ADD COLUMN closingMinutes VARCHAR";
     public final String ALTER_INVENTORY_QUERY = "ALTER TABLE " + INVENTORY_TABLE + " ADD COLUMN saleInventoryQuantity VARCHAR";
+    public final String ALTER_INVENTORY_PRODUCT_NAME_QUERY = "ALTER TABLE " + INVENTORY_TABLE + " ADD COLUMN productName VARCHAR";
     public final String ALTER_PRODUCT_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN productCode VARCHAR";
     public final String ALTER_CATEGORY_DELETED_QUERY = "ALTER TABLE " + PRODUCT_CATEGORY_TABLE + " ADD COLUMN categoryDeletedStatus VARCHAR";
     public final String ALTER_PRODUCT_DELETED_QUERY = "ALTER TABLE " + PRODUCT_TABLE + " ADD COLUMN productDeletedStatus VARCHAR";
@@ -640,6 +643,7 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         addColumnIfNotExists(db, COMPANY_TABLE, "closingMinutes", ALTER_COMPANY_CLOSING_MINUTES_QUERY);
         migrateCompanyStructuredFields(db);
         addColumnIfNotExists(db, INVENTORY_TABLE, "saleInventoryQuantity", ALTER_INVENTORY_QUERY);
+        addColumnIfNotExists(db, INVENTORY_TABLE, "productName", ALTER_INVENTORY_PRODUCT_NAME_QUERY);
         addColumnIfNotExists(db, PRODUCT_TABLE, "productCode", ALTER_PRODUCT_QUERY);
         addColumnIfNotExists(db, PRODUCT_CATEGORY_TABLE, "categoryDeletedStatus", ALTER_CATEGORY_DELETED_QUERY);
         addColumnIfNotExists(db, PRODUCT_TABLE, "productDeletedStatus", ALTER_PRODUCT_DELETED_QUERY);
@@ -5394,11 +5398,25 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
     public boolean addInventory(String productId, String productQuantity, String
             afterSaleInventoryQuantity, String saleInventoryQuantity, String inventoryDate,
                                 int inventoryStatus, String inventoryNetworkStatus) {
+        return addInventory(productId, null, productQuantity, afterSaleInventoryQuantity,
+                saleInventoryQuantity, inventoryDate, inventoryStatus, inventoryNetworkStatus);
+    }
+
+    public boolean addInventory(String productId, String productName, String productQuantity, String
+            afterSaleInventoryQuantity, String saleInventoryQuantity, String inventoryDate,
+                                int inventoryStatus, String inventoryNetworkStatus) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 
         contentValues.put("productId", productId);
+        String resolvedName = productName != null ? productName.trim() : "";
+        if (resolvedName.isEmpty()) {
+            resolvedName = lookupProductName(db, productId);
+        }
+        if (!resolvedName.isEmpty()) {
+            contentValues.put("productName", resolvedName);
+        }
         contentValues.put("productInventoryQuantity", productQuantity);
         contentValues.put("afterSaleInventoryQuantity", afterSaleInventoryQuantity);
         contentValues.put("saleInventoryQuantity", saleInventoryQuantity);
@@ -5413,53 +5431,193 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     }
 
+    private String lookupProductName(SQLiteDatabase db, String productId) {
+        if (productId == null || productId.trim().isEmpty()) {
+            return "";
+        }
+        String key = productId.trim();
+        Cursor c = db.rawQuery(
+                "SELECT productName FROM " + PRODUCT_TABLE
+                        + " WHERE TRIM(CAST(productId AS TEXT)) = ?"
+                        + " OR TRIM(IFNULL(productNetworkStatus,'')) = ?"
+                        + " LIMIT 1",
+                new String[]{key, key});
+        String name = "";
+        if (c.moveToFirst()) {
+            name = c.getString(0);
+        }
+        c.close();
+        return name != null ? name.trim() : "";
+    }
+
     public List<InventoryResponse> getInventoryList() {
 
         List<InventoryResponse> inventoryResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
+        backfillInventoryProductNames(db);
+        java.util.HashMap<String, String> nameByProductId = loadProductNameMap(db);
 
-        Cursor cursor = db.rawQuery("SELECT inventory.*, product.productName FROM inventory LEFT JOIN product ON inventory.productId = product.productId", null);
-        InventoryResponse inventoryResponse;
+        /*
+         * Prefer stored inventory.productName, then product join (id or network status).
+         * Cloud sync used to remap product auto-ids — name column + network join covers that.
+         */
+        Cursor cursor = db.rawQuery(
+                "SELECT i.inventoryId, i.productId,"
+                        + " i.productInventoryQuantity, i.afterSaleInventoryQuantity,"
+                        + " i.saleInventoryQuantity, i.inventoryDate,"
+                        + " i.inventoryNetworkStatus, i.inventoryStatus,"
+                        + " IFNULL(NULLIF(TRIM(i.productName), ''), '') AS storedProductName,"
+                        + " IFNULL(NULLIF(TRIM(p.productName), ''), '') AS invProductName"
+                        + " FROM " + INVENTORY_TABLE + " i"
+                        + " LEFT JOIN " + PRODUCT_TABLE + " p"
+                        + " ON TRIM(CAST(i.productId AS TEXT)) = TRIM(CAST(p.productId AS TEXT))"
+                        + " OR TRIM(CAST(i.productId AS TEXT)) = TRIM(IFNULL(p.productNetworkStatus, ''))"
+                        + " ORDER BY i.inventoryId DESC",
+                null);
+        /* Latest row per productId (current stock view). */
+        java.util.LinkedHashMap<String, InventoryResponse> latestByProduct = new java.util.LinkedHashMap<>();
         while (cursor.moveToNext()) {
-            inventoryResponse = new InventoryResponse();
+            String productId = cursor.getString(cursor.getColumnIndex("productId"));
+            String key = productId != null ? productId.trim() : "";
+            if (key.isEmpty() || latestByProduct.containsKey(key)) {
+                continue;
+            }
+            InventoryResponse inventoryResponse = new InventoryResponse();
             inventoryResponse.setInventoryId(cursor.getString(cursor.getColumnIndex("inventoryId")));
-            inventoryResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
-            inventoryResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            inventoryResponse.setProductId(productId);
+            inventoryResponse.setProductName(resolveInventoryProductName(
+                    cursor, nameByProductId, key));
             inventoryResponse.setProductInventoryQuantity(cursor.getString(cursor.getColumnIndex("productInventoryQuantity")));
             inventoryResponse.setAfterSaleInventoryQuantity(cursor.getString(cursor.getColumnIndex("afterSaleInventoryQuantity")));
             inventoryResponse.setSaleInventoryQuantity(cursor.getString(cursor.getColumnIndex("saleInventoryQuantity")));
             inventoryResponse.setInventoryDate(cursor.getString(cursor.getColumnIndex("inventoryDate")));
             inventoryResponse.setInventoryNetworkStatus(cursor.getString(cursor.getColumnIndex("inventoryNetworkStatus")));
             inventoryResponse.setInventoryStatus(cursor.getString(cursor.getColumnIndex("inventoryStatus")));
-            inventoryResponseList.add(inventoryResponse);
+            latestByProduct.put(key, inventoryResponse);
         }
-
+        cursor.close();
         db.close();
+        inventoryResponseList.addAll(latestByProduct.values());
         return inventoryResponseList;
 
+    }
+
+    private void backfillInventoryProductNames(SQLiteDatabase db) {
+        try {
+            db.execSQL(
+                    "UPDATE " + INVENTORY_TABLE + " SET productName = ("
+                            + " SELECT p.productName FROM " + PRODUCT_TABLE + " p"
+                            + " WHERE TRIM(CAST(p.productId AS TEXT)) = TRIM(CAST(" + INVENTORY_TABLE + ".productId AS TEXT))"
+                            + " OR TRIM(IFNULL(p.productNetworkStatus,'')) = TRIM(CAST(" + INVENTORY_TABLE + ".productId AS TEXT))"
+                            + " LIMIT 1"
+                            + " ) WHERE IFNULL(TRIM(productName), '') = ''"
+                            + " OR productName LIKE 'Product %'");
+        } catch (Exception ignored) {
+            /* Older DBs without productName column are handled by ensureAdditiveSchema. */
+        }
+    }
+
+    private java.util.HashMap<String, String> loadProductNameMap(SQLiteDatabase db) {
+        java.util.HashMap<String, String> map = new java.util.HashMap<>();
+        Cursor c = db.rawQuery(
+                "SELECT productId, productName, productNetworkStatus FROM " + PRODUCT_TABLE, null);
+        while (c.moveToNext()) {
+            String id = c.getString(0);
+            String name = c.getString(1);
+            String network = c.getString(2);
+            if (name == null || name.trim().isEmpty()) {
+                continue;
+            }
+            String trimmed = name.trim();
+            if (id != null && !id.trim().isEmpty()) {
+                map.put(id.trim(), trimmed);
+                String alt = id.trim().replaceFirst("\\.0$", "");
+                if (!alt.equals(id.trim())) {
+                    map.put(alt, trimmed);
+                }
+            }
+            if (network != null && !network.trim().isEmpty()) {
+                map.put(network.trim(), trimmed);
+            }
+        }
+        c.close();
+        return map;
+    }
+
+    private String resolveInventoryProductName(
+            Cursor cursor,
+            java.util.HashMap<String, String> nameByProductId,
+            String productIdKey) {
+        int storedIdx = cursor.getColumnIndex("storedProductName");
+        String name = storedIdx >= 0 ? cursor.getString(storedIdx) : null;
+        if (name != null && name.trim().matches("(?i)Product\\s+\\d+")) {
+            name = null;
+        }
+        if (name == null || name.trim().isEmpty()) {
+            int nameIdx = cursor.getColumnIndex("invProductName");
+            name = nameIdx >= 0 ? cursor.getString(nameIdx) : null;
+        }
+        if (name == null || name.trim().isEmpty()) {
+            name = nameByProductId.get(productIdKey);
+        }
+        if ((name == null || name.trim().isEmpty()) && productIdKey != null) {
+            String alt = productIdKey.replaceFirst("\\.0$", "");
+            if (!alt.equals(productIdKey)) {
+                name = nameByProductId.get(alt);
+            }
+        }
+        if (name != null && !name.trim().isEmpty()
+                && !name.trim().matches("(?i)Product\\s+\\d+")) {
+            return name.trim();
+        }
+        return "Product " + productIdKey;
     }
 
     public List<InventoryResponse> getLowInventoryList() {
 
         List<InventoryResponse> inventoryResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
+        backfillInventoryProductNames(db);
+        java.util.HashMap<String, String> nameByProductId = loadProductNameMap(db);
 
-        Cursor cursor = db.rawQuery("SELECT inventory.*, product.productName FROM inventory LEFT JOIN product ON inventory.productId = product.productId WHERE inventory.afterSaleInventoryQuantity < 6 ORDER BY inventory.afterSaleInventoryQuantity DESC", null);
-        InventoryResponse inventoryResponse;
+        Cursor cursor = db.rawQuery(
+                "SELECT i.inventoryId, i.productId,"
+                        + " i.productInventoryQuantity, i.afterSaleInventoryQuantity,"
+                        + " i.saleInventoryQuantity, i.inventoryDate,"
+                        + " i.inventoryNetworkStatus, i.inventoryStatus,"
+                        + " IFNULL(NULLIF(TRIM(i.productName), ''), '') AS storedProductName,"
+                        + " IFNULL(NULLIF(TRIM(p.productName), ''), '') AS invProductName"
+                        + " FROM " + INVENTORY_TABLE + " i"
+                        + " LEFT JOIN " + PRODUCT_TABLE + " p"
+                        + " ON TRIM(CAST(i.productId AS TEXT)) = TRIM(CAST(p.productId AS TEXT))"
+                        + " OR TRIM(CAST(i.productId AS TEXT)) = TRIM(IFNULL(p.productNetworkStatus, ''))"
+                        + " WHERE CAST(IFNULL(i.afterSaleInventoryQuantity,'0') AS REAL) < 6"
+                        + " ORDER BY CAST(IFNULL(i.afterSaleInventoryQuantity,'0') AS REAL) ASC,"
+                        + " i.inventoryId DESC",
+                null);
+        java.util.LinkedHashMap<String, InventoryResponse> latestByProduct = new java.util.LinkedHashMap<>();
         while (cursor.moveToNext()) {
-            inventoryResponse = new InventoryResponse();
+            String productId = cursor.getString(cursor.getColumnIndex("productId"));
+            String key = productId != null ? productId.trim() : "";
+            if (key.isEmpty() || latestByProduct.containsKey(key)) {
+                continue;
+            }
+            InventoryResponse inventoryResponse = new InventoryResponse();
             inventoryResponse.setInventoryId(cursor.getString(cursor.getColumnIndex("inventoryId")));
-            inventoryResponse.setProductId(cursor.getString(cursor.getColumnIndex("productId")));
-            inventoryResponse.setProductName(cursor.getString(cursor.getColumnIndex("productName")));
+            inventoryResponse.setProductId(productId);
+            inventoryResponse.setProductName(resolveInventoryProductName(
+                    cursor, nameByProductId, key));
             inventoryResponse.setProductInventoryQuantity(cursor.getString(cursor.getColumnIndex("productInventoryQuantity")));
             inventoryResponse.setAfterSaleInventoryQuantity(cursor.getString(cursor.getColumnIndex("afterSaleInventoryQuantity")));
+            inventoryResponse.setSaleInventoryQuantity(cursor.getString(cursor.getColumnIndex("saleInventoryQuantity")));
             inventoryResponse.setInventoryDate(cursor.getString(cursor.getColumnIndex("inventoryDate")));
             inventoryResponse.setInventoryNetworkStatus(cursor.getString(cursor.getColumnIndex("inventoryNetworkStatus")));
             inventoryResponse.setInventoryStatus(cursor.getString(cursor.getColumnIndex("inventoryStatus")));
-            inventoryResponseList.add(inventoryResponse);
+            latestByProduct.put(key, inventoryResponse);
         }
-
+        cursor.close();
         db.close();
+        inventoryResponseList.addAll(latestByProduct.values());
         return inventoryResponseList;
 
     }
@@ -6540,6 +6698,111 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     }
 
+    /** QR tokens for report period (empty prefix = all). */
+    public List<MessTokenResponse> getMessTokensForReport(String datePrefix) {
+        List<MessTokenResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor;
+        if (datePrefix == null || datePrefix.trim().isEmpty()) {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + MESS_TOKEN_TABLE + " ORDER BY tokenDate DESC",
+                    null);
+        } else {
+            cursor = db.rawQuery(
+                    "SELECT * FROM " + MESS_TOKEN_TABLE
+                            + " WHERE tokenDate LIKE ? ORDER BY tokenDate DESC",
+                    new String[]{"%" + datePrefix.trim() + "%"});
+        }
+        while (cursor.moveToNext()) {
+            list.add(cursorToMessToken(cursor));
+        }
+        cursor.close();
+        db.close();
+        return list;
+    }
+
+    /**
+     * Mess report rows: paper coupons and QR tokens as separate sources.
+     * Twin mess_invoice rows created with a QR print are excluded from coupons.
+     */
+    public List<MessReportItem> getMessReportItems(String datePrefix) {
+        List<MessReportItem> out = new ArrayList<>();
+        List<MessTokenResponse> tokens = getMessTokensForReport(datePrefix);
+        java.util.HashSet<String> qrKeys = new java.util.HashSet<>();
+        for (MessTokenResponse t : tokens) {
+            if (t == null) continue;
+            qrKeys.add(messMatchKey(t.getMemberName(), t.getMessType(), t.getTokenDate()));
+            MessReportItem item = new MessReportItem();
+            item.setSource(MessReportItem.SOURCE_QR);
+            item.setMemberId(t.getMemberId());
+            item.setMemberName(t.getMemberName());
+            item.setMessType(t.getMessType());
+            item.setDateTime(t.getTokenDate());
+            String code = t.getTokenCode() != null ? t.getTokenCode() : "";
+            item.setDetail(code.length() > 8
+                    ? code.substring(0, 8).toUpperCase(Locale.US)
+                    : code.toUpperCase(Locale.US));
+            out.add(item);
+        }
+
+        List<MessInvoiceResponse> invoices = (datePrefix == null || datePrefix.trim().isEmpty())
+                ? getInvoiceMessInvoiceReportList()
+                : getInvoiceMessInvoiceDateWiseReportList(datePrefix.trim());
+        for (MessInvoiceResponse inv : invoices) {
+            if (inv == null) continue;
+            String key = messMatchKey(inv.getMemberName(), inv.getMessType(), inv.getMessInvoiceDate());
+            if (qrKeys.contains(key)) {
+                continue; // QR twin invoice — not a paper coupon
+            }
+            MessReportItem item = new MessReportItem();
+            item.setSource(MessReportItem.SOURCE_COUPON);
+            item.setMemberId(inv.getMemberId());
+            item.setMemberName(inv.getMemberName());
+            item.setMessType(inv.getMessType());
+            item.setDateTime(inv.getMessInvoiceDate());
+            item.setDetail("Coupon");
+            out.add(item);
+        }
+        return out;
+    }
+
+    public int countMemberCoupons(String memberId, String memberName) {
+        return countMemberPrintSource(memberId, memberName, true);
+    }
+
+    public int countMemberQrTokens(String memberId, String memberName) {
+        return countMemberPrintSource(memberId, memberName, false);
+    }
+
+    private int countMemberPrintSource(String memberId, String memberName, boolean couponsOnly) {
+        List<MessReportItem> all = getMessReportItems("");
+        String mid = memberId != null ? memberId.trim() : "";
+        String name = memberName != null ? memberName.trim().toLowerCase(Locale.US) : "";
+        int count = 0;
+        for (MessReportItem item : all) {
+            if (item == null) continue;
+            boolean matchId = mid.length() > 0 && mid.equals(
+                    item.getMemberId() != null ? item.getMemberId().trim() : "");
+            boolean matchName = name.length() > 0 && name.equals(
+                    item.getMemberName() != null ? item.getMemberName().trim().toLowerCase(Locale.US) : "");
+            if (!matchId && !matchName) continue;
+            if (couponsOnly && item.isQr()) continue;
+            if (!couponsOnly && !item.isQr()) continue;
+            count++;
+        }
+        return count;
+    }
+
+    private static String messMatchKey(String memberName, String messType, String dateTime) {
+        String name = memberName != null ? memberName.trim().toLowerCase(Locale.US) : "";
+        String meal = messType != null ? messType.trim().toLowerCase(Locale.US) : "";
+        String day = "";
+        if (dateTime != null && dateTime.trim().length() >= 10) {
+            day = dateTime.trim().substring(0, 10);
+        }
+        return name + "|" + meal + "|" + day;
+    }
+
     public boolean saveMessToken(String tokenCode, String memberId, String memberName, String memberMobile,
                                  String memberType, String messType, String tokenAmount, String tokenDate,
                                  String tokenNetworkStatus, String tokenState, int tokenStatus, int verifyStatus) {
@@ -6638,6 +6901,73 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         c.close();
         db.close();
         return list;
+    }
+
+    /** QR tokens printed today (tokenDate LIKE yyyy-MM-dd%). */
+    public List<MessTokenResponse> getMessTokensToday(String dayPrefix) {
+        List<MessTokenResponse> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + MESS_TOKEN_TABLE
+                        + " WHERE tokenDate LIKE ? ORDER BY tokenDate DESC",
+                new String[]{(dayPrefix != null ? dayPrefix : "") + "%"});
+        while (cursor.moveToNext()) {
+            list.add(cursorToMessToken(cursor));
+        }
+        cursor.close();
+        db.close();
+        return list;
+    }
+
+    /**
+     * Today's printed mess coupons + QR tokens + meal-queue rows for the Today screen.
+     * Meal API rows should be merged by the caller first; this fills local-only prints.
+     */
+    public List<MessMealTokenItem> getLocalPrintedMessTokensToday(String dayPrefix) {
+        List<MessMealTokenItem> out = new ArrayList<>();
+        if (dayPrefix == null || dayPrefix.trim().isEmpty()) {
+            return out;
+        }
+        List<MessTokenResponse> qrTokens = getMessTokensToday(dayPrefix);
+        java.util.HashSet<String> qrKeys = new java.util.HashSet<>();
+        for (MessTokenResponse t : qrTokens) {
+            if (t == null) continue;
+            String name = t.getMemberName() != null ? t.getMemberName().trim().toLowerCase(Locale.US) : "";
+            String meal = t.getMessType() != null ? t.getMessType().trim().toLowerCase(Locale.US) : "";
+            qrKeys.add(name + "|" + meal);
+            MessMealTokenItem item = new MessMealTokenItem();
+            item.tokenId = "qr-" + (t.getTokenId() != null ? t.getTokenId() : t.getTokenCode());
+            String code = t.getTokenCode() != null ? t.getTokenCode() : "";
+            item.tokenNumber = code.length() > 8 ? code.substring(0, 8).toUpperCase(Locale.US) : code.toUpperCase(Locale.US);
+            item.mealSession = t.getMessType() != null ? t.getMessType() : "QR Token";
+            item.date = dayPrefix;
+            item.printStatus = "PRINTED";
+            item.createdAt = t.getTokenDate();
+            item.memberName = t.getMemberName();
+            item.memberMobile = t.getMemberMobile();
+            item.registrationNo = t.getMemberMobile();
+            out.add(item);
+        }
+
+        List<MessInvoiceResponse> invoices = getInvoiceMessInvoiceDateWiseReportList(dayPrefix);
+        for (MessInvoiceResponse inv : invoices) {
+            if (inv == null) continue;
+            String name = inv.getMemberName() != null ? inv.getMemberName().trim().toLowerCase(Locale.US) : "";
+            String meal = inv.getMessType() != null ? inv.getMessType().trim().toLowerCase(Locale.US) : "";
+            if (qrKeys.contains(name + "|" + meal)) {
+                continue; // already shown as QR token twin
+            }
+            MessMealTokenItem item = new MessMealTokenItem();
+            item.tokenId = "coupon-" + (inv.getInvoiceId() != null ? inv.getInvoiceId() : "");
+            item.tokenNumber = "COUPON";
+            item.mealSession = inv.getMessType() != null ? inv.getMessType() : "Coupon";
+            item.date = dayPrefix;
+            item.printStatus = "PRINTED";
+            item.createdAt = inv.getMessInvoiceDate();
+            item.memberName = inv.getMemberName();
+            out.add(item);
+        }
+        return out;
     }
 
     public MessTokenResponse getMessTokenByCode(String tokenCode) {
@@ -7744,7 +8074,15 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
                 contentValues.put("productDeletedStatus", product.getProductDeletedStatus());
                 contentValues.put("productNetworkStatus", product.getProductNetworkStatus());
                 putOptionalColumn(contentValues, "subcategoryId", localSubcategoryId);
-                db.insert(PRODUCT_TABLE, null, contentValues);
+                /* Keep server productId so inventory / invoice FKs still resolve after cloud fetch. */
+                String serverProductId = product.getProductId();
+                if (serverProductId != null && !serverProductId.trim().isEmpty()) {
+                    contentValues.put("productId", serverProductId.trim());
+                    db.insertWithOnConflict(PRODUCT_TABLE, null, contentValues,
+                            SQLiteDatabase.CONFLICT_REPLACE);
+                } else {
+                    db.insert(PRODUCT_TABLE, null, contentValues);
+                }
             }
             db.setTransactionSuccessful();
         } finally {

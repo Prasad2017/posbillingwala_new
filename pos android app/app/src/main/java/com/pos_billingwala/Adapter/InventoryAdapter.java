@@ -3,6 +3,7 @@ package com.pos_billingwala.Adapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -39,10 +40,19 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.MyVi
         InventoryResponse inventoryResponse = inventoryResponseList.get(position);
 
         holder.binding.srNo.setText("" + (position + 1));
-        holder.binding.productName.setText(inventoryResponse.getProductName());
-        holder.binding.inventoryQty.setText(inventoryResponse.getProductInventoryQuantity());
-        holder.binding.afterSaleInventoryQty.setText(inventoryResponse.getAfterSaleInventoryQuantity());
-        holder.binding.saleInventoryQty.setText(inventoryResponse.getSaleInventoryQuantity());
+        String name = inventoryResponse.getProductName();
+        if (name == null || name.trim().isEmpty()) {
+            name = "Product " + (inventoryResponse.getProductId() != null
+                    ? inventoryResponse.getProductId() : "");
+        }
+        holder.binding.productName.setText(name.trim());
+        holder.binding.productName.setVisibility(View.VISIBLE);
+        holder.binding.productName.setTextColor(
+                ContextCompat.getColor(context, R.color.colorTextPrimary));
+        holder.binding.productName.setAlpha(1f);
+        holder.binding.inventoryQty.setText(formatQty(inventoryResponse.getProductInventoryQuantity()));
+        holder.binding.afterSaleInventoryQty.setText(formatQty(inventoryResponse.getAfterSaleInventoryQuantity()));
+        holder.binding.saleInventoryQty.setText(formatQty(inventoryResponse.getSaleInventoryQuantity()));
 
         float remaining = parseQty(inventoryResponse.getAfterSaleInventoryQuantity());
         int stockColor = ContextCompat.getColor(context,
@@ -63,6 +73,11 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.MyVi
         } catch (NumberFormatException e) {
             return 0f;
         }
+    }
+
+    private static String formatQty(String value) {
+        float qty = parseQty(value);
+        return String.format(java.util.Locale.US, "%.3f", qty);
     }
 
     @Override

@@ -19,6 +19,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ActionButtonUi;
+import com.pos_billingwala.Extra.MessTokenQrHelper;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Print.BluetoothPrinterChannel;
@@ -30,8 +31,11 @@ import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.ActivityCompanyPrinterSettingBinding;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 
 @SuppressLint("NonConstantResourceId, StaticFieldLeak, SetTextI18n")
@@ -172,6 +176,8 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         binding.disconnectKOTPrinter.setOnClickListener(this);
         binding.invoicePreview.setOnClickListener(this);
         binding.kotPreview.setOnClickListener(this);
+        binding.messCouponPreview.setOnClickListener(this);
+        binding.messQrTokenPreview.setOnClickListener(this);
         binding.backToSetting.setOnClickListener(this);
         binding.saveSetting.getRoot().setOnClickListener(this);
         ActionButtonUi.bind(binding.saveSetting.getRoot(), R.drawable.ic_save, R.string.ui_save_setting);
@@ -232,6 +238,31 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             kotPreviewIntent.putExtra(TestInvoiceBluetoothPrint.EXTRA_PREVIEW_MODE,
                     TestInvoiceBluetoothPrint.MODE_KOT);
             startActivity(kotPreviewIntent);
+        } else if (id == R.id.messCouponPreview) {
+            Intent messCoupon = new Intent(activity, CouponBluetoothPrint.class);
+            messCoupon.putExtra("invoiceRunningStatus", "printBill");
+            messCoupon.putExtra("cartOrderStatus", "mess");
+            messCoupon.putExtra("memberId", "0");
+            messCoupon.putExtra("memberName", "Demo Member");
+            messCoupon.putExtra("memberMobileNumber", "9876543210");
+            messCoupon.putExtra("messDays", "2");
+            messCoupon.putExtra("messInvoiceResponseList", "0");
+            messCoupon.putExtra(CouponBluetoothPrint.EXTRA_PREVIEW_ONLY, true);
+            startActivity(messCoupon);
+        } else if (id == R.id.messQrTokenPreview) {
+            Intent messQr = new Intent(activity, MessTokenBluetoothPrint.class);
+            messQr.putExtra("tokenCode", MessTokenQrHelper.generateTokenCode());
+            messQr.putExtra("memberId", "0");
+            messQr.putExtra("memberName", "Demo Member");
+            messQr.putExtra("memberMobile", "9876543210");
+            messQr.putExtra("memberType", MessTokenQrHelper.MEMBER_TYPE_MEMBER);
+            messQr.putExtra("messType", "Lunch");
+            messQr.putExtra("tokenAmount", "0");
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            messQr.putExtra("tokenDate", df.format(Calendar.getInstance().getTime()));
+            messQr.putExtra("tokenNetworkStatus", "preview");
+            messQr.putExtra(MessTokenBluetoothPrint.EXTRA_PREVIEW_ONLY, true);
+            startActivity(messQr);
         } else if (id == R.id.saveSetting) {
             if (printerName != null) {
                 if (!binding.invoicePrefix.getText().toString().isEmpty()) {

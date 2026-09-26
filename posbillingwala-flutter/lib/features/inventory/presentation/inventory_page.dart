@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
+import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_bottom_sheet.dart';
@@ -39,6 +40,9 @@ class InventoryPageState extends ConsumerState<InventoryPage>
       if (mounted) setState(() {});
     });
     Future.microtask(() async {
+      try {
+        await ref.read(appDatabaseProvider).backfillInventoryProductNames();
+      } catch (_) {}
       if (!AppPlatform.requiresNetwork) return;
       try {
         await ref.read(inventoryControllerProvider.notifier).syncAll();
@@ -75,7 +79,21 @@ class InventoryPageState extends ConsumerState<InventoryPage>
     return Scaffold(
       backgroundColor: MasterUi.bg,
       appBar: AppBar(
-        title: Text(AppStrings.of(ref).inventory),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(AppStrings.of(ref).inventory),
+            Text(
+              'Quick view of remaining stock',
+              style: TextStyle(
+                fontFamily: AppFonts.family,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: Colors.white.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+        ),
         bottom: TabBar(
           controller: inventoryPageTabs,
           indicatorColor: Colors.white,
@@ -139,7 +157,7 @@ class InventoryPageState extends ConsumerState<InventoryPage>
                       ),
                     ),
                     child: const Text(
-                      'Add',
+                      'Add Inventory',
                       style: TextStyle(
                         fontFamily: AppFonts.family,
                         fontWeight: FontWeight.w700,
@@ -202,7 +220,7 @@ class StockTabState extends ConsumerState<StockTab> {
   Widget build(BuildContext context) {
     final balances = ref.watch(stockBalancesProvider);
     final movementsAsync = ref.watch(inventoryMovementsProvider);
-    final qtyFormat = NumberFormat('#0.##');
+    final qtyFormat = NumberFormat('0.000');
     final dateFormat = DateFormat('dd MMM');
     final lowCount = balances.where((b) => b.lowStock).length;
 
@@ -309,31 +327,26 @@ class StockTabState extends ConsumerState<StockTab> {
                 ),
               ),
               const SizedBox(height: 10),
-              MasterCard(
-                padding: EdgeInsets.zero,
-                child: filteredBalances.isEmpty
-                    ? const MasterEmptyState(
-                        title: 'No stock yet',
-                        subtitle: 'Use Add → Purchase to stock a product.',
-                      )
-                    : Column(
-                        children: [
-                          for (var i = 0; i < filteredBalances.length; i++) ...[
-                            if (i > 0)
-                              Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: AppColors.border.withValues(alpha: .7),
-                              ),
-                            BalanceRow(
-                              index: i + 1,
-                              balance: filteredBalances[i],
-                              qtyFormat: qtyFormat,
-                            ),
-                          ],
-                        ],
+              if (filteredBalances.isEmpty)
+                const MasterCard(
+                  child: MasterEmptyState(
+                    title: 'No stock yet',
+                    subtitle: 'Use Add → Purchase to stock a product.',
+                  ),
+                )
+              else
+                Column(
+                  children: [
+                    for (var i = 0; i < filteredBalances.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 10),
+                      BalanceRow(
+                        index: i + 1,
+                        balance: filteredBalances[i],
+                        qtyFormat: qtyFormat,
                       ),
-              ),
+                    ],
+                  ],
+                ),
               const SizedBox(height: 18),
               const MasterSectionLabel('Movements (Purchase / Waste / Sale)'),
               const SizedBox(height: 10),
@@ -485,35 +498,47 @@ class BalanceRow extends StatelessWidget {
         : balance.lowStock
             ? AppColors.tableBillRequested
             : AppColors.tableAvailable;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      child: Row(
+    final name = balance.productName.trim().isEmpty
+        ? 'Product ${balance.productId}'
+        : balance.productName.trim();
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.45),
+          width: 1.4,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '$index',
-              style: const TextStyle(
-                fontFamily: AppFonts.family,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$index',
+                  style: const TextStyle(
+                    fontFamily: AppFonts.family,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  balance.productName,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -523,50 +548,89 @@ class BalanceRow extends StatelessWidget {
                     color: AppColors.navy,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  balance.lowStock ? 'Low stock — restock soon' : 'In stock',
-                  style: TextStyle(
-                    fontFamily: AppFonts.family,
-                    fontSize: 12,
-                    color: remainingColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: remainingColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  'In Stock',
-                  style: TextStyle(
-                    fontFamily: AppFonts.family,
-                    fontSize: 11,
-                    color: remainingColor,
-                    fontWeight: FontWeight.w600,
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _QtyBlock(
+                  label: 'Total Qty',
+                  value: qtyFormat.format(balance.totalQty),
+                  valueColor: AppColors.navy,
+                ),
+              ),
+              Expanded(
+                child: _QtyBlock(
+                  label: 'Sale Qty',
+                  value: qtyFormat.format(balance.saleQty),
+                  valueColor: AppColors.primary,
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: remainingColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: _QtyBlock(
+                    label: 'In Stock',
+                    value: qtyFormat.format(balance.remaining),
+                    valueColor: remainingColor,
+                    valueSize: 20,
                   ),
                 ),
-                Text(
-                  qtyFormat.format(balance.remaining),
-                  style: TextStyle(
-                    fontFamily: AppFonts.family,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: remainingColor,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _QtyBlock extends StatelessWidget {
+  const _QtyBlock({
+    required this.label,
+    required this.value,
+    required this.valueColor,
+    this.valueSize = 16,
+  });
+
+  final String label;
+  final String value;
+  final Color valueColor;
+  final double valueSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppFonts.family,
+            fontSize: 11,
+            color: AppColors.navy.withValues(alpha: .45),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: AppFonts.family,
+            fontSize: valueSize,
+            fontWeight: FontWeight.w800,
+            color: valueColor,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/features/reports/domain/report_export.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_period_controls.dart';
 
@@ -77,6 +78,27 @@ class StaffWiseReportPage extends ConsumerWidget {
       appBar: AppBar(
         title: Text('User-wise — ${period.label}'),
         actions: [
+          IconButton(
+            tooltip: 'Export Excel',
+            onPressed: () {
+              final rows = rowsAsync.valueOrNull;
+              if (rows == null || rows.isEmpty) return;
+              shareStaffSalesExcel(
+                rows: rows
+                    .map(
+                      (r) => (
+                        staffName: r.staffName,
+                        billCount: r.billCount,
+                        totalSales: r.totalSales,
+                      ),
+                    )
+                    .toList(),
+                title: 'User-wise Sales',
+                subtitle: period.label,
+              );
+            },
+            icon: const Icon(Icons.ios_share_rounded),
+          ),
           IconButton(
             tooltip: 'Period',
             onPressed: () => showReportPeriodFilterMenu(context, ref),

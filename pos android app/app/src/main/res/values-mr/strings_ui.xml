@@ -146,6 +146,11 @@
     <string name="ui_lunch">दुपारचे जेवण</string>
     <string name="ui_dinner">रात्रीचे जेवण</string>
     <string name="ui_mess_coupons_count">%d कूपन</string>
+    <string name="ui_mess_items_count">%d आयटम</string>
+    <string name="ui_mess_coupons_section">पेपर कूपन</string>
+    <string name="ui_mess_qr_tokens_section">QR टोकन</string>
+    <string name="ui_coupons">कूपन</string>
+    <string name="ui_qr_tokens">QR टोकन</string>
     <string name="ui_menu">मेनू</string>
     <string name="ui_member_address">सदस्याचा पत्ता</string>
     <string name="ui_member_list">सदस्य यादी</string>
@@ -173,6 +178,7 @@
     <string name="empty_sub_members">अजून कोणतेही मेस सदस्य नाहीत. सुरुवात करण्यासाठी सदस्य जोडा.</string>
     <string name="empty_sub_member_payments">या सदस्याचा पेमेंट इतिहास नाही.</string>
     <string name="empty_sub_mess_invoices">निवडलेल्या कालावधीसाठी मेस इनव्हॉइस सापडले नाहीत.</string>
+    <string name="empty_sub_mess_tokens_today">आज कोणतेही मेस टोकन प्रिंट झाले नाही. मेसमधून कूपन किंवा QR टोकन प्रिंट करा.</string>
     <string name="empty_sub_parcels">कोणतेही खुले पार्सल नाहीत. बिलिंग सुरू करण्यासाठी New Parcel टॅप करा.</string>
     <string name="empty_sub_dine_in">टेबल सापडले नाहीत. शॉप डिटेल्समध्ये No of Table सेट करा आणि Table Master मध्ये टेबल जोडा.</string>
     <string name="empty_sub_table_master_areas">अजून कोणतेही एरिया नाहीत. Hall, AC, Non-AC किंवा Garden जोडा.</string>
@@ -285,8 +291,10 @@
     <string name="ui_auto_print_kot">ऑटो प्रिंट KOT</string>
     <string name="ui_kot_preview">KOT पूर्वावलोकन</string>
     <string name="ui_bill_printer_name">बिल प्रिंटरचे नाव</string>
+    <string name="ui_mess_coupon_preview">मेस कूपन</string>
+    <string name="ui_mess_qr_token_preview">मेस QR टोकन</string>
     <string name="ui_print_preview">प्रिंट पूर्वावलोकन</string>
-    <string name="ui_print_preview_hint">नमुना इनव्हॉइस किंवा KOT प्रिंटरवर तपासा</string>
+    <string name="ui_print_preview_hint">नमुना इनव्हॉइस, KOT, मेस कूपन किंवा QR टोकन प्रिंटरवर तपासा</string>
     <string name="ui_select_connect_invoice_printer">इनव्हॉइस प्रिंटर निवडा आणि कनेक्ट करा</string>
     <string name="ui_select_connect_kot_printer">KOT प्रिंटर निवडा आणि कनेक्ट करा</string>
     <string name="ui_invoice_prefix_hint">इनव्हॉइस क्रमांकासाठी उपसर्ग</string>

@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.pos_billingwala.Model.MessInvoiceResponse;
+import com.pos_billingwala.Model.MessReportItem;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.InvoiceMessReportListBinding;
 import com.pos_billingwala.databinding.ItemMessReportSectionHeaderBinding;
@@ -31,22 +31,45 @@ public class InvoiceMessReportAdapter extends RecyclerView.Adapter<RecyclerView.
     private final Context context;
     private final List<Row> rows;
 
-    public InvoiceMessReportAdapter(Context context, List<MessInvoiceResponse> messInvoiceResponseList) {
+    public InvoiceMessReportAdapter(Context context, List<MessReportItem> items) {
         this.context = context;
-        this.rows = buildRows(messInvoiceResponseList);
+        this.rows = buildRows(items);
     }
 
-    /** Lunch first, then Dinner, then any other meal type — each with its own section header. */
-    public static List<Row> buildRows(List<MessInvoiceResponse> source) {
+    /**
+     * Top-level: Paper Coupons vs QR Tokens.
+     * Within each: Lunch, Dinner, Other.
+     */
+    public static List<Row> buildRows(List<MessReportItem> source) {
         List<Row> out = new ArrayList<>();
         if (source == null || source.isEmpty()) {
             return out;
         }
-        List<MessInvoiceResponse> lunch = new ArrayList<>();
-        List<MessInvoiceResponse> dinner = new ArrayList<>();
-        List<MessInvoiceResponse> other = new ArrayList<>();
-        for (MessInvoiceResponse item : source) {
-            String type = normalizeMeal(item != null ? item.getMessType() : null);
+        List<MessReportItem> coupons = new ArrayList<>();
+        List<MessReportItem> qrTokens = new ArrayList<>();
+        for (MessReportItem item : source) {
+            if (item == null) continue;
+            if (item.isQr()) {
+                qrTokens.add(item);
+            } else {
+                coupons.add(item);
+            }
+        }
+        appendSourceSection(out, "Paper Coupons", coupons);
+        appendSourceSection(out, "QR Tokens", qrTokens);
+        return out;
+    }
+
+    private static void appendSourceSection(List<Row> out, String sourceTitle, List<MessReportItem> items) {
+        if (items.isEmpty()) {
+            return;
+        }
+        out.add(Row.header(sourceTitle, items.size()));
+        List<MessReportItem> lunch = new ArrayList<>();
+        List<MessReportItem> dinner = new ArrayList<>();
+        List<MessReportItem> other = new ArrayList<>();
+        for (MessReportItem item : items) {
+            String type = normalizeMeal(item.getMessType());
             if ("lunch".equals(type)) {
                 lunch.add(item);
             } else if ("dinner".equals(type)) {
@@ -55,21 +78,20 @@ public class InvoiceMessReportAdapter extends RecyclerView.Adapter<RecyclerView.
                 other.add(item);
             }
         }
-        appendSection(out, "Lunch", lunch);
-        appendSection(out, "Dinner", dinner);
+        appendMealSection(out, "Lunch", lunch);
+        appendMealSection(out, "Dinner", dinner);
         if (!other.isEmpty()) {
-            appendSection(out, "Other", other);
+            appendMealSection(out, "Other", other);
         }
-        return out;
     }
 
-    private static void appendSection(List<Row> out, String title, List<MessInvoiceResponse> items) {
+    private static void appendMealSection(List<Row> out, String title, List<MessReportItem> items) {
         if (items.isEmpty()) {
             return;
         }
         out.add(Row.header(title, items.size()));
         int index = 1;
-        for (MessInvoiceResponse item : items) {
+        for (MessReportItem item : items) {
             out.add(Row.item(item, index++));
         }
     }
@@ -81,13 +103,27 @@ public class InvoiceMessReportAdapter extends RecyclerView.Adapter<RecyclerView.
         return raw.trim().toLowerCase(Locale.US);
     }
 
-    public static int countMeal(List<MessInvoiceResponse> source, String meal) {
+    public static int countSource(List<MessReportItem> source, boolean qr) {
+        if (source == null || source.isEmpty()) {
+            return 0;
+        }
+        int count = 0;
+        for (MessReportItem item : source) {
+            if (item == null) continue;
+            if (qr == item.isQr()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public static int countMeal(List<MessReportItem> source, String meal) {
         if (source == null || source.isEmpty()) {
             return 0;
         }
         String target = normalizeMeal(meal);
         int count = 0;
-        for (MessInvoiceResponse item : source) {
+        for (MessReportItem item : source) {
             if (target.equals(normalizeMeal(item != null ? item.getMessType() : null))) {
                 count++;
             }
@@ -121,23 +157,29 @@ public class InvoiceMessReportAdapter extends RecyclerView.Adapter<RecyclerView.
                 title = context.getString(R.string.ui_lunch);
             } else if ("Dinner".equalsIgnoreCase(title)) {
                 title = context.getString(R.string.ui_dinner);
+            } else if ("Paper Coupons".equalsIgnoreCase(title)) {
+                title = context.getString(R.string.ui_mess_coupons_section);
+            } else if ("QR Tokens".equalsIgnoreCase(title)) {
+                title = context.getString(R.string.ui_mess_qr_tokens_section);
             }
             h.binding.sectionHeaderTitle.setText(title);
-            h.binding.sectionHeaderCount.setText(
-                    context.getString(R.string.ui_mess_coupons_count, row.headerCount));
+            boolean isSource = "Paper Coupons".equalsIgnoreCase(row.headerTitle)
+                    || "QR Tokens".equalsIgnoreCase(row.headerTitle);
+            h.binding.sectionHeaderCount.setText(isSource
+                    ? context.getString(R.string.ui_mess_items_count, row.headerCount)
+                    : context.getString(R.string.ui_mess_coupons_count, row.headerCount));
         } else if (holder instanceof ItemHolder) {
             ItemHolder h = (ItemHolder) holder;
-            MessInvoiceResponse item = row.item;
+            MessReportItem item = row.item;
             h.binding.srNo.setText("" + row.itemIndex);
-            bindDateTime(h, item.getMessInvoiceDate());
+            bindDateTime(h, item.getDateTime());
             h.binding.memberName.setText(item.getMemberName());
-            h.binding.messType.setText(item.getMessType());
+            h.binding.messType.setText(item.displayType());
             boolean lastInSection = position + 1 >= rows.size() || rows.get(position + 1).isHeader;
             h.binding.rowDivider.setVisibility(lastInSection ? View.GONE : View.VISIBLE);
         }
     }
 
-    /** Date on first line, 12-hour AM/PM time on second line. */
     private static void bindDateTime(ItemHolder holder, String raw) {
         String[] parts = formatDateTimeParts(raw);
         holder.binding.invoiceDate.setText(parts[0]);
@@ -150,10 +192,6 @@ public class InvoiceMessReportAdapter extends RecyclerView.Adapter<RecyclerView.
         }
     }
 
-    /**
-     * @return [date, timeAmPm] — date as yyyy-MM-dd (or original if unparseable),
-     *         time as hh:mm a
-     */
     public static String[] formatDateTimeParts(String raw) {
         if (raw == null || raw.trim().isEmpty()) {
             return new String[]{"", ""};
@@ -180,7 +218,6 @@ public class InvoiceMessReportAdapter extends RecyclerView.Adapter<RecyclerView.
             } catch (ParseException ignored) {
             }
         }
-        // Fallback: split on first space if present.
         int space = value.indexOf(' ');
         if (space > 0 && space < value.length() - 1) {
             return new String[]{value.substring(0, space), value.substring(space + 1)};
@@ -197,11 +234,11 @@ public class InvoiceMessReportAdapter extends RecyclerView.Adapter<RecyclerView.
         final boolean isHeader;
         final String headerTitle;
         final int headerCount;
-        final MessInvoiceResponse item;
+        final MessReportItem item;
         final int itemIndex;
 
         private Row(boolean isHeader, String headerTitle, int headerCount,
-                    MessInvoiceResponse item, int itemIndex) {
+                    MessReportItem item, int itemIndex) {
             this.isHeader = isHeader;
             this.headerTitle = headerTitle;
             this.headerCount = headerCount;
@@ -213,7 +250,7 @@ public class InvoiceMessReportAdapter extends RecyclerView.Adapter<RecyclerView.
             return new Row(true, title, count, null, 0);
         }
 
-        static Row item(MessInvoiceResponse item, int index) {
+        static Row item(MessReportItem item, int index) {
             return new Row(false, null, 0, item, index);
         }
     }

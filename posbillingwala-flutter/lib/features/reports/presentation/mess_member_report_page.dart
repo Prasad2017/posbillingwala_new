@@ -9,6 +9,7 @@ import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_payments_page.dart';
+import 'package:pos_billingwala_v2/features/reports/domain/report_export.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -64,6 +65,18 @@ class MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
       appBar: AppBar(
         title: Text(AppStrings.of(ref).invoiceMemberReport),
         actions: [
+          IconButton(
+            tooltip: 'Export Excel',
+            onPressed: () {
+              final members = ref.read(messMembersProvider).valueOrNull;
+              if (members == null || members.isEmpty) return;
+              shareMessMembersExcel(
+                members: messMemberReportPageFiltered(members),
+                title: AppStrings.of(ref).invoiceMemberReport,
+              );
+            },
+            icon: const Icon(Icons.ios_share_rounded),
+          ),
           IconButton(
             tooltip: 'Sync members',
             onPressed: () =>

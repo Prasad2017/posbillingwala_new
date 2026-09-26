@@ -112,6 +112,12 @@ public class InvoiceMessMemberPaymentReport extends Fragment implements View.OnC
                 pendingAmount = ReportCursorHelper.parseAmount(memberResponseList.get(0).getPaymentMessAmount()) - paidAmount;
                 binding.pendingAmount.setText(MainActivity.currencyName + " " + pendingAmount);
 
+                String memberName = memberResponseList.get(0).getMemberName();
+                int coupons = posBillingWalaDatabase.countMemberCoupons(memberId, memberName);
+                int qrTokens = posBillingWalaDatabase.countMemberQrTokens(memberId, memberName);
+                binding.couponCountTxt.setText(getString(R.string.ui_coupons) + ": " + coupons);
+                binding.qrTokenCountTxt.setText(getString(R.string.ui_qr_tokens) + ": " + qrTokens);
+
                 InvoiceMessMemberPaymentAdapter adapter = new InvoiceMessMemberPaymentAdapter(activity, memberResponseList);
                 binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
                 binding.recyclerView.setAdapter(adapter);

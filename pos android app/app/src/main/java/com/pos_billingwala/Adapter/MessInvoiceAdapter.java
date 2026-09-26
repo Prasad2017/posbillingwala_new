@@ -247,6 +247,7 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
                         intent.putExtra("memberMobileNumber", memberResponse.getMemberMobileNumber());
                         intent.putExtra("messDays", "" + messDays);
                         intent.putExtra("messInvoiceResponseList", "" + messInvoiceResponseList.size());
+                        intent.putExtra(CouponBluetoothPrint.EXTRA_AUTO_PRINT, true);
                         context.startActivity(intent);
                     }
                 } else {
@@ -293,6 +294,7 @@ public class MessInvoiceAdapter extends RecyclerView.Adapter<MessInvoiceAdapter.
         intent.putExtra("tokenDate", tokenDate);
         intent.putExtra("tokenNetworkStatus", networkStatus);
         intent.putExtra("messInvoiceResponseList", "" + existingCouponCount);
+        intent.putExtra(MessTokenBluetoothPrint.EXTRA_AUTO_PRINT, true);
         context.startActivity(intent);
     }
 

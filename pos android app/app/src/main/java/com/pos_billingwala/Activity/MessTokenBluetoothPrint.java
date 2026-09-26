@@ -49,6 +49,9 @@ import java.util.List;
 @SuppressLint({"SetTextI18n", "StaticFieldLeak"})
 public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClickListener {
 
+    public static final String EXTRA_AUTO_PRINT = "autoPrint";
+    public static final String EXTRA_PREVIEW_ONLY = "previewOnly";
+
     public static TextView twoShopName, twoShopDetails, twoInvoiceDetails, twoInvoiceMemberName, twoInvoiceMemberMobile, twoTokenTypeLabel, twoTokenCode;
     public static ImageView twoCompanyLogo, twoQrCode;
     public static NestedScrollView twoNestedScrollView;
@@ -61,6 +64,8 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
 
     private String tokenCode, memberId, memberName, memberMobile, memberType, messType, tokenAmount, tokenDate, tokenNetworkStatus;
     private boolean tokenSaved = false;
+    private boolean autoPrint;
+    private boolean previewOnly;
 
     int PERMISSION_ALL = 1;
     int REQUEST_ENABLE_BT = 4, REQUEST_CONNECT_DEVICE = 6;
@@ -100,6 +105,8 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         tokenAmount = intent.getStringExtra("tokenAmount");
         tokenDate = intent.getStringExtra("tokenDate");
         tokenNetworkStatus = intent.getStringExtra("tokenNetworkStatus");
+        autoPrint = intent.getBooleanExtra(EXTRA_AUTO_PRINT, false);
+        previewOnly = intent.getBooleanExtra(EXTRA_PREVIEW_ONLY, false);
     }
 
     private void initViews() {
@@ -125,6 +132,51 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         getCompanyDetails();
         getPrinterSettingDetails();
         renderTokenPreview();
+        if (autoPrint) {
+            applyAutoPrintChrome();
+            com.pos_billingwala.Extra.AppExecutors.get().postMainDelayed(this::triggerAutoPrint, 450L);
+        }
+    }
+
+    private void applyAutoPrintChrome() {
+        try {
+            if (twoNestedScrollView != null) twoNestedScrollView.setVisibility(View.INVISIBLE);
+            if (binding != null && binding.printInvoiceCardView != null) {
+                binding.printInvoiceCardView.setVisibility(View.GONE);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void revealPreviewChrome() {
+        try {
+            if (twoNestedScrollView != null) twoNestedScrollView.setVisibility(View.VISIBLE);
+            if (binding != null && binding.printInvoiceCardView != null) {
+                binding.printInvoiceCardView.setVisibility(View.VISIBLE);
+            }
+        } catch (Exception ignored) {
+        }
+        autoPrint = false;
+    }
+
+    private void triggerAutoPrint() {
+        if (isFinishing()) {
+            return;
+        }
+        if (memberName == null || memberName.trim().isEmpty()
+                || memberMobile == null || memberMobile.trim().isEmpty()) {
+            revealPreviewChrome();
+            return;
+        }
+        if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            Toast.makeText(this, getString(R.string.toast_please_select_printer_from_setting), Toast.LENGTH_SHORT).show();
+            revealPreviewChrome();
+            return;
+        }
+        String addr = printerSettingResponseList.get(0).getBluetoothAddress();
+        PrinterConnectionHelper.ensureBillPrinterAsync(this,
+                addr != null ? addr : "",
+                this::runMessTokenPrintAfterPrinterReady);
     }
 
     private void renderTokenPreview() {
@@ -189,6 +241,9 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
         printImage.PrepareImage(com.pos_billingwala.Print.PrintImage.dither.floyd_steinberg, 128);
         if (!PrinterConnectionHelper.safeWriteBill(this, printImage.getPrintImageData())) {
+            if (autoPrint) {
+                revealPreviewChrome();
+            }
             String addr = printerSettingResponseList.isEmpty() ? "" : printerSettingResponseList.get(0).getBluetoothAddress();
             WoosimPrnMng.connect(this, addr != null ? addr : "", MessTokenBluetoothPrint.this);
             return;
@@ -198,6 +253,10 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
     }
 
     private void saveMessTokenIfNeeded() {
+        if (previewOnly) {
+            Toast.makeText(this, getString(R.string.ui_test_print), Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (tokenSaved) {
             finish();
             return;

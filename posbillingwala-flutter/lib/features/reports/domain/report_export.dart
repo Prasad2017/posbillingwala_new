@@ -211,3 +211,182 @@ Future<void> shareExpensesCsv({
     ),
   );
 }
+
+Future<void> shareMessInvoicesExcel({
+  required List<MessInvoice> invoices,
+  required String title,
+  String? subtitle,
+}) async {
+  final dateFmt = DateFormat('yyyy-MM-dd');
+  final timeFmt = DateFormat('hh:mm a');
+  final rows = <List<String>>[
+    const ['SR', 'Date', 'Time', 'Member', 'Meal Type'],
+  ];
+  for (var i = 0; i < invoices.length; i++) {
+    final m = invoices[i];
+    rows.add([
+      '${i + 1}',
+      dateFmt.format(m.messInvoiceDate),
+      timeFmt.format(m.messInvoiceDate),
+      m.memberName,
+      m.messType,
+    ]);
+  }
+  await shareXlsFile(
+    title: title,
+    fileStem: title,
+    htmlBody: buildHtmlSpreadsheet(
+      reportTitle: title,
+      subtitle: subtitle,
+      rows: rows,
+    ),
+  );
+}
+
+Future<void> shareMessReportExcel({
+  required List<({
+    bool isQr,
+    DateTime dateTime,
+    String memberName,
+    String messType,
+    String detail,
+  })> rows,
+  required String title,
+  String? subtitle,
+}) async {
+  final dateFmt = DateFormat('yyyy-MM-dd');
+  final timeFmt = DateFormat('hh:mm a');
+  final table = <List<String>>[
+    const ['SR', 'Source', 'Date', 'Time', 'Member', 'Meal Type', 'Detail'],
+  ];
+  for (var i = 0; i < rows.length; i++) {
+    final m = rows[i];
+    table.add([
+      '${i + 1}',
+      m.isQr ? 'QR Token' : 'Coupon',
+      dateFmt.format(m.dateTime),
+      timeFmt.format(m.dateTime),
+      m.memberName,
+      m.messType,
+      m.detail,
+    ]);
+  }
+  await shareXlsFile(
+    title: title,
+    fileStem: title,
+    htmlBody: buildHtmlSpreadsheet(
+      reportTitle: title,
+      subtitle: subtitle,
+      rows: table,
+    ),
+  );
+}
+
+Future<void> shareMessMembersExcel({
+  required List<MessMember> members,
+  required String title,
+  String? subtitle,
+}) async {
+  final rows = <List<String>>[
+    const ['SR', 'Member Name', 'Mobile', 'Type'],
+  ];
+  for (var i = 0; i < members.length; i++) {
+    final m = members[i];
+    rows.add([
+      '${i + 1}',
+      m.memberName,
+      m.memberMobileNumber ?? '',
+      m.memberType,
+    ]);
+  }
+  await shareXlsFile(
+    title: title,
+    fileStem: title,
+    htmlBody: buildHtmlSpreadsheet(
+      reportTitle: title,
+      subtitle: subtitle,
+      rows: rows,
+    ),
+  );
+}
+
+Future<void> shareMessPaymentsExcel({
+  required List<MessMemberPayment> payments,
+  required String title,
+  String? subtitle,
+}) async {
+  final rows = <List<String>>[
+    const ['SR', 'Date', 'Member', 'Paid', 'Mess Days'],
+  ];
+  var total = 0.0;
+  for (var i = 0; i < payments.length; i++) {
+    final p = payments[i];
+    total += p.paymentPaidAmount;
+    rows.add([
+      '${i + 1}',
+      p.paymentDate,
+      p.memberName,
+      p.paymentPaidAmount.toStringAsFixed(2),
+      '${p.messTotalDays}',
+    ]);
+  }
+  rows.add(['', '', 'TOTAL', total.toStringAsFixed(2), '']);
+  await shareXlsFile(
+    title: title,
+    fileStem: title,
+    htmlBody: buildHtmlSpreadsheet(
+      reportTitle: title,
+      subtitle: subtitle,
+      rows: rows,
+    ),
+  );
+}
+
+Future<void> shareStaffSalesExcel({
+  required List<({String staffName, int billCount, double totalSales})> rows,
+  required String title,
+  String? subtitle,
+}) async {
+  final table = <List<String>>[
+    const ['SR', 'Staff', 'Bills', 'Sales'],
+  ];
+  var totalBills = 0;
+  var totalSales = 0.0;
+  for (var i = 0; i < rows.length; i++) {
+    final r = rows[i];
+    totalBills += r.billCount;
+    totalSales += r.totalSales;
+    table.add([
+      '${i + 1}',
+      r.staffName,
+      '${r.billCount}',
+      r.totalSales.toStringAsFixed(2),
+    ]);
+  }
+  table.add(['', 'TOTAL', '$totalBills', totalSales.toStringAsFixed(2)]);
+  await shareXlsFile(
+    title: title,
+    fileStem: title,
+    htmlBody: buildHtmlSpreadsheet(
+      reportTitle: title,
+      subtitle: subtitle,
+      rows: table,
+    ),
+  );
+}
+
+Future<void> shareGenericExcel({
+  required String title,
+  String? subtitle,
+  required List<List<String>> rows,
+}) async {
+  await shareXlsFile(
+    title: title,
+    fileStem: title,
+    htmlBody: buildHtmlSpreadsheet(
+      reportTitle: title,
+      subtitle: subtitle,
+      rows: rows,
+    ),
+  );
+}

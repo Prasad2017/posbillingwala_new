@@ -29,7 +29,7 @@ import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.OperationalReportCharts;
 import com.pos_billingwala.Extra.ReportExcelHelper;
 import com.pos_billingwala.Extra.ReportUiHelper;
-import com.pos_billingwala.Model.MessInvoiceResponse;
+import com.pos_billingwala.Model.MessReportItem;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
 
@@ -47,7 +47,7 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
     public int mYear, mMonth, mDay;
     View view;
     POSBillingWalaDatabase posBillingWalaDatabase;
-    List<MessInvoiceResponse> messInvoiceResponseList = new ArrayList<>();
+    List<MessReportItem> messReportItems = new ArrayList<>();
     Calendar calender;
     DatePickerDialog datePickerDialog;
     String invoiceDate = "";
@@ -108,7 +108,7 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
         } else if (id == R.id.shareInvoice) {
             ReportExcelHelper.exportAndShare(activity, getString(R.string.ui_invoice_mess_report),
                     "/Sale/MessReport.xls", ReportExcelHelper.periodSubtitle(invoiceDate),
-                    ReportExcelHelper.messInvoiceRows(messInvoiceResponseList));
+                    ReportExcelHelper.messReportRows(messReportItems));
         }
     }
 
@@ -211,15 +211,15 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
     public void getDateReportList(String invoiceDate) {
         SweetAlertDialog loader = ListLoader.show(activity);
         try {
-            messInvoiceResponseList.clear();
-            messInvoiceResponseList = posBillingWalaDatabase.getInvoiceMessInvoiceDateWiseReportList(invoiceDate);
-            if (!messInvoiceResponseList.isEmpty()) {
+            messReportItems.clear();
+            messReportItems = posBillingWalaDatabase.getMessReportItems(invoiceDate);
+            if (!messReportItems.isEmpty()) {
 
-                InvoiceMessReportAdapter adapter = new InvoiceMessReportAdapter(activity, messInvoiceResponseList);
+                InvoiceMessReportAdapter adapter = new InvoiceMessReportAdapter(activity, messReportItems);
                 binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
                 binding.recyclerView.setAdapter(adapter);
                 binding.dateChip.setText(OperationalReportCharts.formatPeriodLabel(invoiceDate));
-                bindMessKpis(messInvoiceResponseList);
+                bindMessKpis(messReportItems);
                 binding.nestedScrollView.setVisibility(View.VISIBLE);
                 EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_mess_invoices);
             } else {
@@ -232,15 +232,15 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
     }
 
 
-    private void bindMessKpis(List<MessInvoiceResponse> list) {
-        int lunch = InvoiceMessReportAdapter.countMeal(list, "Lunch");
-        int dinner = InvoiceMessReportAdapter.countMeal(list, "Dinner");
+    private void bindMessKpis(List<MessReportItem> list) {
+        int coupons = InvoiceMessReportAdapter.countSource(list, false);
+        int qr = InvoiceMessReportAdapter.countSource(list, true);
         ReportUiHelper.bindKpi(binding.kpi1, getString(R.string.ui_total_bills),
                 String.valueOf(list.size()), "");
-        ReportUiHelper.bindKpi(binding.kpi2, getString(R.string.ui_lunch),
-                String.valueOf(lunch), "");
-        ReportUiHelper.bindKpi(binding.kpi3, getString(R.string.ui_dinner),
-                String.valueOf(dinner), "");
+        ReportUiHelper.bindKpi(binding.kpi2, getString(R.string.ui_coupons),
+                String.valueOf(coupons), "");
+        ReportUiHelper.bindKpi(binding.kpi3, getString(R.string.ui_qr_tokens),
+                String.valueOf(qr), "");
         binding.kpi3.getRoot().setVisibility(View.VISIBLE);
         binding.kpi4.getRoot().setVisibility(View.GONE);
     }
@@ -256,14 +256,14 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
     public void getInvoiceMessInvoiceReportList() {
         SweetAlertDialog loader = ListLoader.show(activity);
         try {
-            messInvoiceResponseList.clear();
-            messInvoiceResponseList = posBillingWalaDatabase.getInvoiceMessInvoiceReportList();
-            if (!messInvoiceResponseList.isEmpty()) {
-                InvoiceMessReportAdapter adapter = new InvoiceMessReportAdapter(activity, messInvoiceResponseList);
+            messReportItems.clear();
+            messReportItems = posBillingWalaDatabase.getMessReportItems("");
+            if (!messReportItems.isEmpty()) {
+                InvoiceMessReportAdapter adapter = new InvoiceMessReportAdapter(activity, messReportItems);
                 binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
                 binding.recyclerView.setAdapter(adapter);
                 binding.dateChip.setText(OperationalReportCharts.formatPeriodLabel(""));
-                bindMessKpis(messInvoiceResponseList);
+                bindMessKpis(messReportItems);
                 binding.nestedScrollView.setVisibility(View.VISIBLE);
                 EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_mess_invoices);
             } else {

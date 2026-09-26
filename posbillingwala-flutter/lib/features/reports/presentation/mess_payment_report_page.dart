@@ -7,6 +7,7 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
+import 'package:pos_billingwala_v2/features/reports/domain/report_export.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -45,6 +46,18 @@ class MessPaymentReportPageState extends ConsumerState<MessPaymentReportPage> {
               icon: const Icon(Icons.arrow_back_rounded),
               onPressed: () => context.pop(),
             ),
+            actions: [
+              IconButton(
+                tooltip: 'Export Excel',
+                onPressed: rows.isEmpty
+                    ? null
+                    : () => shareMessPaymentsExcel(
+                        payments: rows,
+                        title: AppStrings.of(ref).memberPaymentReport,
+                      ),
+                icon: const Icon(Icons.ios_share_rounded),
+              ),
+            ],
           ),
           body: snap.connectionState != ConnectionState.done
               ? const Center(child: CircularProgressIndicator())

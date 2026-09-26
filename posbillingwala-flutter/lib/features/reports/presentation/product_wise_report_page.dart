@@ -84,7 +84,7 @@ class ProductWiseReportPageState extends ConsumerState<ProductWiseReportPage> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Export CSV',
+            tooltip: 'Export Excel',
             onPressed: () {
               final rows = productWiseReportPageRows.asData?.value;
               if (rows == null || rows.isEmpty) return;

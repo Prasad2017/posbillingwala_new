@@ -4,11 +4,19 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
+import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
-import 'package:pos_billingwala_v2/features/mess/presentation/mess_coupon_page.dart';
+import 'package:pos_billingwala_v2/features/mess/domain/mess_slip_builder.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_token_qr_page.dart';
+import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
+import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
+import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -352,12 +360,119 @@ class MessHubMemberCard extends ConsumerWidget {
   Future<void> printCoupon(BuildContext context, WidgetRef ref) async {
     if (!await guardPrint(context, ref, qr: false)) return;
     if (!context.mounted) return;
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
-        builder: (_) => MessCouponPage(member: stats.member),
-      ),
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
-    if (saved == true) onPrinted();
+
+    var saved = false;
+    try {
+      if (AppPlatform.requiresNetwork && !await ensureOnline()) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text(kOnlineRequiredMessage)),
+          );
+        }
+        return;
+      }
+
+      final db = ref.read(appDatabaseProvider);
+      final used = await db.countMessCouponsForMemberOnDay(
+        stats.member.memberName,
+        DateTime.now(),
+      );
+      if (used >= stats.allowedToday) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Already coupon created')),
+          );
+        }
+        return;
+      }
+
+      final messType = MessSlipBuilder.resolveMessType(
+        existingPrintsToday: used,
+      );
+      final profile = ref.read(shopReceiptProfileProvider);
+      final layout = MessSlipBuilder.couponLayout(
+        profile: profile,
+        memberName: stats.member.memberName,
+        messType: messType,
+        couponNo: used + 1,
+      );
+      final printResult = await ref.read(printServiceProvider).printMessSlip(
+        layout.toPlainText(
+          width: ref.read(printerSettingsProvider).charsPerLine,
+        ),
+        layout: layout,
+        label: 'Mess coupon',
+      );
+      final printed =
+          printResult.outcome != PrintOutcome.failed &&
+          printResult.outcome != PrintOutcome.previewOnly;
+      if (!printed) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(printResult.message ?? 'Print failed — not saved'),
+            ),
+          );
+        }
+        return;
+      }
+
+      final id = await db.issueMessCoupon(
+        memberId: '${stats.member.memberId}',
+        memberName: stats.member.memberName,
+        messType: messType.isEmpty ? 'Lunch' : messType,
+      );
+
+      final userId = ref.read(authControllerProvider).session?.userId;
+      var uploaded = false;
+      if (userId != null && userId.isNotEmpty) {
+        final row = await db.getMessInvoiceById(id);
+        if (row != null) {
+          final ok = await MessApi(ref.read(apiClientProvider)).insertMessInvoice(
+            userId: userId,
+            memberName: row.memberName,
+            messType: row.messType,
+            messInvoiceDate: DateFormat(
+              'yyyy-MM-dd HH:mm:ss',
+            ).format(row.messInvoiceDate),
+            messInvoiceNetworkStatus: row.messInvoiceNetworkStatus,
+            messInvoiceStatus: '0',
+          );
+          if (ok) {
+            await db.markMessInvoiceSynced(id);
+            uploaded = true;
+          }
+        }
+      }
+      if (AppPlatform.requiresNetwork && !uploaded) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text(kWebApiSaveFailedMessage)),
+          );
+        }
+        return;
+      }
+
+      saved = true;
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Coupon printed')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+    }
+    if (saved) onPrinted();
   }
 
   Future<void> printQr(BuildContext context, WidgetRef ref) async {
@@ -374,6 +489,14 @@ class MessHubMemberCard extends ConsumerWidget {
       );
       return;
     }
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    var saved = false;
     try {
       final messType = MessTokenQrHelper.resolveMessType(
         existingPrintsToday: stats.todayPrints,
@@ -381,26 +504,56 @@ class MessHubMemberCard extends ConsumerWidget {
       final prep = ref
           .read(messControllerProvider.notifier)
           .prepareMemberToken(stats.member, messType: messType);
-      if (!context.mounted) return;
-      final saved = await Navigator.of(context).push<bool>(
-        MaterialPageRoute<bool>(
-          builder: (_) => MessTokenQrPage(
-            title: 'QR Token Preview',
-            subtitle: stats.member.memberName,
-            memberMobile: stats.member.memberMobileNumber,
-            payload: prep.payload,
-            tokenCode: prep.tokenCode,
-            messType: prep.messType,
-            member: stats.member,
-            commitAfterPrint: true,
-          ),
-        ),
+      final profile = ref.read(shopReceiptProfileProvider);
+      final mobile = messTokenDigits(stats.member.memberMobileNumber);
+      final layout = MessSlipBuilder.qrTokenLayout(
+        profile: profile,
+        memberName: stats.member.memberName,
+        memberMobile: mobile,
+        messType: prep.messType,
+        tokenCode: prep.tokenCode,
+        qrPayload: prep.payload,
       );
-      if (saved == true) onPrinted();
+      final result = await ref.read(printServiceProvider).printMessSlip(
+        layout.toPlainText(
+          width: ref.read(printerSettingsProvider).charsPerLine,
+        ),
+        layout: layout,
+        qrPayload: prep.payload,
+        channel: PrinterChannelKind.bill,
+        label: 'Mess QR token',
+      );
+      final ok =
+          result.outcome != PrintOutcome.failed &&
+          result.outcome != PrintOutcome.previewOnly;
+      if (!ok) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(result.message ?? 'Print failed')),
+          );
+        }
+        return;
+      }
+
+      await ref.read(messControllerProvider.notifier).commitMemberToken(
+        member: stats.member,
+        tokenCode: prep.tokenCode,
+        messType: prep.messType,
+      );
+      saved = true;
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message ?? 'QR token printed')),
+        );
+      }
     } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
     }
+    if (saved) onPrinted();
   }
 
   Future<bool> guardPrint(

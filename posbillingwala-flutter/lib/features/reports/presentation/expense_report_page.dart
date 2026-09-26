@@ -88,7 +88,7 @@ class ExpenseReportPageState extends ConsumerState<ExpenseReportPage> {
         title: Text(AppStrings.of(ref).expenseWiseReport),
         actions: [
           IconButton(
-            tooltip: 'Export',
+            tooltip: 'Export Excel',
             onPressed: expensesAsync.maybeWhen(
               data: (all) {
                 final filtered = inPeriod(all, period);

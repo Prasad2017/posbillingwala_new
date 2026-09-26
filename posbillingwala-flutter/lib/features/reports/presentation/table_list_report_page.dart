@@ -145,7 +145,7 @@ class TableListReportPageState extends ConsumerState<TableListReportPage> {
         title: Text(title),
         actions: [
           IconButton(
-            tooltip: 'Export CSV',
+            tooltip: 'Export Excel',
             onPressed: tableInvoices.isEmpty
                 ? null
                 : () => shareInvoicesCsv(

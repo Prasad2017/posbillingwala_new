@@ -12,8 +12,34 @@ import 'package:pos_billingwala_v2/features/reports/domain/report_export.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
-/* Android InvoiceMessReport — mess coupons grouped by Lunch / Dinner.
- * Date on line 1, 12-hour time (no seconds) on line 2. */
+/* Paper coupon vs QR token are separate report sources (Android MessReportItem). */
+enum MessReportSource { coupon, qr }
+
+class MessReportRow {
+  const MessReportRow({
+    required this.source,
+    required this.memberName,
+    required this.messType,
+    required this.dateTime,
+    required this.detail,
+  });
+
+  final MessReportSource source;
+  final String memberName;
+  final String messType;
+  final DateTime dateTime;
+  final String detail;
+
+  bool get isQr => source == MessReportSource.qr;
+
+  String get displayType {
+    final meal = messType.trim();
+    if (isQr) return meal.isEmpty ? 'QR Token' : 'QR · $meal';
+    return meal.isEmpty ? 'Coupon' : 'Coupon · $meal';
+  }
+}
+
+/* Android InvoiceMessReport — Coupons / QR Tokens, then Lunch / Dinner. */
 class MessInvoiceReportPage extends ConsumerWidget {
   const MessInvoiceReportPage({super.key});
 
@@ -22,11 +48,51 @@ class MessInvoiceReportPage extends ConsumerWidget {
 
   static String normalizeMeal(String? raw) => (raw ?? '').trim().toLowerCase();
 
-  static bool isLunch(MessInvoice row) =>
-      normalizeMeal(row.messType) == 'lunch';
+  static String matchKey(String name, String meal, DateTime date) {
+    final day = DateFormat('yyyy-MM-dd').format(date);
+    return '${name.trim().toLowerCase()}|${meal.trim().toLowerCase()}|$day';
+  }
 
-  static bool isDinner(MessInvoice row) =>
-      normalizeMeal(row.messType) == 'dinner';
+  static List<MessReportRow> buildRows({
+    required List<MessInvoice> invoices,
+    required List<MessToken> tokens,
+  }) {
+    final qrKeys = <String>{};
+    final out = <MessReportRow>[];
+    for (final t in tokens) {
+      final name = t.memberName ?? '';
+      qrKeys.add(matchKey(name, t.messType, t.tokenDate));
+      final code = t.tokenCode;
+      out.add(
+        MessReportRow(
+          source: MessReportSource.qr,
+          memberName: name,
+          messType: t.messType,
+          dateTime: t.tokenDate,
+          detail: code.length > 8
+              ? code.substring(0, 8).toUpperCase()
+              : code.toUpperCase(),
+        ),
+      );
+    }
+    for (final inv in invoices) {
+      if (qrKeys.contains(
+        matchKey(inv.memberName, inv.messType, inv.messInvoiceDate),
+      )) {
+        continue; // QR twin invoice
+      }
+      out.add(
+        MessReportRow(
+          source: MessReportSource.coupon,
+          memberName: inv.memberName,
+          messType: inv.messType,
+          dateTime: inv.messInvoiceDate,
+          detail: 'Coupon',
+        ),
+      );
+    }
+    return out;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,11 +108,23 @@ class MessInvoiceReportPage extends ConsumerWidget {
           IconButton(
             tooltip: 'Export Excel',
             onPressed: () async {
-              final rows =
-                  await ref.read(appDatabaseProvider).watchMessInvoices().first;
+              final db = ref.read(appDatabaseProvider);
+              final invoices = await db.watchMessInvoices().first;
+              final tokens = await db.getAllMessTokens();
+              final rows = buildRows(invoices: invoices, tokens: tokens);
               if (rows.isEmpty) return;
-              await shareMessInvoicesExcel(
-                invoices: rows,
+              await shareMessReportExcel(
+                rows: rows
+                    .map(
+                      (r) => (
+                        isQr: r.isQr,
+                        dateTime: r.dateTime,
+                        memberName: r.memberName,
+                        messType: r.messType,
+                        detail: r.detail,
+                      ),
+                    )
+                    .toList(),
                 title: AppStrings.of(ref).invoiceMessReport,
               );
             },
@@ -56,71 +134,81 @@ class MessInvoiceReportPage extends ConsumerWidget {
       ),
       body: StreamBuilder<List<MessInvoice>>(
         stream: ref.read(appDatabaseProvider).watchMessInvoices(),
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting &&
-              !snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final all = snap.data ?? const <MessInvoice>[];
-          if (all.isEmpty) {
-            return Center(
-              child: Text(
-                AppStrings.of(ref).tr('empty_sub_mess_invoices'),
-                textAlign: TextAlign.center,
-              ),
-            );
-          }
+        builder: (context, invSnap) {
+          return StreamBuilder<List<MessToken>>(
+            stream: ref.read(appDatabaseProvider).watchAllMessTokens(),
+            builder: (context, tokSnap) {
+              if (invSnap.connectionState == ConnectionState.waiting &&
+                  !invSnap.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final invoices = invSnap.data ?? const <MessInvoice>[];
+              final tokens = tokSnap.data ?? const <MessToken>[];
+              final all = buildRows(invoices: invoices, tokens: tokens);
+              if (all.isEmpty) {
+                return Center(
+                  child: Text(
+                    AppStrings.of(ref).tr('empty_sub_mess_invoices'),
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }
 
-          final lunch = all.where(isLunch).toList();
-          final dinner = all.where(isDinner).toList();
-          final other = all
-              .where((r) => !isLunch(r) && !isDinner(r))
-              .toList();
+              final coupons =
+                  all.where((r) => r.source == MessReportSource.coupon).toList();
+              final qr =
+                  all.where((r) => r.source == MessReportSource.qr).toList();
 
-          return ResponsiveScrollShell(
-            dashboard: true,
-            child: ListView(
-              padding: EdgeInsets.fromLTRB(
-                AppBreakpoints.pagePaddingFor(context.widthClass),
-                12,
-                AppBreakpoints.pagePaddingFor(context.widthClass),
-                28,
-              ),
-              children: [
-                ReportKpiGrid(
-                  items: [
-                    ReportKpiData(
-                      label: AppStrings.of(ref).tr('ui_total_bills'),
-                      value: '${all.length}',
+              return ResponsiveScrollShell(
+                dashboard: true,
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    AppBreakpoints.pagePaddingFor(context.widthClass),
+                    12,
+                    AppBreakpoints.pagePaddingFor(context.widthClass),
+                    28,
+                  ),
+                  children: [
+                    ReportKpiGrid(
+                      items: [
+                        ReportKpiData(
+                          label: AppStrings.of(ref).tr('ui_total_bills'),
+                          value: '${all.length}',
+                        ),
+                        ReportKpiData(
+                          label: 'Coupons',
+                          value: '${coupons.length}',
+                        ),
+                        ReportKpiData(
+                          label: 'QR Tokens',
+                          value: '${qr.length}',
+                        ),
+                      ],
                     ),
-                    ReportKpiData(
-                      label: AppStrings.of(ref).tr('ui_lunch'),
-                      value: '${lunch.length}',
-                    ),
-                    ReportKpiData(
-                      label: AppStrings.of(ref).tr('ui_dinner'),
-                      value: '${dinner.length}',
+                    const SizedBox(height: 14),
+                    ReportSurfaceCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _TableHeader(),
+                          if (coupons.isNotEmpty)
+                            _SourceSection(
+                              title: 'Paper Coupons',
+                              rows: coupons,
+                            ),
+                          if (qr.isNotEmpty)
+                            _SourceSection(
+                              title: 'QR Tokens',
+                              rows: qr,
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
-                ReportSurfaceCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _TableHeader(),
-                      if (lunch.isNotEmpty)
-                        _MealSection(title: 'Lunch', count: lunch.length, rows: lunch),
-                      if (dinner.isNotEmpty)
-                        _MealSection(title: 'Dinner', count: dinner.length, rows: dinner),
-                      if (other.isNotEmpty)
-                        _MealSection(title: 'Other', count: other.length, rows: other),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           );
         },
       ),
@@ -141,9 +229,9 @@ class _TableHeader extends StatelessWidget {
           bottom: BorderSide(color: AppColors.border.withValues(alpha: .7)),
         ),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const SizedBox(
+          SizedBox(
             width: 36,
             child: Text(
               'Sr',
@@ -155,7 +243,7 @@ class _TableHeader extends StatelessWidget {
               ),
             ),
           ),
-          const Expanded(
+          Expanded(
             flex: 5,
             child: Text(
               'Invoice Date',
@@ -167,8 +255,8 @@ class _TableHeader extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          const Expanded(
+          SizedBox(width: 8),
+          Expanded(
             flex: 4,
             child: Text(
               'Member Name',
@@ -180,8 +268,8 @@ class _TableHeader extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(
-            width: 64,
+          SizedBox(
+            width: 88,
             child: Text(
               'Type',
               textAlign: TextAlign.end,
@@ -199,25 +287,35 @@ class _TableHeader extends StatelessWidget {
   }
 }
 
-class _MealSection extends StatelessWidget {
-  const _MealSection({
-    required this.title,
-    required this.count,
-    required this.rows,
-  });
+class _SourceSection extends StatelessWidget {
+  const _SourceSection({required this.title, required this.rows});
 
   final String title;
-  final int count;
-  final List<MessInvoice> rows;
+  final List<MessReportRow> rows;
 
   @override
   Widget build(BuildContext context) {
+    final lunch = rows
+        .where((r) => MessInvoiceReportPage.normalizeMeal(r.messType) == 'lunch')
+        .toList();
+    final dinner = rows
+        .where(
+          (r) => MessInvoiceReportPage.normalizeMeal(r.messType) == 'dinner',
+        )
+        .toList();
+    final other = rows
+        .where((r) {
+          final m = MessInvoiceReportPage.normalizeMeal(r.messType);
+          return m != 'lunch' && m != 'dinner';
+        })
+        .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          color: AppColors.primaryLight,
+          color: AppColors.primary.withValues(alpha: .12),
           child: Row(
             children: [
               Expanded(
@@ -233,7 +331,55 @@ class _MealSection extends StatelessWidget {
                 ),
               ),
               Text(
-                '$count coupons',
+                '${rows.length} items',
+                style: TextStyle(
+                  fontFamily: AppFonts.family,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: AppColors.navy.withValues(alpha: .55),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (lunch.isNotEmpty) _MealSection(title: 'Lunch', rows: lunch),
+        if (dinner.isNotEmpty) _MealSection(title: 'Dinner', rows: dinner),
+        if (other.isNotEmpty) _MealSection(title: 'Other', rows: other),
+      ],
+    );
+  }
+}
+
+class _MealSection extends StatelessWidget {
+  const _MealSection({required this.title, required this.rows});
+
+  final String title;
+  final List<MessReportRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          color: AppColors.primaryLight,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title.toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: AppFonts.family,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    letterSpacing: 0.5,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              Text(
+                '${rows.length}',
                 style: TextStyle(
                   fontFamily: AppFonts.family,
                   fontWeight: FontWeight.w600,
@@ -252,23 +398,23 @@ class _MealSection extends StatelessWidget {
               endIndent: 14,
               color: AppColors.border.withValues(alpha: .7),
             ),
-          _MessInvoiceRow(index: i + 1, invoice: rows[i]),
+          _MessReportItemRow(index: i + 1, row: rows[i]),
         ],
       ],
     );
   }
 }
 
-class _MessInvoiceRow extends StatelessWidget {
-  const _MessInvoiceRow({required this.index, required this.invoice});
+class _MessReportItemRow extends StatelessWidget {
+  const _MessReportItemRow({required this.index, required this.row});
 
   final int index;
-  final MessInvoice invoice;
+  final MessReportRow row;
 
   @override
   Widget build(BuildContext context) {
-    final date = MessInvoiceReportPage.dateOnlyFmt.format(invoice.messInvoiceDate);
-    final time = MessInvoiceReportPage.timeFmt.format(invoice.messInvoiceDate);
+    final date = MessInvoiceReportPage.dateOnlyFmt.format(row.dateTime);
+    final time = MessInvoiceReportPage.timeFmt.format(row.dateTime);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -316,27 +462,43 @@ class _MessInvoiceRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             flex: 4,
-            child: Text(
-              invoice.memberName,
-              style: const TextStyle(
-                fontFamily: AppFonts.family,
-                fontWeight: FontWeight.w700,
-                fontSize: 13.5,
-                color: AppColors.navy,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  row.memberName,
+                  style: const TextStyle(
+                    fontFamily: AppFonts.family,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                    color: AppColors.navy,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (row.detail.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    row.detail,
+                    style: TextStyle(
+                      fontFamily: AppFonts.family,
+                      fontSize: 11,
+                      color: AppColors.navy.withValues(alpha: .45),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           SizedBox(
-            width: 64,
+            width: 88,
             child: Text(
-              invoice.messType,
+              row.displayType,
               textAlign: TextAlign.end,
               style: const TextStyle(
                 fontFamily: AppFonts.family,
                 fontWeight: FontWeight.w700,
-                fontSize: 12,
+                fontSize: 11,
                 color: AppColors.primary,
               ),
             ),

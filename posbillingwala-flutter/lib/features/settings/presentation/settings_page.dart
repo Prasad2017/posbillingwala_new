@@ -1040,7 +1040,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const Text(
-                          'Open sample invoice, KOT, or mess slip on the next screen',
+                          'Test sample invoice, KOT, mess coupon or QR token',
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondary,
@@ -1079,22 +1079,22 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                           children: [
                             Expanded(
                               child: PreviewActionButton(
-                                icon: Icons.qr_code_2_rounded,
-                                label: 'Mess QR Token',
-                                onPressed: btBusy
-                                    ? null
-                                    : () => openMessTestPreview('mess-qr'),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: PreviewActionButton(
                                 icon: Icons.confirmation_number_rounded,
                                 label: 'Mess Coupon',
                                 onPressed: btBusy
                                     ? null
                                     : () =>
                                         openMessTestPreview('mess-coupon'),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: PreviewActionButton(
+                                icon: Icons.qr_code_2_rounded,
+                                label: 'Mess QR Token',
+                                onPressed: btBusy
+                                    ? null
+                                    : () => openMessTestPreview('mess-qr'),
                               ),
                             ),
                           ],

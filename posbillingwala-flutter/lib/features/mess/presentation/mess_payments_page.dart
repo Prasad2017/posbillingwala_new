@@ -16,6 +16,7 @@ import 'package:pos_billingwala_v2/features/mess/domain/mess_payment_args.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/features/reports/presentation/mess_invoice_report_page.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class MessPaymentsPage extends ConsumerStatefulWidget {
@@ -676,6 +677,64 @@ class MessPaymentsPageState extends ConsumerState<MessPaymentsPage> {
             ),
       body: Column(
         children: [
+          if (widget.member != null)
+            FutureBuilder<(int, int)>(
+              future: () async {
+                final db = ref.read(appDatabaseProvider);
+                final name = widget.member!.memberName;
+                final invoices = await db.watchMessInvoices().first;
+                final tokens = await db.getAllMessTokens();
+                final rows = MessInvoiceReportPage.buildRows(
+                  invoices: invoices,
+                  tokens: tokens,
+                );
+                var coupons = 0;
+                var qr = 0;
+                for (final r in rows) {
+                  final matchName =
+                      name.trim().toLowerCase() ==
+                      r.memberName.trim().toLowerCase();
+                  if (!matchName) continue;
+                  if (r.isQr) {
+                    qr++;
+                  } else {
+                    coupons++;
+                  }
+                }
+                return (coupons, qr);
+              }(),
+              builder: (context, snap) {
+                final coupons = snap.data?.$1 ?? 0;
+                final qr = snap.data?.$2 ?? 0;
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Coupons: $coupons',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'QR Tokens: $qr',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           Expanded(
             child: (!cloudLoaded && paymentsAsync.isLoading)
                 ? const Center(child: CircularProgressIndicator())

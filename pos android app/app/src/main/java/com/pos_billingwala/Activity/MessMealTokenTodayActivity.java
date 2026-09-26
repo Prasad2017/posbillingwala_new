@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.EmptyListUi;
 import com.pos_billingwala.Extra.MessMealTokenPrintWorker;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.MessMealTokenItem;
@@ -23,8 +24,10 @@ import com.pos_billingwala.Retrofit.Api;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -33,6 +36,7 @@ import retrofit2.Response;
 public class MessMealTokenTodayActivity extends BaseActivity {
 
     private TextView countsText;
+    private View noDataFound;
     private RecyclerView recyclerView;
     private final List<MessMealTokenItem> items = new ArrayList<>();
     private TokenAdapter adapter;
@@ -43,12 +47,14 @@ public class MessMealTokenTodayActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mess_meal_token_today);
         countsText = findViewById(R.id.countsText);
+        noDataFound = findViewById(R.id.noDataFound);
         recyclerView = findViewById(R.id.recyclerView);
         findViewById(R.id.backBtn).setOnClickListener(v -> finish());
         today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         adapter = new TokenAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
+        countsText.setText(getString(R.string.ui_today));
     }
 
     @Override
@@ -63,10 +69,11 @@ public class MessMealTokenTodayActivity extends BaseActivity {
                 .enqueue(new Callback<AllApiResponse>() {
                     @Override
                     public void onResponse(Call<AllApiResponse> call, Response<AllApiResponse> response) {
-                        items.clear();
+                        List<MessMealTokenItem> remote = new ArrayList<>();
+                        StringBuilder sb = new StringBuilder(getString(R.string.ui_today));
                         if (response.isSuccessful() && response.body() != null) {
                             if (response.body().messMealTokens != null) {
-                                items.addAll(response.body().messMealTokens);
+                                remote.addAll(response.body().messMealTokens);
                                 POSBillingWalaDatabase db = new POSBillingWalaDatabase(MessMealTokenTodayActivity.this);
                                 for (MessMealTokenItem t : response.body().messMealTokens) {
                                     if (t == null || t.tokenId == null) continue;
@@ -81,8 +88,9 @@ public class MessMealTokenTodayActivity extends BaseActivity {
                                     }
                                 }
                             }
-                            StringBuilder sb = new StringBuilder("TODAY\n");
-                            if (response.body().messSessionCounts != null) {
+                            if (response.body().messSessionCounts != null
+                                    && !response.body().messSessionCounts.isEmpty()) {
+                                sb.append("\n");
                                 for (MessSessionCount c : response.body().messSessionCounts) {
                                     sb.append(c.sessionName)
                                             .append(" — Generated: ").append(c.generated)
@@ -92,20 +100,91 @@ public class MessMealTokenTodayActivity extends BaseActivity {
                                             .append("\n");
                                 }
                             }
-                            countsText.setText(sb.toString().trim());
                         }
-                        adapter.notifyDataSetChanged();
+                        countsText.setText(sb.toString().trim());
+                        applyMergedList(remote);
                         MessMealTokenPrintWorker.kick(MessMealTokenTodayActivity.this);
                     }
 
                     @Override
                     public void onFailure(Call<AllApiResponse> call, Throwable t) {
-                        POSBillingWalaDatabase db = new POSBillingWalaDatabase(MessMealTokenTodayActivity.this);
-                        items.clear();
-                        items.addAll(db.getMessMealTokenQueueToday(today));
-                        adapter.notifyDataSetChanged();
+                        countsText.setText(getString(R.string.ui_today));
+                        applyMergedList(new ArrayList<>());
                     }
                 });
+    }
+
+    private void applyMergedList(List<MessMealTokenItem> remoteOrEmpty) {
+        POSBillingWalaDatabase db = new POSBillingWalaDatabase(this);
+        List<MessMealTokenItem> merged = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+        if (remoteOrEmpty != null) {
+            for (MessMealTokenItem t : remoteOrEmpty) {
+                if (t == null) continue;
+                String key = tokenKey(t);
+                if (!seen.add(key)) continue;
+                merged.add(t);
+            }
+        }
+
+        if (merged.isEmpty()) {
+            for (MessMealTokenItem t : db.getMessMealTokenQueueToday(today)) {
+                if (t == null) continue;
+                String key = tokenKey(t);
+                if (!seen.add(key)) continue;
+                merged.add(t);
+            }
+        }
+
+        for (MessMealTokenItem t : db.getLocalPrintedMessTokensToday(today)) {
+            if (t == null) continue;
+            String key = tokenKey(t);
+            if (!seen.add(key)) continue;
+            merged.add(t);
+        }
+
+        items.clear();
+        items.addAll(merged);
+        adapter.notifyDataSetChanged();
+        updateEmptyState();
+    }
+
+    private static String tokenKey(MessMealTokenItem t) {
+        if (t.tokenId != null && !t.tokenId.trim().isEmpty()) {
+            return "id:" + t.tokenId.trim().toLowerCase(Locale.US);
+        }
+        String name = t.memberName != null ? t.memberName.trim().toLowerCase(Locale.US) : "";
+        String meal = t.mealSession != null ? t.mealSession.trim().toLowerCase(Locale.US) : "";
+        String num = t.tokenNumber != null ? t.tokenNumber.trim().toLowerCase(Locale.US) : "";
+        return "m:" + name + "|" + meal + "|" + num;
+    }
+
+    private void updateEmptyState() {
+        boolean hasData = !items.isEmpty();
+        recyclerView.setVisibility(hasData ? View.VISIBLE : View.GONE);
+        EmptyListUi.bind(noDataFound, hasData, R.string.empty_sub_mess_tokens_today);
+        if (hasData) {
+            int printed = 0;
+            for (MessMealTokenItem t : items) {
+                if (t != null && t.printStatus != null
+                        && "PRINTED".equalsIgnoreCase(t.printStatus)) {
+                    printed++;
+                }
+            }
+            String summary = getString(R.string.ui_today)
+                    + "  ·  " + items.size() + " tokens"
+                    + "  ·  " + printed + " printed";
+            CharSequence current = countsText.getText();
+            if (current == null || current.toString().trim().equalsIgnoreCase(getString(R.string.ui_today))) {
+                countsText.setText(summary);
+            }
+        }
+    }
+
+    private static boolean isLocalPrinted(MessMealTokenItem item) {
+        String id = item != null ? item.tokenId : null;
+        return id != null && (id.startsWith("qr-") || id.startsWith("coupon-"));
     }
 
     private class TokenAdapter extends RecyclerView.Adapter<TokenAdapter.VH> {
@@ -145,9 +224,14 @@ public class MessMealTokenTodayActivity extends BaseActivity {
 
             holder.metaLine.setText((item.mealSession != null ? item.mealSession : "") + "  "
                     + (item.createdAt != null ? item.createdAt : ""));
-            boolean canRetry = item.printStatus != null
+
+            boolean localPrinted = isLocalPrinted(item);
+            boolean canRetry = !localPrinted
+                    && item.printStatus != null
                     && !"PRINTED".equalsIgnoreCase(item.printStatus)
                     && !"CANCELLED".equalsIgnoreCase(item.printStatus);
+            holder.btnRetry.setVisibility(localPrinted ? View.GONE : View.VISIBLE);
+            holder.btnCancel.setVisibility(localPrinted ? View.GONE : View.VISIBLE);
             holder.btnRetry.setEnabled(canRetry);
             holder.btnCancel.setEnabled(canRetry);
             holder.btnRetry.setOnClickListener(v -> {

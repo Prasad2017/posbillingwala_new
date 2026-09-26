@@ -152,6 +152,11 @@
     <string name="ui_lunch">Lunch</string>
     <string name="ui_dinner">Dinner</string>
     <string name="ui_mess_coupons_count">%d coupons</string>
+    <string name="ui_mess_items_count">%d items</string>
+    <string name="ui_mess_coupons_section">Paper Coupons</string>
+    <string name="ui_mess_qr_tokens_section">QR Tokens</string>
+    <string name="ui_coupons">Coupons</string>
+    <string name="ui_qr_tokens">QR Tokens</string>
     <string name="ui_menu">Menu</string>
     <string name="ui_member_address">Member Address (Optional)</string>
     <string name="ui_member_list">Member List</string>
@@ -186,6 +191,7 @@
     <string name="empty_sub_members">No mess members yet. Add a member to get started.</string>
     <string name="empty_sub_member_payments">No payment history for this member.</string>
     <string name="empty_sub_mess_invoices">No mess invoices found for the selected period.</string>
+    <string name="empty_sub_mess_tokens_today">No mess tokens printed today. Print a coupon or QR token from Mess.</string>
     <string name="empty_sub_parcels">No open parcels. Tap New Parcel to start billing.</string>
     <string name="empty_sub_dine_in">No tables found. Set No of Table in Shop Details and add tables in Table Master.</string>
     <string name="empty_sub_table_master_areas">No areas yet. Add Hall, AC, Non-AC or Garden.</string>
@@ -312,9 +318,11 @@
     <string name="ui_kot_copies">KOT Copies</string>
     <string name="ui_auto_print_kot">Auto Print KOT</string>
     <string name="ui_kot_preview">KOT Preview</string>
+    <string name="ui_mess_coupon_preview">Mess Coupon</string>
+    <string name="ui_mess_qr_token_preview">Mess QR Token</string>
     <string name="ui_bill_printer_name">Bill Printer Name</string>
     <string name="ui_print_preview">Print Preview</string>
-    <string name="ui_print_preview_hint">Test sample invoice or KOT on your printer</string>
+    <string name="ui_print_preview_hint">Test sample invoice, KOT, mess coupon or QR token on your printer</string>
     <string name="ui_select_connect_invoice_printer">Select and connect invoice printer</string>
     <string name="ui_select_connect_kot_printer">Select and connect KOT printer</string>
     <string name="ui_invoice_prefix_hint">Prefix used for invoice number</string>

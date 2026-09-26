@@ -37,6 +37,7 @@ public class AddInventory extends Fragment implements View.OnClickListener {
     List<InventoryResponse> inventoryResponseList = new ArrayList<>();
     String[] productIdList, productNameList;
     String productId;
+    String selectedProductName = "";
     FragmentAddInventoryBinding binding;
 
 
@@ -66,7 +67,10 @@ public class AddInventory extends Fragment implements View.OnClickListener {
             }
         });
 
-        binding.productSpinner.setOnItemSelectedListener((position, label) -> productId = productIdList[position]);
+        binding.productSpinner.setOnItemSelectedListener((position, label) -> {
+            productId = productIdList[position];
+            selectedProductName = label != null ? label : productNameList[position];
+        });
 
         binding.backToInventory.setOnClickListener(this);
         binding.addInventory.setOnClickListener(this);
@@ -99,6 +103,16 @@ public class AddInventory extends Fragment implements View.OnClickListener {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         String inventoryDate = df.format(c);
 
+        String productName = selectedProductName != null ? selectedProductName.trim() : "";
+        if (productName.isEmpty() && productNameList != null && productIdList != null) {
+            for (int i = 0; i < productIdList.length; i++) {
+                if (productId != null && productId.equals(productIdList[i]) && i < productNameList.length) {
+                    productName = productNameList[i];
+                    break;
+                }
+            }
+        }
+
         inventoryResponseList = posBillingWalaDatabase.getInventoryDetails(productId);
         if (!inventoryResponseList.isEmpty()) {
 
@@ -107,10 +121,10 @@ public class AddInventory extends Fragment implements View.OnClickListener {
             int afterSaleInventoryQuantity = Integer.parseInt(inventoryResponseList.get(0).getAfterSaleInventoryQuantity());
             int totalQty = newInventoryQty + afterSaleInventoryQuantity;
 
-            posBillingWalaDatabase.addInventory(productId, "" + totalQty, "0", "0", inventoryDate, 0, getRandomString(10));
+            posBillingWalaDatabase.addInventory(productId, productName, "" + totalQty, "0", "0", inventoryDate, 0, getRandomString(10));
             Toast.makeText(activity, getString(R.string.toast_update_inventory_successfully), Toast.LENGTH_SHORT).show();
         } else {
-            posBillingWalaDatabase.addInventory(productId, binding.inventoryQty.getText().toString(), binding.inventoryQty.getText().toString(), "0", inventoryDate, 0, getRandomString(10));
+            posBillingWalaDatabase.addInventory(productId, productName, binding.inventoryQty.getText().toString(), binding.inventoryQty.getText().toString(), "0", inventoryDate, 0, getRandomString(10));
 
             Toast.makeText(activity, getString(R.string.toast_add_inventory_successfully), Toast.LENGTH_SHORT).show();
         }

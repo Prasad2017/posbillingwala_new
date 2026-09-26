@@ -403,6 +403,8 @@ class AppStrings {
 
   String get noQrTokensToday => tr('app_no_qr_tokens_today');
 
+  String get emptyMessTokensToday => tr('empty_sub_mess_tokens_today');
+
   String get noTableBills => tr('app_no_table_bills');
 
   String get noTablesHint => tr('app_no_tables_hint');

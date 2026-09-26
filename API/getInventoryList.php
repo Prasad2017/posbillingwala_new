@@ -19,7 +19,9 @@ $i=0;
         date_default_timezone_set("Asia/Calcutta");
         $date = date("Y-m-d");
         
-	$sth="SELECT * FROM `inventory` WHERE `userId`='$userId'";
+	$sth="SELECT i.*, p.`productName` AS productName FROM `inventory` i"
+            . " LEFT JOIN `products` p ON p.`productId` = i.`productId`"
+            . " WHERE i.`userId`='$userId'";
 
     if ($result = mysqli_query($con, $sth))
     {
@@ -32,6 +34,7 @@ $i=0;
        
         $getdata["inventoryId"]=$row['inventoryId'];
         $getdata["productId"]=$row['productId'];
+        $getdata["productName"]=isset($row['productName']) ? $row['productName'] : '';
         $getdata["productInventoryQuantity"]=$row['productInventoryQuantity'];
         $getdata["afterSaleInventoryQuantity"]=$row['afterSaleInventoryQuantity'];
         $getdata["saleInventoryQuantity"]=$row['saleInventoryQuantity'];

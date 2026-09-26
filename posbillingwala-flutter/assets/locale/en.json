@@ -114,6 +114,7 @@
   "app_no_products_category": "No products in this category",
   "app_no_products_yet": "No products yet",
   "app_no_qr_tokens_today": "No QR meal tokens today",
+  "empty_sub_mess_tokens_today": "No mess tokens printed today. Print a coupon or QR token from Mess.",
   "app_no_table_bills": "No table bills for this filter",
   "app_no_tables_hint": "Sync tables from cloud, or defaults will be created automatically.",
   "app_no_tables_yet": "No tables yet",

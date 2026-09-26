@@ -12,6 +12,10 @@ final inventoryMovementsProvider = StreamProvider<List<InventoryMovement>>((
   return ref.watch(appDatabaseProvider).watchInventoryMovements();
 });
 
+final productNameMapProvider = StreamProvider<Map<int, String>>((ref) {
+  return ref.watch(appDatabaseProvider).watchProductNameMap();
+});
+
 final stockBalancesProvider = Provider<List<ProductStockBalance>>((ref) {
   final movements = ref
       .watch(inventoryMovementsProvider)
@@ -19,6 +23,12 @@ final stockBalancesProvider = Provider<List<ProductStockBalance>>((ref) {
         data: (rows) => rows,
         orElse: () => const <InventoryMovement>[],
       );
+  /* All products (not category-filtered); deleted included via watchProductNameMap. */
+  final nameById = ref.watch(productNameMapProvider).maybeWhen(
+        data: (map) => map,
+        orElse: () => const <int, String>{},
+      );
+
   final latestByProduct = <int, InventoryMovement>{};
   /* movements are newest-first; first seen wins. */
   for (final row in movements) {
@@ -26,16 +36,28 @@ final stockBalancesProvider = Provider<List<ProductStockBalance>>((ref) {
   }
   final balances =
       latestByProduct.values
-          .map(
-            (row) => ProductStockBalance(
+          .map((row) {
+            final fromMaster = nameById[row.productId]?.trim() ?? '';
+            final fromMove = row.productName.trim();
+            final moveIsFallback = RegExp(
+              r'^Product\s+\d+$',
+              caseSensitive: false,
+            ).hasMatch(fromMove);
+            /* Prefer products-table name; ignore empty / "Product 24" ledger stubs. */
+            final name = fromMaster.isNotEmpty
+                ? fromMaster
+                : (fromMove.isNotEmpty && !moveIsFallback
+                      ? fromMove
+                      : 'Product ${row.productId}');
+            return ProductStockBalance(
               productId: row.productId,
-              productName: row.productName.isEmpty
-                  ? 'Product ${row.productId}'
-                  : row.productName,
+              productName: name,
+              totalQty: row.productInventoryQuantity,
+              saleQty: row.saleInventoryQuantity,
               remaining: row.afterSaleInventoryQuantity,
               lowStock: row.afterSaleInventoryQuantity < 6,
-            ),
-          )
+            );
+          })
           .toList()
         ..sort((a, b) => a.productName.compareTo(b.productName));
   return balances;
@@ -199,16 +221,13 @@ class InventoryController extends Notifier<AsyncValue<String?>> {
       }
 
       final cloudInventory = await api.fetchInventory(userId);
-      final products = await ref
-          .read(appDatabaseProvider)
-          .watchActiveProducts()
-          .first;
-      final nameById = {for (final p in products) p.productId: p.productName};
+      final nameById = await db.watchProductNameMap().first;
       final invCompanions = cloudInventory
           .where((e) => e.productId > 0)
           .map((e) => e.toCompanion(productNameOverride: nameById[e.productId]))
           .toList();
       final invDownloaded = await db.upsertCloudInventory(invCompanions);
+      await db.backfillInventoryProductNames();
 
       final cloudExpenses = await api.fetchExpenses(userId);
       final expCompanions = cloudExpenses
