@@ -19,7 +19,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -30,7 +29,6 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.AppExecutors;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.ResponsiveUi;
-import com.pos_billingwala.Extra.SimpleDividerItemDecoration;
 import com.pos_billingwala.Model.ProductResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentProductMasterBinding;
@@ -171,19 +169,8 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
 
     public void initViews() {
         productRecyclerView = view.findViewById(R.id.productRecyclerView);
-        // Dense product cards (actions + portions + tax) need wide columns.
-        // POS catalog min-width (150dp) created 6-col crushed grids on tablets.
-        int productColumns = 1;
-        if (ResponsiveUi.isWideLayout(activity)) {
-            int widthDp = ResponsiveUi.windowWidthDp(activity);
-            int heightDp = ResponsiveUi.windowHeightDp(activity);
-            int minCardDp = heightDp > 0 && heightDp < 720 ? 480 : 400;
-            productColumns = Math.max(1, Math.min(2, widthDp / minCardDp));
-        }
-        productRecyclerView.setLayoutManager(new GridLayoutManager(activity, productColumns));
-        if (productRecyclerView.getItemDecorationCount() == 0) {
-            productRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(activity));
-        }
+        // Per-item cards: 1 col portrait phone, 2 cols landscape / tablet when width allows.
+        productRecyclerView.setLayoutManager(new GridLayoutManager(activity, productGridColumns()));
         noDataFound = view.findViewById(R.id.noDataFound);
         searchProduct = view.findViewById(R.id.searchProduct);
         productCountText = view.findViewById(R.id.productCountText);
@@ -269,6 +256,22 @@ public class ProductMaster extends Fragment implements View.OnClickListener {
         if (productCountText != null && activity != null) {
             productCountText.setText(activity.getString(R.string.ui_products_count, count));
         }
+    }
+
+    /** Dense master cards need ~360dp; never crush into more than 2 columns. */
+    private int productGridColumns() {
+        if (activity == null) {
+            return 1;
+        }
+        int widthDp = ResponsiveUi.windowWidthDp(activity);
+        if (widthDp < 600) {
+            return 1;
+        }
+        int heightDp = ResponsiveUi.windowHeightDp(activity);
+        int minCardDp = ResponsiveUi.isLandscape(activity) && heightDp > 0 && heightDp < 700
+                ? 420
+                : 360;
+        return Math.max(1, Math.min(2, widthDp / minCardDp));
     }
 
     @Override

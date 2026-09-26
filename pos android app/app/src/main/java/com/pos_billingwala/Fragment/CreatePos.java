@@ -225,7 +225,7 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         binding.menuIcon.setOnClickListener(this);
         binding.productsTab.setOnClickListener(this);
         binding.combosTab.setOnClickListener(this);
-        // Tablet/land: Pay Now owns the tap. Phone: whole footer (or View Cart) opens payment.
+        // Tablet/land: View Cart owns the tap. Phone: whole footer (or View Cart) opens payment.
         if (binding.payButton != null) {
             binding.payButton.setClickable(true);
             binding.payButton.setFocusable(true);

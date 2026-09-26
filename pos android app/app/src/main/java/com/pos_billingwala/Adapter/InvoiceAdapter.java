@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pos_billingwala.Activity.InvoiceDetailsBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Extra.PaymentSettlementHelper;
-import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
@@ -137,7 +136,9 @@ public class InvoiceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 }
                 : null);
 
-        RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
+        if (holder.binding.rowDivider != null) {
+            holder.binding.rowDivider.setVisibility(View.GONE);
+        }
     }
 
     private void bindPaymentChip(MyViewHolder holder, InvoiceResponse invoiceResponse) {

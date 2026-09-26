@@ -422,7 +422,7 @@
                     android:fontFamily="@font/poppinsmedium"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:text="@string/ui_pay_now"
+                    android:text="@string/ui_view_cart"
                     android:textAllCaps="true"
                     android:textColor="@color/colorPrimary"
                     android:textSize="15sp" />

@@ -20,7 +20,6 @@ import com.pos_billingwala.Adapter.InvoiceAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.ResponsiveUi;
-import com.pos_billingwala.Extra.TabletUi;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentOrderInvoiceBinding;
@@ -156,18 +155,14 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
                 if (page != null && !page.isEmpty()) {
                     invoiceResponseList.addAll(page);
                     adapter = new InvoiceAdapter(activity, invoiceResponseList);
-                    if (ResponsiveUi.isWideLayout(activity)) {
-                        binding.recyclerView.setLayoutManager(new GridLayoutManager(activity,
-                                TabletUi.gridColumnCount(activity)));
-                    } else {
-                        binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
-                    }
+                    binding.recyclerView.setLayoutManager(new GridLayoutManager(activity,
+                            invoiceGridColumns()));
                     binding.recyclerView.setAdapter(adapter);
-                    binding.invoiceListCard.setVisibility(View.VISIBLE);
+                    binding.recyclerView.setVisibility(View.VISIBLE);
                     EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_invoices);
                     pageNumber = page.size();
                 } else {
-                    binding.invoiceListCard.setVisibility(View.GONE);
+                    binding.recyclerView.setVisibility(View.GONE);
                     EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_invoices);
                     pageNumber = 0;
                 }
@@ -178,7 +173,20 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
         }
     }
 
-    /** Loads exactly one more page on scroll â€” never chains all pages. */
+    /** Invoice cards read best at ~320dp; landscape/tablet get 2–3 cols. */
+    private int invoiceGridColumns() {
+        if (activity == null) {
+            return 1;
+        }
+        int widthDp = ResponsiveUi.windowWidthDp(activity);
+        if (widthDp < 560) {
+            return 1;
+        }
+        int minCardDp = ResponsiveUi.isLandscape(activity) ? 300 : 340;
+        return Math.max(1, Math.min(3, widthDp / minCardDp));
+    }
+
+    /** Loads exactly one more page on scroll — never chains all pages. */
     private class LoadMoreInvoices extends AsyncTask<Void, Void, List<InvoiceResponse>> {
         @Override
         protected void onPreExecute() {

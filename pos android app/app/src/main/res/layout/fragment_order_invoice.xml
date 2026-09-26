@@ -65,24 +65,18 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <com.pos_billingwala.Extra.PosCardView
-        android:id="@+id/invoiceListCard"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/appBarLayout"
-        android:layout_margin="12dp"
-        android:visibility="gone"
-        app:cardBackgroundColor="@color/colorSurface"
-        app:cardCornerRadius="14dp">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:overScrollMode="never" />
-
-    </com.pos_billingwala.Extra.PosCardView>
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingStart="6dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="6dp"
+        android:paddingBottom="12dp"
+        android:visibility="gone" />
 
     <include
         android:id="@+id/noDataFound"

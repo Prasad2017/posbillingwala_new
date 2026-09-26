@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_bottom_sheet.dart';
@@ -138,44 +137,62 @@ class ReportsPage extends ConsumerWidget {
                     child: Text(AppStrings.of(ref).noBillsPeriod),
                   );
                 }
+                final cols = AppBreakpoints.cardColumnsFor(context.widthClass);
                 return Padding(
                   padding: EdgeInsets.fromLTRB(pad, 4, pad, 28),
-                  child: Material(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    clipBehavior: Clip.antiAlias,
-                    child: ListView.separated(
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, _) => Divider(
-                        height: 1,
-                        indent: 12,
-                        endIndent: 12,
-                        color: AppColors.border.withValues(alpha: .7),
-                      ),
-                      itemBuilder: (context, i) {
-                        final invoice = filtered[i];
-                        return ReportInvoiceRow(
-                          index: i + 1,
-                          invoice: invoice,
-                          currency: currency,
-                          denseDate: true,
-                          onTap: () => context.push(
-                            '/reports/invoice/${invoice.invoiceId}',
-                          ),
-                          onShowQr:
-                              AppPlatform.isWeb ||
-                                  invoice.invoiceOrderStatus ==
-                                      'cancelled' ||
-                                  invoice.invoiceOrderStatus == 'refunded'
-                              ? null
-                              : () => requestShowInvoicePaymentQr(
-                                  context,
-                                  ref,
-                                  invoice,
+                  child: ListView.builder(
+                    itemCount: (filtered.length / cols).ceil(),
+                    itemBuilder: (context, row) {
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: row == (filtered.length / cols).ceil() - 1 ? 0 : 10),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (var c = 0; c < cols; c++) ...[
+                              if (c > 0) const SizedBox(width: 10),
+                              Expanded(
+                                child: Builder(
+                                  builder: (context) {
+                                    final i = row * cols + c;
+                                    if (i >= filtered.length) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    final invoice = filtered[i];
+                                    return Material(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: ReportInvoiceRow(
+                                        index: i + 1,
+                                        invoice: invoice,
+                                        currency: currency,
+                                        denseDate: true,
+                                        onTap: () => context.push(
+                                          '/reports/invoice/${invoice.invoiceId}',
+                                        ),
+                                        onShowQr:
+                                            AppPlatform.isWeb ||
+                                                invoice.invoiceOrderStatus ==
+                                                    'cancelled' ||
+                                                invoice.invoiceOrderStatus ==
+                                                    'refunded'
+                                            ? null
+                                            : () =>
+                                                  requestShowInvoicePaymentQr(
+                                                    context,
+                                                    ref,
+                                                    invoice,
+                                                  ),
+                                      ),
+                                    );
+                                  },
                                 ),
-                        );
-                      },
-                    ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 );
               },
