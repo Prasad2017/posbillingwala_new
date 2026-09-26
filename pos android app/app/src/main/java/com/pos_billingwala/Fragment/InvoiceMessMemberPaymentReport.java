@@ -18,6 +18,7 @@ import com.pos_billingwala.Adapter.InvoiceMessMemberPaymentAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ReportExcelHelper;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentInvoiceMessMemberPaymentReportBinding;
@@ -70,6 +71,7 @@ public class InvoiceMessMemberPaymentReport extends Fragment implements View.OnC
         }
 
         binding.backToSetting.setOnClickListener(this);
+        binding.shareInvoice.setOnClickListener(this);
 
         return view;
     }
@@ -78,6 +80,10 @@ public class InvoiceMessMemberPaymentReport extends Fragment implements View.OnC
     public void onClick(View view) {
         if (view.getId() == R.id.backToSetting) {
             ((MainActivity) getActivity()).navigateBack();
+        } else if (view.getId() == R.id.shareInvoice) {
+            ReportExcelHelper.exportAndShare(activity, getString(R.string.ui_invoice_member_report),
+                    "/Sale/MessMemberPaymentReport.xls", ReportExcelHelper.periodSubtitle(""),
+                    ReportExcelHelper.memberPaymentRows(memberResponseList));
         }
     }
 

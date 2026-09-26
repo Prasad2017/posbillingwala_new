@@ -187,13 +187,14 @@
                     tools:text="12 Products" />
             </LinearLayout>
 
-            <androidx.recyclerview.widget.RecyclerView
+            <com.pos_billingwala.Extra.AutoFitGridRecyclerView
                 android:id="@+id/productRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_marginTop="@dimen/spacing_md"
                 android:layout_weight="1"
                 android:clipToPadding="false"
+                android:columnWidth="300dp"
                 android:nestedScrollingEnabled="true"
                 android:overScrollMode="never"
                 android:paddingBottom="@dimen/spacing_sm" />

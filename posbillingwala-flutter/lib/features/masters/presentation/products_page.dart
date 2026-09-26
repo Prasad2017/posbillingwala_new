@@ -242,22 +242,58 @@ class ProductsPageState extends ConsumerState<ProductsPage> {
                       subtitle: 'Tap Add Product to create a menu item.',
                     ),
                   )
-                else
-                  for (final product in products) ...[
-                    ProductCard(
-                      product: product,
-                      priceLabel: currency.format(product.productPrice),
-                      portions: portionsMap[product.productId] ?? const [],
-                      onEdit: () => context.push(
-                        '/masters/products/form?id=${product.productId}',
-                      ),
-                      onDelete: () => delete(product),
-                      onPortions: () => context.push(
-                        '/masters/products/portions?id=${product.productId}',
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
+                else ...[
+                  Builder(
+                    builder: (context) {
+                      final cols = AppBreakpoints.cardColumnsFor(
+                        context.widthClass,
+                      );
+                      final rows = (products.length / cols).ceil();
+                      return Column(
+                        children: [
+                          for (var row = 0; row < rows; row++) ...[
+                            if (row > 0) const SizedBox(height: 10),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (var c = 0; c < cols; c++) ...[
+                                  if (c > 0) const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Builder(
+                                      builder: (context) {
+                                        final i = row * cols + c;
+                                        if (i >= products.length) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        final product = products[i];
+                                        return ProductCard(
+                                          product: product,
+                                          priceLabel: currency.format(
+                                            product.productPrice,
+                                          ),
+                                          portions:
+                                              portionsMap[product.productId] ??
+                                              const [],
+                                          onEdit: () => context.push(
+                                            '/masters/products/form?id=${product.productId}',
+                                          ),
+                                          onDelete: () => delete(product),
+                                          onPortions: () => context.push(
+                                            '/masters/products/portions?id=${product.productId}',
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ],
             ),
           );

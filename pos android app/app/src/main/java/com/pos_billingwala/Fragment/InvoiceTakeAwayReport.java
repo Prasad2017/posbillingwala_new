@@ -31,6 +31,7 @@ import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ReportExcelHelper;
 import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
@@ -72,7 +73,7 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
         ReportUiHelper.applyOperationalReportLayout(activity, binding);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
         binding.toolbar.heading.setText(getString(R.string.ui_invoice_take_away_report));
-        binding.toolbar.shareInvoice.setVisibility(View.GONE);
+        binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
         binding.listTitle.setText(getString(R.string.ui_takeaway_summary));
         binding.donutTitle.setText(getString(R.string.ui_payment_mode));
         binding.barTitle.setText(getString(R.string.ui_amount_breakdown));
@@ -105,6 +106,7 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
 
         binding.toolbar.backToSetting.setOnClickListener(this);
         binding.toolbar.menuIcon.setOnClickListener(this);
+        binding.toolbar.shareInvoice.setOnClickListener(this);
 
         return view;
     }
@@ -115,6 +117,10 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
             ((MainActivity) getActivity()).navigateBack();
         } else if (view.getId() == R.id.menuIcon) {
             setPopUpWindow();
+        } else if (view.getId() == R.id.shareInvoice) {
+            ReportExcelHelper.exportAndShare(activity, getString(R.string.ui_invoice_take_away_report),
+                    "/Sale/TakeAwayReport.xls", ReportExcelHelper.periodSubtitle(invoiceDate),
+                    ReportExcelHelper.invoiceRows(invoiceResponseList, "Total Amount"));
         }
     }
 

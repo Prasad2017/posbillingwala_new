@@ -27,6 +27,7 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.OperationalReportCharts;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ReportExcelHelper;
 import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.Model.ReportRankItem;
@@ -60,7 +61,7 @@ public class InvoiceRefundReport extends Fragment implements View.OnClickListene
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         binding.toolbar.heading.setText(getString(R.string.refund_wise_report));
-        binding.toolbar.shareInvoice.setVisibility(View.GONE);
+        binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
         binding.listTitle.setText(getString(R.string.refund_wise_report));
         binding.donutTitle.setText(getString(R.string.refund_wise_report));
         binding.barTitle.setText(getString(R.string.ui_amount_breakdown));
@@ -83,6 +84,7 @@ public class InvoiceRefundReport extends Fragment implements View.OnClickListene
 
         binding.toolbar.backToSetting.setOnClickListener(this);
         binding.toolbar.menuIcon.setOnClickListener(this);
+        binding.toolbar.shareInvoice.setOnClickListener(this);
         return root;
     }
 
@@ -93,6 +95,10 @@ public class InvoiceRefundReport extends Fragment implements View.OnClickListene
             ((MainActivity) activity).navigateBack();
         } else if (id == R.id.menuIcon) {
             showPeriodMenu();
+        } else if (id == R.id.shareInvoice) {
+            ReportExcelHelper.exportAndShare(activity, getString(R.string.refund_wise_report),
+                    "/Sale/RefundReport.xls", ReportExcelHelper.periodSubtitle(invoiceDate),
+                    ReportExcelHelper.invoiceRows(invoiceResponseList, "Total Amount"));
         }
     }
 

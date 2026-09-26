@@ -29,6 +29,7 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.OperationalReportCharts;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ReportExcelHelper;
 import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentOperationalReportBinding;
@@ -60,7 +61,7 @@ public class SaleReport extends Fragment implements View.OnClickListener {
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         binding.toolbar.heading.setText(getString(R.string.ui_sale_reports));
-        binding.toolbar.shareInvoice.setVisibility(View.GONE);
+        binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
         binding.listTitle.setText(getString(R.string.ui_sale_wise_report));
 
         View root = binding.getRoot();
@@ -77,6 +78,7 @@ public class SaleReport extends Fragment implements View.OnClickListener {
 
         binding.toolbar.backToSetting.setOnClickListener(this);
         binding.toolbar.menuIcon.setOnClickListener(this);
+        binding.toolbar.shareInvoice.setOnClickListener(this);
         applyModuleVisibility();
         return root;
     }
@@ -94,6 +96,16 @@ public class SaleReport extends Fragment implements View.OnClickListener {
             ((MainActivity) activity).navigateBack();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
+        } else if (id == R.id.shareInvoice) {
+            float shownFast = LicenseModules.isEnabled(MainActivity.fastBilling) ? fastBilling : 0f;
+            float shownTable = LicenseModules.isEnabled(MainActivity.dineIn) ? tableAmount : 0f;
+            float shownTakeAway = LicenseModules.isEnabled(MainActivity.takeAway) ? takeAwayAmount : 0f;
+            float cashTotal = posBillingWalaDatabase.getInvoiceTenderCashTotal(invoiceDate);
+            float upiTotal = posBillingWalaDatabase.getInvoiceTenderUpiTotal(invoiceDate);
+            ReportExcelHelper.exportAndShare(activity, getString(R.string.ui_sale_reports),
+                    "/Sale/SaleWiseReport.xls", ReportExcelHelper.periodSubtitle(invoiceDate),
+                    ReportExcelHelper.saleSummaryRows(subAmount, totalGSTAmount, discount, totalAmount,
+                            shownFast, shownTable, shownTakeAway, cashTotal, upiTotal));
         }
     }
 

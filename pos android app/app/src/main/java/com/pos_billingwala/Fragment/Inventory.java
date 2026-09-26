@@ -11,13 +11,11 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InventoryAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Model.InventoryResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentInventoryBinding;
@@ -97,8 +95,7 @@ public class Inventory extends Fragment implements View.OnClickListener {
             if (!inventoryResponseList.isEmpty()) {
 
                 adapter = new InventoryAdapter(activity, inventoryResponseList);
-                binding.recyclerView.setLayoutManager(new GridLayoutManager(activity,
-                        inventoryGridColumns()));
+                // AutoFitGridRecyclerView sets span count from measured width.
                 binding.recyclerView.setAdapter(adapter);
                 adapter.notifyDataSetChanged();
                 //  adapter.notifyItemInserted(inventoryResponseList.size() - 1);
@@ -114,18 +111,5 @@ public class Inventory extends Fragment implements View.OnClickListener {
         } finally {
             ListLoader.dismiss(loader);
         }
-    }
-
-    /** Stock cards: 1 col phone portrait, 2–3 cols landscape / tablet. */
-    private int inventoryGridColumns() {
-        if (activity == null) {
-            return 1;
-        }
-        int widthDp = ResponsiveUi.windowWidthDp(activity);
-        if (widthDp < 560) {
-            return 1;
-        }
-        int minCardDp = ResponsiveUi.isLandscape(activity) ? 280 : 320;
-        return Math.max(1, Math.min(3, widthDp / minCardDp));
     }
 }

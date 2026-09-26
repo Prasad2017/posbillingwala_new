@@ -6484,7 +6484,12 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<MessInvoiceResponse> messInvoiceResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM mess_invoice", null);
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM mess_invoice ORDER BY "
+                        + "CASE LOWER(TRIM(IFNULL(messType,''))) "
+                        + "WHEN 'lunch' THEN 0 WHEN 'dinner' THEN 1 ELSE 2 END, "
+                        + "messInvoiceDate DESC",
+                null);
         MessInvoiceResponse messInvoiceResponse;
         while (cursor.moveToNext()) {
             messInvoiceResponse = new MessInvoiceResponse();
@@ -6509,7 +6514,13 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
         List<MessInvoiceResponse> messInvoiceResponseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM mess_invoice WHERE messInvoiceDate LIKE '%" + invoiceDate + "%'", null);
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM mess_invoice WHERE messInvoiceDate LIKE '%" + invoiceDate + "%' "
+                        + "ORDER BY "
+                        + "CASE LOWER(TRIM(IFNULL(messType,''))) "
+                        + "WHEN 'lunch' THEN 0 WHEN 'dinner' THEN 1 ELSE 2 END, "
+                        + "messInvoiceDate DESC",
+                null);
         MessInvoiceResponse messInvoiceResponse;
         while (cursor.moveToNext()) {
             messInvoiceResponse = new MessInvoiceResponse();

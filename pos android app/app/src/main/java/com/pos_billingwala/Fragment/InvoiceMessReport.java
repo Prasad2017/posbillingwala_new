@@ -27,6 +27,7 @@ import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.OperationalReportCharts;
+import com.pos_billingwala.Extra.ReportExcelHelper;
 import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.MessInvoiceResponse;
 import com.pos_billingwala.R;
@@ -63,7 +64,7 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
         ReportUiHelper.applyOperationalReportLayout(activity, binding);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
         binding.toolbar.heading.setText(getString(R.string.ui_invoice_mess_report));
-        binding.toolbar.shareInvoice.setVisibility(View.GONE);
+        binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
         binding.listTitle.setText(getString(R.string.ui_invoice_mess_report));
         ReportUiHelper.setupDetailTableHeader(binding.tableHeader,
                 getString(R.string.ui_invoice_date),
@@ -92,6 +93,7 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
 
         binding.toolbar.backToSetting.setOnClickListener(this);
         binding.toolbar.menuIcon.setOnClickListener(this);
+        binding.toolbar.shareInvoice.setOnClickListener(this);
 
         return view;
     }
@@ -103,6 +105,10 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
             ((MainActivity) getActivity()).navigateBack();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
+        } else if (id == R.id.shareInvoice) {
+            ReportExcelHelper.exportAndShare(activity, getString(R.string.ui_invoice_mess_report),
+                    "/Sale/MessReport.xls", ReportExcelHelper.periodSubtitle(invoiceDate),
+                    ReportExcelHelper.messInvoiceRows(messInvoiceResponseList));
         }
     }
 
@@ -213,12 +219,7 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
                 binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
                 binding.recyclerView.setAdapter(adapter);
                 binding.dateChip.setText(OperationalReportCharts.formatPeriodLabel(invoiceDate));
-                ReportUiHelper.bindKpi(binding.kpi1, getString(R.string.ui_total_bills),
-                        String.valueOf(messInvoiceResponseList.size()), "");
-                ReportUiHelper.bindKpi(binding.kpi2, getString(R.string.ui_invoice_mess_report),
-                        String.valueOf(messInvoiceResponseList.size()), "");
-                binding.kpi3.getRoot().setVisibility(View.GONE);
-                binding.kpi4.getRoot().setVisibility(View.GONE);
+                bindMessKpis(messInvoiceResponseList);
                 binding.nestedScrollView.setVisibility(View.VISIBLE);
                 EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_mess_invoices);
             } else {
@@ -230,6 +231,19 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
         }
     }
 
+
+    private void bindMessKpis(List<MessInvoiceResponse> list) {
+        int lunch = InvoiceMessReportAdapter.countMeal(list, "Lunch");
+        int dinner = InvoiceMessReportAdapter.countMeal(list, "Dinner");
+        ReportUiHelper.bindKpi(binding.kpi1, getString(R.string.ui_total_bills),
+                String.valueOf(list.size()), "");
+        ReportUiHelper.bindKpi(binding.kpi2, getString(R.string.ui_lunch),
+                String.valueOf(lunch), "");
+        ReportUiHelper.bindKpi(binding.kpi3, getString(R.string.ui_dinner),
+                String.valueOf(dinner), "");
+        binding.kpi3.getRoot().setVisibility(View.VISIBLE);
+        binding.kpi4.getRoot().setVisibility(View.GONE);
+    }
 
     @Override
     public void onStart() {
@@ -249,12 +263,7 @@ public class InvoiceMessReport extends Fragment implements View.OnClickListener 
                 binding.recyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
                 binding.recyclerView.setAdapter(adapter);
                 binding.dateChip.setText(OperationalReportCharts.formatPeriodLabel(""));
-                ReportUiHelper.bindKpi(binding.kpi1, getString(R.string.ui_total_bills),
-                        String.valueOf(messInvoiceResponseList.size()), "");
-                ReportUiHelper.bindKpi(binding.kpi2, getString(R.string.ui_invoice_mess_report),
-                        String.valueOf(messInvoiceResponseList.size()), "");
-                binding.kpi3.getRoot().setVisibility(View.GONE);
-                binding.kpi4.getRoot().setVisibility(View.GONE);
+                bindMessKpis(messInvoiceResponseList);
                 binding.nestedScrollView.setVisibility(View.VISIBLE);
                 EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_mess_invoices);
             } else {

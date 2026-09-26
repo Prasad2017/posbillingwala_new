@@ -67,7 +67,7 @@ class ReportsPage extends ConsumerWidget {
         title: Text(AppStrings.of(ref).invoiceReports),
         actions: [
           IconButton(
-            tooltip: 'Export CSV',
+            tooltip: 'Export Excel',
             onPressed: filtered.isEmpty
                 ? null
                 : () => shareInvoicesCsv(

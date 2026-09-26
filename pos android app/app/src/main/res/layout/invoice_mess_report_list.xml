@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
@@ -22,39 +23,66 @@
             android:gravity="center"
             android:textColor="@color/colorTextHint"
             android:textSize="12sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            tools:text="1" />
 
-        <TextView
-            android:id="@+id/invoiceDate"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="@color/colorTextSecondary"
-            android:textSize="12sp" />
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1.15"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/invoiceDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/poppinsmedium"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/colorTextPrimary"
+                android:textSize="12sp"
+                tools:text="2026-09-24" />
+
+            <TextView
+                android:id="@+id/invoiceTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:fontFamily="@font/poppinsregular"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/colorTextHint"
+                android:textSize="11sp"
+                tools:text="10:27 PM" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/memberName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
             android:layout_weight="1"
             android:ellipsize="end"
-            android:maxLines="1"
+            android:fontFamily="@font/poppinsmedium"
+            android:maxLines="2"
             android:textColor="@color/colorTextPrimary"
             android:textSize="13sp"
-            android:textStyle="bold" />
+            tools:text="Prasad" />
 
         <TextView
             android:id="@+id/messType"
             android:layout_width="72dp"
             android:layout_height="wrap_content"
             android:ellipsize="end"
+            android:fontFamily="@font/poppinsbold"
             android:gravity="end"
             android:maxLines="1"
             android:textColor="@color/colorPrimary"
             android:textSize="12sp"
-            android:textStyle="bold" />
+            tools:text="Dinner" />
     </LinearLayout>
 
     <View

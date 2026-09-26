@@ -28,6 +28,7 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.OperationalReportCharts;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ReportExcelHelper;
 import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.Model.ReportRankItem;
@@ -61,7 +62,7 @@ public class InvoiceDiscountReport extends Fragment implements View.OnClickListe
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
 
         binding.toolbar.heading.setText(getString(R.string.discount_wise_report));
-        binding.toolbar.shareInvoice.setVisibility(View.GONE);
+        binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
         binding.listTitle.setText(getString(R.string.discount_wise_report));
         binding.donutTitle.setText(getString(R.string.discount_wise_report));
         binding.barTitle.setText(getString(R.string.ui_amount_breakdown));
@@ -84,6 +85,7 @@ public class InvoiceDiscountReport extends Fragment implements View.OnClickListe
 
         binding.toolbar.backToSetting.setOnClickListener(this);
         binding.toolbar.menuIcon.setOnClickListener(this);
+        binding.toolbar.shareInvoice.setOnClickListener(this);
         return root;
     }
 
@@ -94,6 +96,10 @@ public class InvoiceDiscountReport extends Fragment implements View.OnClickListe
             ((MainActivity) activity).navigateBack();
         } else if (id == R.id.menuIcon) {
             showPeriodMenu();
+        } else if (id == R.id.shareInvoice) {
+            ReportExcelHelper.exportAndShare(activity, getString(R.string.discount_wise_report),
+                    "/Sale/DiscountReport.xls", ReportExcelHelper.periodSubtitle(invoiceDate),
+                    ReportExcelHelper.discountInvoiceRows(invoiceResponseList));
         }
     }
 

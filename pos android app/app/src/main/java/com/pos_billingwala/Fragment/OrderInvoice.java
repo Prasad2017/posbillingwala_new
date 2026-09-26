@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,7 +18,6 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
-import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentOrderInvoiceBinding;
@@ -155,8 +153,7 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
                 if (page != null && !page.isEmpty()) {
                     invoiceResponseList.addAll(page);
                     adapter = new InvoiceAdapter(activity, invoiceResponseList);
-                    binding.recyclerView.setLayoutManager(new GridLayoutManager(activity,
-                            invoiceGridColumns()));
+                    // AutoFitGridRecyclerView sets span count from measured width.
                     binding.recyclerView.setAdapter(adapter);
                     binding.recyclerView.setVisibility(View.VISIBLE);
                     EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_invoices);
@@ -171,19 +168,6 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
                 ListLoader.dismiss(loader);
             }
         }
-    }
-
-    /** Invoice cards read best at ~320dp; landscape/tablet get 2–3 cols. */
-    private int invoiceGridColumns() {
-        if (activity == null) {
-            return 1;
-        }
-        int widthDp = ResponsiveUi.windowWidthDp(activity);
-        if (widthDp < 560) {
-            return 1;
-        }
-        int minCardDp = ResponsiveUi.isLandscape(activity) ? 300 : 340;
-        return Math.max(1, Math.min(3, widthDp / minCardDp));
     }
 
     /** Loads exactly one more page on scroll — never chains all pages. */

@@ -16,6 +16,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceMessListAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
+import com.pos_billingwala.Extra.ReportExcelHelper;
 import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.MemberResponse;
 import com.pos_billingwala.R;
@@ -49,7 +50,7 @@ public class InvoiceMessMemberReportList extends Fragment implements View.OnClic
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
         binding.toolbar.heading.setText(getString(R.string.ui_invoice_member_report));
         binding.toolbar.menuIcon.setVisibility(View.GONE);
-        binding.toolbar.shareInvoice.setVisibility(View.GONE);
+        binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
         binding.listTitle.setText(getString(R.string.ui_invoice_member_report));
         ReportUiHelper.setupTableHeader(binding.tableHeader, getString(R.string.ui_member_name));
         binding.cardDonut.setVisibility(View.GONE);
@@ -76,6 +77,7 @@ public class InvoiceMessMemberReportList extends Fragment implements View.OnClic
         }
 
         binding.toolbar.backToSetting.setOnClickListener(this);
+        binding.toolbar.shareInvoice.setOnClickListener(this);
 
         return view;
     }
@@ -84,6 +86,10 @@ public class InvoiceMessMemberReportList extends Fragment implements View.OnClic
     public void onClick(View view) {
         if (view.getId() == R.id.backToSetting) {
             ((MainActivity) getActivity()).navigateBack();
+        } else if (view.getId() == R.id.shareInvoice) {
+            ReportExcelHelper.exportAndShare(activity, getString(R.string.ui_invoice_member_report),
+                    "/Sale/MessMemberReport.xls", ReportExcelHelper.periodSubtitle(""),
+                    ReportExcelHelper.memberRows(memberResponseList));
         }
     }
 

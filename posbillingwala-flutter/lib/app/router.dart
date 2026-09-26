@@ -53,6 +53,7 @@ import 'package:pos_billingwala_v2/features/reports/presentation/edit_invoice_pa
 import 'package:pos_billingwala_v2/features/reports/presentation/expense_report_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/invoice_add_products_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/invoice_detail_page.dart';
+import 'package:pos_billingwala_v2/features/reports/presentation/mess_invoice_report_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/mess_member_report_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/mess_payment_report_page.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/operational_report_page.dart';
@@ -462,10 +463,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/reports/mess',
             name: 'reports-mess',
-            builder: (context, state) => const OperationalReportPage(
-              titleKey: 'ui_invoice_mess_report',
-              typeFilter: ReportInvoiceTypeFilter.mess,
-            ),
+            builder: (context, state) => const MessInvoiceReportPage(),
           ),
           GoRoute(
             path: '/reports/refund',

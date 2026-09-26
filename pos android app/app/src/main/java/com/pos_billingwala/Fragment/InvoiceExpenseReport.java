@@ -28,6 +28,7 @@ import com.pos_billingwala.CalenderView.MonthPickerDialog;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.ReportCursorHelper;
+import com.pos_billingwala.Extra.ReportExcelHelper;
 import com.pos_billingwala.Extra.ReportUiHelper;
 import com.pos_billingwala.Model.ExpenseResponse;
 import com.pos_billingwala.R;
@@ -69,7 +70,7 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
         ReportUiHelper.applyOperationalReportLayout(activity, binding);
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
         binding.toolbar.heading.setText(getString(R.string.ui_expense_report));
-        binding.toolbar.shareInvoice.setVisibility(View.GONE);
+        binding.toolbar.shareInvoice.setVisibility(View.VISIBLE);
         binding.listTitle.setText(getString(R.string.ui_expense_wise_report));
         binding.donutTitle.setText(getString(R.string.ui_expense_report));
         binding.barTitle.setText(getString(R.string.ui_amount_breakdown));
@@ -95,6 +96,7 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
 
         binding.toolbar.backToSetting.setOnClickListener(this);
         binding.toolbar.menuIcon.setOnClickListener(this);
+        binding.toolbar.shareInvoice.setOnClickListener(this);
 
         return view;
     }
@@ -106,6 +108,10 @@ public class InvoiceExpenseReport extends Fragment implements View.OnClickListen
             ((MainActivity) activity).navigateBack();
         } else if (id == R.id.menuIcon) {
             setPopUpWindow();
+        } else if (id == R.id.shareInvoice) {
+            ReportExcelHelper.exportAndShare(activity, getString(R.string.ui_expense_report),
+                    "/Sale/ExpenseReport.xls", ReportExcelHelper.periodSubtitle(expenseDate),
+                    ReportExcelHelper.expenseRows(expenseResponseList));
         }
     }
 

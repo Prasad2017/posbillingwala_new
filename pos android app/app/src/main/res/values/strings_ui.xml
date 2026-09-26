@@ -149,6 +149,9 @@
     <string name="ui_login">Login</string>
     <string name="ui_logout_बहेर_पडणे">Logout (बाहेर पडणे)</string>
     <string name="ui_meal_lunch">Meal: Lunch</string>
+    <string name="ui_lunch">Lunch</string>
+    <string name="ui_dinner">Dinner</string>
+    <string name="ui_mess_coupons_count">%d coupons</string>
     <string name="ui_menu">Menu</string>
     <string name="ui_member_address">Member Address (Optional)</string>
     <string name="ui_member_list">Member List</string>
