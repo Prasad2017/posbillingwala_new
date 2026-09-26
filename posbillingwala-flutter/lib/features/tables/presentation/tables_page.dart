@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
-import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
@@ -83,16 +82,28 @@ class TablesPageState extends ConsumerState<TablesPage> {
               children: [
                 LegendDot(
                   label: strings.tableAvailable,
-                  color: AppColors.success,
+                  color: AppColors.tableAvailable,
                 ),
                 LegendDot(
                   label: strings.tableRunning,
-                  color: AppColors.warning,
+                  color: AppColors.tableRunning,
                 ),
-                LegendDot(label: strings.tableHold, color: AppColors.orange),
-                LegendDot(label: strings.tableBill, color: AppColors.purple),
-                LegendDot(label: strings.tableBlocked, color: AppColors.red),
-                LegendDot(label: strings.tableReserved, color: AppColors.teal),
+                LegendDot(
+                  label: strings.tableBill,
+                  color: AppColors.tableBillRequested,
+                ),
+                LegendDot(
+                  label: strings.tableHold,
+                  color: AppColors.tablePayment,
+                ),
+                LegendDot(
+                  label: strings.tableReserved,
+                  color: AppColors.tableReserved,
+                ),
+                LegendDot(
+                  label: strings.tableBlocked,
+                  color: AppColors.tableBlocked,
+                ),
               ],
             ),
           ),
@@ -129,7 +140,7 @@ class TablesPageState extends ConsumerState<TablesPage> {
                           currency: currency,
                           onTap: () => onTableTap(context, ref, item),
                           onLongPress: () =>
-                              onTableActions(context, ref, item, floor),
+                              showPosTableOverflow(context, ref, item),
                         );
                       }
 
@@ -230,119 +241,125 @@ class TablesPageState extends ConsumerState<TablesPage> {
     );
   }
 
+  /* Android TableAdapter.onTableTapped — available opens billing; occupied shows sheet. */
   Future<void> onTableTap(
     BuildContext context,
     WidgetRef ref,
     FloorTableView floor,
   ) async {
-    if (floor.status == FloorTableStatus.blocked ||
-        floor.status == FloorTableStatus.reserved) {
+    if (floor.status == FloorTableStatus.blocked) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Table is ${floor.statusLabel.toLowerCase()}')),
+        const SnackBar(content: Text('Table is blocked')),
+      );
+      return;
+    }
+    if (floor.status == FloorTableStatus.reserved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Table is reserved')),
       );
       return;
     }
 
-    try {
-      await ref.read(tablesControllerProvider.notifier).openTable(floor);
-      if (!context.mounted) return;
-      context.push('/tables/billing');
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-    }
-  }
-
-  Future<void> onTableActions(
-    BuildContext context,
-    WidgetRef ref,
-    FloorTableView floor,
-    List<FloorTableView> all,
-  ) async {
-    if (floor.status == FloorTableStatus.blocked ||
-        floor.status == FloorTableStatus.reserved) {
+    if (floor.status == FloorTableStatus.available) {
+      try {
+        await ref.read(tablesControllerProvider.notifier).openTable(floor);
+        if (!context.mounted) return;
+        context.push('/tables/billing');
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
+      }
       return;
     }
 
-    final occupied =
-        floor.status == FloorTableStatus.running ||
-        floor.status == FloorTableStatus.hold ||
-        floor.status == FloorTableStatus.billRequest;
+    await showOccupiedSheet(context, ref, floor);
+  }
+
+  /* Android TableAdapter.showOccupiedSheet */
+  Future<void> showOccupiedSheet(
+    BuildContext context,
+    WidgetRef ref,
+    FloorTableView floor,
+  ) async {
     final strings = AppStrings.of(ref);
     final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
     final title = floor.table.displayName.isEmpty
         ? 'Table ${floor.table.tableNumber}'
         : floor.table.displayName;
 
+    final amountLines = StringBuffer(
+      'Existing Bill:\n${currency.format(floor.currentAmount)}',
+    );
+    if (floor.remainingAmount > 0.05 &&
+        floor.remainingAmount + 0.05 < floor.currentAmount) {
+      amountLines.writeln(
+        'Remaining: ${currency.format(floor.remainingAmount)}',
+      );
+    }
+    if (floor.printRetryAvailable) {
+      amountLines.writeln('Print: Failed — retry available');
+    }
+
+    final paymentPending =
+        floor.status == FloorTableStatus.paymentPending ||
+        floor.status == FloorTableStatus.partiallyPaid;
+    final settleLabel = floor.printRetryAvailable
+        ? 'Retry Print'
+        : strings.settleBill;
+
     final action = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       builder: (context) => SafeArea(
-        child: occupied
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    title: Text(title),
-                    subtitle: Text(currency.format(floor.currentAmount)),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    title: Text(strings.addItemsExisting),
-                    onTap: () => Navigator.pop(context, 'add_items'),
-                  ),
-                  ListTile(
-                    title: Text(strings.viewBill),
-                    onTap: () => Navigator.pop(context, 'view_bill'),
-                  ),
-                  ListTile(
-                    title: Text(strings.settleBill),
-                    onTap: () => Navigator.pop(context, 'settle'),
-                  ),
-                  ListTile(
-                    title: Text(strings.more),
-                    onTap: () => Navigator.pop(context, 'more'),
-                  ),
-                  ListTile(
-                    title: Text(strings.cancel),
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              )
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    title: Text(title),
-                    subtitle: Text(floor.statusLabel),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    title: Text(strings.openBilling),
-                    onTap: () => Navigator.pop(context, 'open'),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text('$title IS OCCUPIED'),
+              subtitle: Text(amountLines.toString().trim()),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              title: Text(strings.addItemsExisting),
+              onTap: () => Navigator.pop(context, 'add_items'),
+            ),
+            ListTile(
+              title: Text(strings.viewBill),
+              onTap: () => Navigator.pop(context, 'view_bill'),
+            ),
+            ListTile(
+              title: Text(settleLabel),
+              onTap: () => Navigator.pop(context, 'settle'),
+            ),
+            ListTile(
+              title: Text(strings.cancel),
+              onTap: () => Navigator.pop(context),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
 
     if (!context.mounted || action == null) return;
 
-    if (action == 'more') {
-      final more = await showAdvancedTableActions(context, floor);
-      if (!context.mounted || more == null) return;
-      await handleTableAction(context, ref, floor, all, more);
+    if (action == 'add_items') {
+      try {
+        await ref.read(tablesControllerProvider.notifier).openTable(floor);
+        if (!context.mounted) return;
+        context.push('/tables/billing');
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
+      }
       return;
     }
 
-    if (action == 'add_items' || action == 'view_bill' || action == 'open') {
-      await onTableTap(context, ref, floor);
-      return;
-    }
-
-    if (action == 'settle') {
+    if (action == 'view_bill') {
       try {
         await ref.read(tablesControllerProvider.notifier).openTable(floor);
         if (!context.mounted) return;
@@ -356,290 +373,19 @@ class TablesPageState extends ConsumerState<TablesPage> {
       return;
     }
 
-    await handleTableAction(context, ref, floor, all, action);
-  }
-
-  Future<String?> showAdvancedTableActions(
-    BuildContext context,
-    FloorTableView floor,
-  ) {
-    return showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const ListTile(title: Text('More actions')),
-            const Divider(height: 1),
-            ListTile(
-              title: const Text('Join with another table'),
-              onTap: () => Navigator.pop(context, 'join'),
-            ),
-            ListTile(
-              title: const Text('Transfer to another table'),
-              onTap: () => Navigator.pop(context, 'transfer'),
-            ),
-            ListTile(
-              title: const Text('Move items to another table'),
-              onTap: () => Navigator.pop(context, 'move'),
-            ),
-            ListTile(
-              title: const Text('Split bill'),
-              onTap: () => Navigator.pop(context, 'split_bill'),
-            ),
-            ListTile(
-              title: const Text('Guests / Waiter'),
-              onTap: () => Navigator.pop(context, 'meta'),
-            ),
-            ListTile(
-              title: const Text('Duplicate print last bill'),
-              onTap: () => Navigator.pop(context, 'print'),
-            ),
-            if (floor.openSession?.sessionStatus != 'HOLD')
-              ListTile(
-                title: const Text('Hold table'),
-                onTap: () => Navigator.pop(context, 'hold'),
-              ),
-            if (floor.openSession?.sessionStatus == 'HOLD')
-              ListTile(
-                title: const Text('Resume table'),
-                onTap: () => Navigator.pop(context, 'resume'),
-              ),
-            ListTile(
-              title: const Text('Mark bill requested'),
-              onTap: () => Navigator.pop(context, 'bill'),
-            ),
-            if (floor.openSession != null &&
-                (floor.joinedLabel?.contains('+') ?? false) &&
-                !floor.isJoinedSecondary)
-              ListTile(
-                title: const Text('Split joined tables'),
-                onTap: () => Navigator.pop(context, 'split'),
-              ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> handleTableAction(
-    BuildContext context,
-    WidgetRef ref,
-    FloorTableView floor,
-    List<FloorTableView> all,
-    String action,
-  ) async {
-    if (action == 'meta' || action == 'print') {
-      await handleTableOpsAction(context, ref, floor, all, action);
-      return;
-    }
-
-    if (action == 'open') {
-      await onTableTap(context, ref, floor);
-      return;
-    }
-
-    if (action == 'split' && floor.openSession != null) {
-      await ref
-          .read(tablesControllerProvider.notifier)
-          .splitJoined(floor.openSession!.sessionId);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Joined tables split')));
-      return;
-    }
-
-    if (action == 'split_bill' && floor.openSession != null) {
-      await context.push(
-        '/tables/split-bill'
-        '?table=${Uri.encodeComponent(floor.billingTableNumber)}'
-        '&sessionId=${floor.openSession!.sessionId}',
-      );
-      return;
-    }
-
-    if (action == 'hold' && floor.openSession != null) {
-      await ref
-          .read(tablesControllerProvider.notifier)
-          .setSessionStatus(
-            sessionId: floor.openSession!.sessionId,
-            status: 'HOLD',
-          );
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Table on hold')));
-      return;
-    }
-
-    if (action == 'resume' && floor.openSession != null) {
-      await ref
-          .read(tablesControllerProvider.notifier)
-          .setSessionStatus(
-            sessionId: floor.openSession!.sessionId,
-            status: 'RUNNING',
-          );
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Table resumed')));
-      return;
-    }
-
-    if (action == 'bill' && floor.openSession != null) {
-      await ref
-          .read(tablesControllerProvider.notifier)
-          .setSessionStatus(
-            sessionId: floor.openSession!.sessionId,
-            status: 'BILL_REQUEST',
-          );
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Bill requested')));
-      return;
-    }
-
-    if (action == 'transfer' || action == 'move') {
-      final candidates = all
-          .where(
-            (t) =>
-                t.table.tableNumber != floor.billingTableNumber &&
-                t.status == FloorTableStatus.available,
-          )
-          .toList();
-      if (candidates.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No available target tables')),
-        );
+    if (action == 'settle') {
+      if (floor.printRetryAvailable) {
+        await retryFailedBillPrint(context, ref, floor);
         return;
       }
-      final target = await showDialog<FloorTableView>(
-        context: context,
-        builder: (context) => SimpleDialog(
-          title: Text(action == 'transfer' ? 'Transfer to' : 'Move items to'),
-          children: candidates
-              .map(
-                (c) => SimpleDialogOption(
-                  onPressed: () => Navigator.pop(context, c),
-                  child: Text(
-                    c.table.displayName.isEmpty
-                        ? 'Table ${c.table.tableNumber}'
-                        : c.table.displayName,
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-      );
-      if (target == null || !context.mounted) return;
-      try {
-        if (action == 'transfer') {
-          await ref
-              .read(tablesControllerProvider.notifier)
-              .transferTable(
-                fromTable: floor.billingTableNumber,
-                toTable: target.table.tableNumber,
-              );
-        } else {
-          final items = await ref
-              .read(appDatabaseProvider)
-              .getCartItems(cartScope: floor.billingTableNumber);
-          if (items.isEmpty) {
-            if (!context.mounted) return;
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('No items to move')));
-            return;
-          }
-          if (!context.mounted) return;
-          final selected = await showModalBottomSheet<List<CartItem>>(
-            context: context,
-            isScrollControlled: true,
-            showDragHandle: true,
-            builder: (context) => MoveItemsSheet(items: items),
-          );
-          if (selected == null || selected.isEmpty || !context.mounted) return;
-          await ref
-              .read(tablesControllerProvider.notifier)
-              .moveItems(
-                fromTable: floor.billingTableNumber,
-                toTable: target.table.tableNumber,
-                items: selected,
-              );
-        }
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              action == 'transfer'
-                  ? 'Transferred to T${target.table.tableNumber}'
-                  : 'Items moved to T${target.table.tableNumber}',
-            ),
-          ),
-        );
-      } catch (e) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
-      }
-      return;
-    }
-
-    if (action == 'join') {
-      final candidates = all
-          .where(
-            (t) =>
-                t.table.tableNumber != floor.billingTableNumber &&
-                t.status == FloorTableStatus.available,
-          )
-          .toList();
-      if (candidates.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No available tables to join')),
-        );
+      if (paymentPending && floor.unpaidInvoice != null) {
+        await settleUnpaidTableInvoice(context, ref, floor);
         return;
       }
-
-      final secondary = await showDialog<FloorTableView>(
-        context: context,
-        builder: (context) => SimpleDialog(
-          title: const Text('Join with'),
-          children: candidates
-              .map(
-                (c) => SimpleDialogOption(
-                  onPressed: () => Navigator.pop(context, c),
-                  child: Text(
-                    c.table.displayName.isEmpty
-                        ? 'Table ${c.table.tableNumber}'
-                        : c.table.displayName,
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-      );
-      if (secondary == null || !context.mounted) return;
-
       try {
-        await ref
-            .read(tablesControllerProvider.notifier)
-            .joinTables(
-              primaryTable: floor.billingTableNumber,
-              secondaryTable: secondary.table.tableNumber,
-            );
+        await ref.read(tablesControllerProvider.notifier).openTable(floor);
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Joined T${secondary.table.tableNumber} into T${floor.billingTableNumber}',
-            ),
-          ),
-        );
+        context.push('/tables/payment');
       } catch (e) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(
@@ -728,17 +474,18 @@ class TableCard extends StatelessWidget {
   Color get statusColor {
     switch (floor.status) {
       case FloorTableStatus.available:
-        return AppColors.success;
+        return AppColors.tableAvailable;
       case FloorTableStatus.running:
-        return AppColors.warning;
-      case FloorTableStatus.hold:
-        return AppColors.orange;
-      case FloorTableStatus.billRequest:
-        return AppColors.purple;
+        return AppColors.tableRunning;
+      case FloorTableStatus.billRequested:
+        return AppColors.tableBillRequested;
+      case FloorTableStatus.paymentPending:
+      case FloorTableStatus.partiallyPaid:
+        return AppColors.tablePayment;
       case FloorTableStatus.blocked:
-        return AppColors.red;
+        return AppColors.tableBlocked;
       case FloorTableStatus.reserved:
-        return AppColors.teal;
+        return AppColors.tableReserved;
     }
   }
 
@@ -749,18 +496,27 @@ class TableCard extends StatelessWidget {
         ? 'Table ${table.tableNumber}'
         : table.displayName;
     final typeLabel = floor.tableTypeName.trim();
-    final seatsLabel = floor.joinedLabel ??
-        (table.capacity > 0 ? 'Seats ${table.capacity}' : null);
+    final elapsed = floor.elapsedLabel;
+    final metaParts = <String>[
+      if (floor.joinedLabel != null) floor.joinedLabel!,
+      if (floor.joinedLabel == null && table.capacity > 0)
+        'Seats ${table.capacity}',
+      if (elapsed.isNotEmpty) elapsed,
+      if (floor.remainingAmount > 0.05 &&
+          floor.status == FloorTableStatus.partiallyPaid)
+        'Due ${currency.format(floor.remainingAmount)}',
+    ];
+    final seatsLabel = metaParts.isEmpty ? null : metaParts.join(' · ');
     final color = statusColor;
+    const onFill = Colors.white;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: color,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color, width: 2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.05),
+            color: color.withValues(alpha: 0.35),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -774,41 +530,28 @@ class TableCard extends StatelessWidget {
           onTap: onTap,
           onLongPress: onLongPress,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    AppSvg(
-                      AppAssets.svgTable,
-                      width: 22,
-                      height: 22,
-                      color: color,
-                    ),
-                    const Spacer(),
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: color.withValues(alpha: 0.35),
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
                 Text(
                   name,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
-                    color: AppColors.navy,
+                    color: onFill,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  floor.statusLabel,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: onFill.withValues(alpha: 0.92),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
                 if (typeLabel.isNotEmpty) ...[
@@ -817,54 +560,48 @@ class TableCard extends StatelessWidget {
                     typeLabel,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.navy,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: onFill.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
                     ),
                   ),
                 ],
-                if ((seatsLabel != null && seatsLabel.isNotEmpty) ||
-                    floor.currentAmount > 0 ||
-                    floor.isJoinedSecondary) ...[
+                if (floor.currentAmount > 0) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    currency.format(floor.currentAmount),
+                    style: const TextStyle(
+                      color: onFill,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+                if (seatsLabel != null && seatsLabel.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (seatsLabel != null && seatsLabel.isNotEmpty)
-                        Expanded(
-                          child: Text(
-                            seatsLabel,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: AppColors.navy.withValues(alpha: 0.55),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                        )
-                      else
-                        const Spacer(),
-                      if (floor.currentAmount > 0)
-                        Text(
-                          currency.format(floor.currentAmount),
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
-                          ),
-                        )
-                      else if (floor.isJoinedSecondary)
-                        Text(
-                          'Joined → T${floor.billingTableNumber}',
-                          style: TextStyle(
-                            color: color,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
-                    ],
+                  Text(
+                    seatsLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: onFill.withValues(alpha: 0.85),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
+                    ),
+                  ),
+                ] else if (floor.isJoinedSecondary) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Joined → T${floor.billingTableNumber}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: onFill.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ],

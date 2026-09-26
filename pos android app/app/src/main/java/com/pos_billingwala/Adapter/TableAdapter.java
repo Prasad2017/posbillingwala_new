@@ -190,16 +190,23 @@ public class TableAdapter extends RecyclerView.Adapter<TableAdapter.MyViewHolder
     private void applyStatusAccent(MyViewHolder holder, String status) {
         int colorRes = TableStatus.colorRes(status);
         int color = ContextCompat.getColor(context, colorRes);
-        android.graphics.drawable.Drawable dot =
-                ContextCompat.getDrawable(context, R.drawable.bg_table_status_dot);
-        if (dot != null) {
-            android.graphics.drawable.Drawable tinted = dot.mutate();
-            androidx.core.graphics.drawable.DrawableCompat.setTint(tinted, color);
-            holder.binding.statusDot.setBackground(tinted);
-        } else {
-            holder.binding.statusDot.setBackgroundColor(color);
+        // Full tab fill by status so floor status is obvious at a glance.
+        holder.binding.tableNumberCardView.setCardBackgroundColor(color);
+        holder.binding.tableNumberCardView.setStrokeWidth(0);
+        holder.binding.tableNumber.setTextColor(ContextCompat.getColor(context, R.color.white));
+        holder.binding.tableStatus.setTextColor(ContextCompat.getColor(context, R.color.white));
+        holder.binding.billAmount.setTextColor(ContextCompat.getColor(context, R.color.white));
+        holder.binding.tableMeta.setTextColor(ContextCompat.getColor(context, R.color.white));
+        if (holder.binding.statusDot.getVisibility() == View.VISIBLE) {
+            android.graphics.drawable.Drawable dot =
+                    ContextCompat.getDrawable(context, R.drawable.bg_table_status_dot);
+            if (dot != null) {
+                android.graphics.drawable.Drawable tinted = dot.mutate();
+                androidx.core.graphics.drawable.DrawableCompat.setTint(
+                        tinted, ContextCompat.getColor(context, R.color.white));
+                holder.binding.statusDot.setBackground(tinted);
+            }
         }
-        holder.binding.tableStatus.setTextColor(color);
     }
 
     private void onTableTapped(PosTableResponse table) {

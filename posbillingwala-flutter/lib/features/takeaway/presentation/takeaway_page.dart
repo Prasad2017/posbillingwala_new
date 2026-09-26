@@ -132,14 +132,22 @@ class TakeawayPageState extends ConsumerState<TakeawayPage> {
           ],
         ),
         actions: [
-          PopupMenuButton<String>(
+          IconButton(
             icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
+            onPressed: () async {
+              final value = await showAppActionSheet(
+                context: context,
+                title: AppStrings.of(ref).takeAway,
+                actions: const [
+                  AppSheetAction(
+                    value: 'new',
+                    label: 'New Parcel',
+                    icon: Icons.add_rounded,
+                  ),
+                ],
+              );
               if (value == 'new') startNewParcel();
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'new', child: Text('New Parcel')),
-            ],
           ),
         ],
       ),

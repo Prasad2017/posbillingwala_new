@@ -29,22 +29,44 @@
                 app:tint="@color/white" />
 
 
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@+id/menuIcon"
+                android:layout_toEndOf="@+id/backToInvoice"
+                android:ellipsize="end"
+                android:fontFamily="@font/poppinsmedium"
+                android:maxLines="1"
+                android:text="@string/ui_invoice"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+            <ImageView
+                android:id="@+id/menuIcon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:contentDescription="@string/ui_menu"
+                android:padding="6dp"
+                android:src="@drawable/ic_menu"
+                android:visibility="gone" />
+
             <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/showQrInvoiceCardView"
-                android:layout_width="45dp"
-                android:layout_height="45dp"
-                android:layout_centerInParent="true"
-                android:layout_marginTop="7dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="7dp"
-                android:layout_toStartOf="@+id/printInvoiceCardView"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
                 app:cardCornerRadius="10dp">
 
                 <ImageView
                     android:id="@+id/showQrInvoice"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
-                    android:layout_gravity="center"
                     android:contentDescription="@string/payment_display_show_qr"
                     android:src="@drawable/ic_qr_code" />
 
@@ -52,40 +74,30 @@
 
             <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/printInvoiceCardView"
-                android:layout_width="45dp"
-                android:layout_height="45dp"
-                android:layout_centerInParent="true"
-                android:layout_marginTop="7dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="7dp"
-                android:layout_toStartOf="@+id/shareInvoiceCardView"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
                 app:cardCornerRadius="10dp">
 
                 <ImageView
                     android:id="@+id/printInvoice"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
-                    android:layout_gravity="center"
                     android:src="@drawable/ic_print" />
 
             </com.pos_billingwala.Extra.PosCardView>
 
             <com.pos_billingwala.Extra.PosCardView
                 android:id="@+id/shareInvoiceCardView"
-                android:layout_width="45dp"
-                android:layout_height="45dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerInParent="true"
-                android:layout_marginTop="7dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="7dp"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
                 app:cardCornerRadius="10dp">
 
                 <ImageView
                     android:id="@+id/shareInvoice"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
-                    android:layout_gravity="center"
                     android:src="@drawable/ic_share" />
 
             </com.pos_billingwala.Extra.PosCardView>

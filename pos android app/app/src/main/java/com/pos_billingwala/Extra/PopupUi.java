@@ -1,5 +1,6 @@
 package com.pos_billingwala.Extra;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,22 +8,34 @@ import android.widget.PopupWindow;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+
 /**
- * Centralized popup menus and dropdowns — consistent sizing, positioning, and elevation
- * across toolbar filters, action menus, and form dropdowns.
+ * Toolbar overflow menus are shown as bottom sheets.
+ * Anchored form dropdowns still use {@link PopupWindow}.
  */
 public final class PopupUi {
 
     private PopupUi() {
     }
 
-    /** Compact action/filter menu (wrap content). */
+    /** Compact action/filter menu — prepared as a bottom sheet (not shown yet). */
+    public static BottomSheetDialog create(@NonNull Activity activity, @NonNull View content) {
+        return BottomSheetUi.prepare(activity, content, true);
+    }
+
+    /** Anchored popups only (searchable dropdowns). Prefer {@link #create(Activity, View)} for menus. */
+    @Deprecated
     public static PopupWindow create(@NonNull Context context, @NonNull View content) {
-        return create(context, content, ViewGroup.LayoutParams.WRAP_CONTENT);
+        return createPopup(context, content, ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
     /** Dropdown list matched to anchor width (searchable spinners, etc.). */
     public static PopupWindow create(@NonNull Context context, @NonNull View content, int widthPx) {
+        return createPopup(context, content, widthPx);
+    }
+
+    private static PopupWindow createPopup(@NonNull Context context, @NonNull View content, int widthPx) {
         PopupWindow popup = new PopupWindow(content, widthPx, ViewGroup.LayoutParams.WRAP_CONTENT, true);
         applyDefaults(context, popup);
         return popup;
@@ -35,11 +48,9 @@ public final class PopupUi {
         popup.setElevation(12f * density);
     }
 
-    /**
-     * Toolbar filter / overflow menu — right-aligned to the anchor, clamped on screen.
-     */
-    public static void showAsToolbarMenu(@NonNull PopupWindow popup, @NonNull View anchor) {
-        showAnchored(popup, anchor, true);
+    /** Toolbar overflow menu — shown as a bottom sheet (anchor kept for call-site compatibility). */
+    public static void showAsToolbarMenu(@NonNull BottomSheetDialog sheet, @NonNull View anchor) {
+        BottomSheetUi.present(sheet);
     }
 
     /**

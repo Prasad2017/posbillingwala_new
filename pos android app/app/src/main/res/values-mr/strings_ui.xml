@@ -66,6 +66,12 @@
     <string name="ui_delete">हटवा</string>
     <string name="ui_data_management">डेटा व्यवस्थापन</string>
     <string name="ui_delete_all_invoices_hint">क्लाउड सिंक नंतर सर्व स्थानिक इनव्हॉइस हटवा</string>
+    <string name="ui_delete_all_invoices_title">सर्व इनव्हॉइस हटवा</string>
+    <string name="ui_delete_all_invoices_confirm">हे सर्व स्थानिक इनव्हॉइस कायमचे हटवेल. हे परत येणार नाही. सुरू ठेवायचे?</string>
+    <string name="ui_delete_all_invoices_pin_title">इनव्हॉइस हटवण्यासाठी पासवर्ड टाका</string>
+    <string name="ui_incorrect_pin">चुकीचा पासवर्ड. इनव्हॉइस हटवले नाहीत.</string>
+    <string name="ui_stock_remaining">स्टॉक</string>
+    <string name="ui_stock_manage_hint">उरलेला स्टॉक पटकन पहा</string>
     <string name="ui_designed_by_pos_billingwala">POS Billingwala द्वारे डिझाइन केले</string>
     <string name="print_powered_by">Powered by POS Billingwala</string>
     <string name="print_powered_by_website">www.posbillingwala.com</string>
@@ -93,6 +99,7 @@
     <string name="ui_expenses_name">खर्चाचे नाव</string>
     <string name="ui_fetch_data_from_cloud_डेट_सर्वरकडून_घेणे">क्लाउडवरून डेटा आणा</string>
     <string name="ui_fetch_data_सर्वर_से_लेन_">डेटा आणा\n(सर्वरकडून)</string>
+    <string name="ui_filter">फिल्टर</string>
     <string name="ui_food">अन्न</string>
     <string name="ui_forgot_licence_key">लायसन्स की विसरलात?</string>
     <string name="ui_gst">GST</string>
@@ -136,6 +143,7 @@
     <string name="ui_login">लॉगिन</string>
     <string name="ui_logout_बहेर_पडणे">बाहेर पडणे</string>
     <string name="ui_meal_lunch">जेवण: दुपारचे जेवण</string>
+    <string name="ui_menu">मेनू</string>
     <string name="ui_member_address">सदस्याचा पत्ता</string>
     <string name="ui_member_list">सदस्य यादी</string>
     <string name="ui_member_name">सदस्याचे नाव</string>

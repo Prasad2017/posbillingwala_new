@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
 import android.util.Base64;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -43,7 +44,10 @@ import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Adapter.DuplicateInvoiceAdapter;
 import com.pos_billingwala.Adapter.DuplicateTwoPrintAdapter;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+
 import com.pos_billingwala.Extra.PaymentSettlementHelper;
+import com.pos_billingwala.Extra.PopupUi;
 import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
@@ -191,6 +195,7 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
         inr = MainActivity.currencyName + " ";
 
         binding.printInvoiceCardView.setOnClickListener(this);
+        binding.menuIcon.setOnClickListener(this);
 
         cashButton = findViewById(R.id.cash);
         onlineButton = findViewById(R.id.online);
@@ -289,7 +294,9 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
 
     @Override
     public void onClick(View view) {
-        if (view.getId() == R.id.printInvoiceCardView) {
+        if (view.getId() == R.id.menuIcon) {
+            showInvoiceMenu();
+        } else if (view.getId() == R.id.printInvoiceCardView) {
             boolean paymentSelected = binding.paymentGroup != null
                     && binding.paymentGroup.getCheckedRadioButtonId() != -1
                     && paymentMode != null && !paymentMode.trim().isEmpty();
@@ -305,6 +312,23 @@ public class DuplicateBluetoothPrint extends BaseActivity implements View.OnClic
                 Toast.makeText(activity, getString(R.string.toast_please_select_payment_mode), Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    private void showInvoiceMenu() {
+        View content = LayoutInflater.from(this).inflate(R.layout.invoice_options_sheet, null);
+        BottomSheetDialog sheet = PopupUi.create(this, content);
+        if (sheet == null) {
+            return;
+        }
+        content.findViewById(R.id.showQrLayout).setVisibility(View.GONE);
+        content.findViewById(R.id.shareLayout).setVisibility(View.GONE);
+        content.findViewById(R.id.editLayout).setVisibility(View.GONE);
+        content.findViewById(R.id.refundLayout).setVisibility(View.GONE);
+        content.findViewById(R.id.printLayout).setOnClickListener(v -> {
+            sheet.dismiss();
+            binding.printInvoiceCardView.performClick();
+        });
+        PopupUi.showAsToolbarMenu(sheet, binding.menuIcon);
     }
 
     private void runDuplicatePrintAfterPrinterReady() {

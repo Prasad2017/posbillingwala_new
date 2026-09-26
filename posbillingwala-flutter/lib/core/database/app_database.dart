@@ -1895,6 +1895,7 @@ WHERE cart_id = 0;
   Future<int> insertLocalTableType({
     required String tableTypeName,
     int tableTypeSortOrder = 0,
+    int defaultCapacity = 4,
   }) async {
     final id = await nextLocalTableTypeId();
     final network = appDatabaseNetworkStatus(prefix: 'tt_');
@@ -1903,6 +1904,7 @@ WHERE cart_id = 0;
         TableTypesCompanion.insert(
           tableTypeId: Value(id),
           tableTypeName: Value(tableTypeName),
+          defaultCapacity: Value(defaultCapacity < 1 ? 4 : defaultCapacity),
           tableTypeSortOrder: Value(tableTypeSortOrder),
           tableTypeNetworkStatus: Value(network),
           tableTypeSyncStatus: const Value('0'),
@@ -1996,12 +1998,16 @@ WHERE cart_id = 0;
   Future<void> updateLocalTableType({
     required int tableTypeId,
     required String tableTypeName,
+    int? defaultCapacity,
   }) async {
     await (update(
       tableTypes,
     )..where((t) => t.tableTypeId.equals(tableTypeId))).write(
       TableTypesCompanion(
         tableTypeName: Value(tableTypeName),
+        defaultCapacity: defaultCapacity == null
+            ? const Value.absent()
+            : Value(defaultCapacity < 1 ? 1 : defaultCapacity),
         tableTypeSyncStatus: const Value('0'),
       ),
     );
@@ -2024,6 +2030,7 @@ WHERE cart_id = 0;
     required String displayName,
     required int capacity,
     int? areaId,
+    int? tableTypeId,
   }) async {
     await (update(posTables)..where((t) => t.tableId.equals(tableId))).write(
       PosTablesCompanion(
@@ -2031,9 +2038,13 @@ WHERE cart_id = 0;
         displayName: Value(displayName),
         capacity: Value(capacity),
         areaId: areaId == null ? const Value.absent() : Value(areaId),
+        tableTypeId: tableTypeId == null
+            ? const Value.absent()
+            : Value(tableTypeId),
         posTableStatus: const Value('0'),
       ),
     );
+    await bumpCompanyNoOfTableIfNeeded(tableNumber);
   }
 
   Future<void> deactivatePosTable(int tableId) async {
@@ -2047,6 +2058,7 @@ WHERE cart_id = 0;
     required String displayName,
     int capacity = 4,
     int? areaId,
+    int? tableTypeId,
     int? sortOrder,
   }) async {
     final maxRow = await (selectOnly(
@@ -2061,6 +2073,7 @@ WHERE cart_id = 0;
           displayName: Value(displayName),
           capacity: Value(capacity),
           areaId: Value(areaId),
+          tableTypeId: Value(tableTypeId),
           sortOrder: Value(sortOrder ?? id),
           posTableNetworkStatus: Value(
             'tbl_${DateTime.now().millisecondsSinceEpoch}',
@@ -2070,7 +2083,25 @@ WHERE cart_id = 0;
       ),
       mode: InsertMode.insertOrReplace,
     );
+    await bumpCompanyNoOfTableIfNeeded(tableNumber);
     return id;
+  }
+
+  /* Android bumpCompanyNoOfTableIfNeeded — grow company.noOfTable with master. */
+  Future<void> bumpCompanyNoOfTableIfNeeded(String tableNumber) async {
+    final num = int.tryParse(tableNumber.trim());
+    if (num == null || num <= 0) return;
+    final company = await getLocalCompany();
+    if (company == null) return;
+    final current = int.tryParse(company.noOfTable?.trim() ?? '') ?? 0;
+    if (num <= current) return;
+    await (update(companies)..where((t) => t.companyId.equals(company.companyId)))
+        .write(
+          CompaniesCompanion(
+            noOfTable: Value('$num'),
+            companyStatus: const Value('0'),
+          ),
+        );
   }
 
   Stream<List<ProductPortion>> watchActivePortions() {
@@ -2317,14 +2348,18 @@ WHERE $where
     final count = await countActivePosTables();
     if (count > 0) return;
 
-    final rows = List.generate(8, (index) {
-      final n = index + 1;
+    final company = await getLocalCompany();
+    var n = int.tryParse(company?.noOfTable?.trim() ?? '') ?? 0;
+    if (n <= 0) n = 8;
+
+    final rows = List.generate(n, (index) {
+      final num = index + 1;
       return PosTablesCompanion.insert(
-        tableId: Value(n),
-        tableNumber: '$n',
-        displayName: Value('Table $n'),
+        tableId: Value(num),
+        tableNumber: '$num',
+        displayName: Value('Table $num'),
         capacity: const Value(4),
-        sortOrder: Value(n),
+        sortOrder: Value(num),
       );
     });
     await replacePosTables(rows);
@@ -2359,6 +2394,8 @@ WHERE $where
       t.sessionStatus.equals('RUNNING') |
       t.sessionStatus.equals('HOLD') |
       t.sessionStatus.equals('BILL_REQUEST') |
+      t.sessionStatus.equals('BILL_REQUESTED') |
+      t.sessionStatus.equals('PAYMENT_PENDING') |
       t.sessionStatus.equals('PARTIALLY_PAID');
 
   Future<DiningSession?> getOpenSessionForTable(String tableNumber) async {
@@ -2473,6 +2510,18 @@ WHERE $where
         sessionSyncStatus: const Value('0'),
       ),
     );
+  }
+
+  /* Android closeDiningSession — table returns AVAILABLE. */
+  Future<void> closeDiningSession(int sessionId) =>
+      settleDiningSession(sessionId);
+
+  Future<void> closeDiningSessions(Iterable<int> sessionIds) async {
+    final ids = sessionIds.toSet();
+    if (ids.isEmpty) return;
+    for (final id in ids) {
+      await settleDiningSession(id);
+    }
   }
 
   Future<void> addSessionPaidAmount({
@@ -3026,6 +3075,87 @@ WHERE $where
           ..orderBy([(t) => OrderingTerm.desc(t.invoiceId)])
           ..limit(1))
         .getSingleOrNull();
+  }
+
+  /* Android checkTablePaymentMode / getUnpaidInvoicesByTable — paymentMode empty. */
+  Expression<bool> isUnpaidInvoice(Invoices t) =>
+      t.paymentMode.equals('') &
+      t.noOfTable.isNotValue('') &
+      t.invoiceOrderStatus.isNotValue('cancelled') &
+      t.invoiceOrderStatus.isNotValue('refunded');
+
+  Stream<List<Invoice>> watchUnpaidTableInvoices() {
+    return (select(invoices)
+          ..where(isUnpaidInvoice)
+          ..orderBy([(t) => OrderingTerm.desc(t.invoiceId)]))
+        .watch();
+  }
+
+  Future<List<Invoice>> unpaidInvoicesForTable(String tableNumber) {
+    return (select(invoices)
+          ..where(
+            (t) => isUnpaidInvoice(t) & t.noOfTable.equals(tableNumber.trim()),
+          )
+          ..orderBy([(t) => OrderingTerm.desc(t.invoiceId)]))
+        .get();
+  }
+
+  Stream<List<Invoice>> watchFailedPrintTableInvoices() {
+    return (select(invoices)
+          ..where(
+            (t) =>
+                t.billPrintStatus.equals('FAILED') &
+                t.noOfTable.isNotValue('') &
+                t.invoiceOrderStatus.isNotValue('cancelled') &
+                t.invoiceOrderStatus.isNotValue('refunded'),
+          )
+          ..orderBy([(t) => OrderingTerm.desc(t.invoiceId)]))
+        .watch();
+  }
+
+  Future<Invoice?> latestFailedPrintInvoiceForTable(String tableNumber) {
+    return (select(invoices)
+          ..where(
+            (t) =>
+                t.noOfTable.equals(tableNumber.trim()) &
+                t.billPrintStatus.equals('FAILED') &
+                t.invoiceOrderStatus.isNotValue('cancelled') &
+                t.invoiceOrderStatus.isNotValue('refunded'),
+          )
+          ..orderBy([(t) => OrderingTerm.desc(t.invoiceId)])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
+  Future<void> updateInvoiceBillPrintStatus({
+    required String invoiceNumber,
+    required String billPrintStatus,
+  }) async {
+    await (update(invoices)
+          ..where((t) => t.invoiceNumber.equals(invoiceNumber)))
+        .write(InvoicesCompanion(billPrintStatus: Value(billPrintStatus)));
+  }
+
+  Future<void> updateInvoiceTablePaymentMode({
+    required String invoiceNumber,
+    required String tableNumber,
+    required String paymentMode,
+    double cashAmount = 0,
+    double upiAmount = 0,
+  }) async {
+    await (update(invoices)..where(
+          (t) =>
+              t.invoiceNumber.equals(invoiceNumber) &
+              t.noOfTable.equals(tableNumber),
+        ))
+        .write(
+          InvoicesCompanion(
+            paymentMode: Value(paymentMode),
+            cashAmount: Value(cashAmount),
+            upiAmount: Value(upiAmount),
+            invoiceSyncStatus: const Value('0'),
+          ),
+        );
   }
 
   Future<Invoice?> latestInvoiceOfType(String invoiceType) {

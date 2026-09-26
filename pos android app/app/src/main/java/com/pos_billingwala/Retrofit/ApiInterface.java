@@ -3,6 +3,7 @@ package com.pos_billingwala.Retrofit;
 
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.AppSplashResponse;
+import com.pos_billingwala.Model.HomeBannerListResponse;
 import com.pos_billingwala.Model.LoginResponse;
 
 import retrofit2.Call;
@@ -89,6 +90,9 @@ public interface ApiInterface {
     @GET("getAppSplash.php")
     Call<AppSplashResponse> getAppSplash();
 
+    @GET("getHomeBannerList.php")
+    Call<HomeBannerListResponse> getHomeBannerList(@Query("userId") String userId);
+
     @GET("getCompanyPrinterSetting.php")
     Call<AllApiResponse> getCompanyPrinterSetting(@Query("userId") String userId);
 
@@ -137,7 +141,8 @@ public interface ApiInterface {
                                      @Field("productNetworkStatus") String productNetworkStatus,
                                      @Field("productDeletedStatus") String productDeletedStatus,
                                      @Field("subcategoryId") String subcategoryId,
-                                     @Field("openPrice") String openPrice);
+                                     @Field("openPrice") String openPrice,
+                                     @Field("productImage") String productImage);
 
     @FormUrlEncoded
     @POST("insertPortionMaster.php")

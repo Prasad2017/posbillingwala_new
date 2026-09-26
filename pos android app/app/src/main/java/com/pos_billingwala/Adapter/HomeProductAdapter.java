@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
+import com.pos_billingwala.Extra.ProductImageHelper;
 import com.pos_billingwala.Fragment.CreatePos;
 import com.pos_billingwala.Interface.ClickListerInterface;
 import com.pos_billingwala.Model.ProductResponse;
@@ -69,22 +70,28 @@ public class HomeProductAdapter extends RecyclerView.Adapter<HomeProductAdapter.
             productPriceUnit = MainActivity.currencyName + " " + productPrice + "/" + productResponse.getProductUnit();
         }
         holder.binding.productPriceUnit.setText(productPriceUnit);
+        /* Image on the right — only when product has an image (Flutter parity). */
+        ProductImageHelper.bind(holder.binding.productIcon, productResponse.getProductImage(), false);
+
         boolean hasQty = productResponse.getProductCartQuantity() != null
                 && !productResponse.getProductCartQuantity().trim().isEmpty()
                 && !"0".equals(productResponse.getProductCartQuantity().trim());
         if (hasQty) {
             holder.binding.productQuantity.setText(productResponse.getProductCartQuantity());
-            holder.binding.productQuantity.setVisibility(View.VISIBLE);
             holder.binding.productAdd.setVisibility(View.GONE);
+            holder.binding.qtyControls.setVisibility(View.VISIBLE);
         } else {
             holder.binding.productQuantity.setText("");
-            holder.binding.productQuantity.setVisibility(View.GONE);
+            holder.binding.qtyControls.setVisibility(View.GONE);
             holder.binding.productAdd.setVisibility(View.VISIBLE);
         }
 
         View.OnClickListener addListener = v -> clickListerInterface.productClicked(productResponse);
         holder.binding.productCardView.setOnClickListener(addListener);
         holder.binding.productAdd.setOnClickListener(addListener);
+        holder.binding.productAddMore.setOnClickListener(addListener);
+        holder.binding.productRemove.setOnClickListener(v ->
+                clickListerInterface.productQuantityDecreased(productResponse));
 
     }
 

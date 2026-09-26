@@ -53,7 +53,7 @@ public class MessMemberList extends Fragment implements View.OnClickListener {
     public static List<MemberResponse> memberResponseList = new ArrayList<>();
     public static List<MemberResponse> searchMemberResponseList = new ArrayList<>();
     View view;
-    PopupWindow mypopupWindow;
+    com.google.android.material.bottomsheet.BottomSheetDialog mypopupWindow;
     FragmentMessMemberListBinding binding;
 
     public static void getAllMessMemberList() {

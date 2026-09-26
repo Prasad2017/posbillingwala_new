@@ -314,7 +314,7 @@ public class InvoicePaymentModeWiseReport extends Fragment implements View.OnCli
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.payment_mode_sale_wise_dialog, null);
-        PopupWindow mypopupWindow = PopupUi.create(activity, view);
+        com.google.android.material.bottomsheet.BottomSheetDialog mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout cashModeWiseLayout = view.findViewById(R.id.cashModeWiseLayout);
         LinearLayout onlineModeWiseLayout = view.findViewById(R.id.onlineModeWiseLayout);

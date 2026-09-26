@@ -1117,7 +1117,30 @@
                 </com.pos_billingwala.Extra.PosCardView>
             </LinearLayout>
 
-            <!-- Sync -->
+            <!-- Home banners (Flutter parity) — replaces sync card -->
+            <LinearLayout
+                android:id="@+id/homeBannerSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_lg"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/homeBannerPager"
+                    android:layout_width="match_parent"
+                    android:layout_height="132dp" />
+
+                <LinearLayout
+                    android:id="@+id/homeBannerDots"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="horizontal"
+                    android:visibility="gone" />
+            </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/fetchDataLayout"
                 android:layout_width="match_parent"
@@ -1142,61 +1165,6 @@
                     android:text="@string/home_fetch_data"
                     android:textColor="@color/colorPrimary"
                     android:textSize="@dimen/text_body" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/synchronizeLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_lg"
-                android:background="@drawable/bg_home_sync_card"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="16dp"
-                android:paddingTop="14dp"
-                android:paddingEnd="16dp"
-                android:paddingBottom="14dp">
-
-                <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_support_icon_circle_blue"
-                    android:contentDescription="@null"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_cloud_upload"
-                    app:tint="@color/colorPrimary" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsbold"
-                        android:text="@string/home_synchronize"
-                        android:textColor="@color/colorPrimary"
-                        android:textSize="15sp" />
-
-                    <TextView
-                        android:id="@+id/homeSyncSubtitle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppinsregular"
-                        android:text="@string/home_sync_subtitle"
-                        android:textColor="@color/colorTextSecondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:contentDescription="@null"
-                    android:src="@drawable/ic_chevron_right"
-                    app:tint="@color/colorPrimary" />
             </LinearLayout>
 
             <!-- Low inventory (hidden until populated) -->

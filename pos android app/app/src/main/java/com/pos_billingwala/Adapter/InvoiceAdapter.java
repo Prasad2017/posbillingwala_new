@@ -2,12 +2,14 @@ package com.pos_billingwala.Adapter;
 
 import android.content.Context;
 import android.content.Intent;
-import android.text.Html;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.InvoiceDetailsBluetoothPrint;
@@ -18,11 +20,16 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.InvoiceProductResponse;
 import com.pos_billingwala.Model.InvoiceResponse;
+import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.InvoiceListBinding;
 import com.pos_billingwala.databinding.ItemLoadingBinding;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 
 public class InvoiceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -41,18 +48,26 @@ public class InvoiceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     public static @NonNull String getInvoiceType(InvoiceResponse invoiceResponse) {
-        String invoiceType = "";
         if (invoiceResponse.getInvoiceType() == null) {
-            return invoiceType;
+            return "";
         }
+        String kind;
         if (invoiceResponse.getInvoiceType().equalsIgnoreCase("table_wise")) {
-            invoiceType = "<b>Invoice Type:</b> Table No- " + invoiceResponse.getNoOfTable();
+            kind = "Table";
         } else if (invoiceResponse.getInvoiceType().equalsIgnoreCase("take_away")) {
-            invoiceType = "<b>Invoice Type:</b> Take Away- " + invoiceResponse.getNoOfTable();
+            kind = "Take Away";
         } else {
-            invoiceType = "<b>Invoice Type:</b> Fast Billing- " + invoiceResponse.getNoOfTable();
+            kind = "Fast Billing";
         }
-        return invoiceType;
+        String ref = invoiceResponse.getNoOfTable();
+        if (ref == null) {
+            return kind;
+        }
+        ref = ref.trim();
+        if (ref.isEmpty() || ref.equals("0") || ref.equals("-") || ref.equalsIgnoreCase("null")) {
+            return kind;
+        }
+        return kind + " · " + ref;
     }
 
     @NonNull
@@ -82,37 +97,15 @@ public class InvoiceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
         posBillingWalaDatabase = new POSBillingWalaDatabase(context);
 
-        String invoiceNumber = "<b>" + invoiceResponse.getInvoiceNumber() + "</b>";
-        holder.binding.invoiceNumber.setText(Html.fromHtml(invoiceNumber));
-        String invoiceType = getInvoiceType(invoiceResponse);
-        holder.binding.invoiceType.setText(Html.fromHtml(invoiceType));
-        String invoiceDate = "<b>Invoice Date:</b> " + invoiceResponse.getInvoiceDate();
-        holder.binding.invoiceDate.setText(Html.fromHtml(invoiceDate));
-        String subTotal = "<b>Sub Total:</b> " + MainActivity.currencyName + " " + invoiceResponse.getSubTotal();
-        holder.binding.subTotal.setText(Html.fromHtml(subTotal));
-        float gst = Float.parseFloat(invoiceResponse.getTotalGSTAmount());
-        String shopGST = "<b>CGST:</b> " + MainActivity.currencyName + " " + (gst / 2) + "&nbsp;&nbsp;&nbsp;<b>SGST:</b> " + MainActivity.currencyName + " " + (gst / 2);
-        holder.binding.gst.setText(Html.fromHtml(shopGST));
-
-        String discount = "";
-        if (invoiceResponse.getDiscountType() != null) {
-            if (invoiceResponse.getDiscountType().equalsIgnoreCase("Amount")) {
-                discount = "<b>Discount:</b> " + MainActivity.currencyName + invoiceResponse.getDiscount();
-            } else {
-                discount = "<b>Discount(%):</b> " + invoiceResponse.getDiscount();
-            }
-        } else {
-            discount = "<b>Discount(%):</b> " + invoiceResponse.getDiscount();
-        }
-
-        holder.binding.discount.setText(Html.fromHtml(discount));
-
-        String totalAmount = "<b>Total Amount:</b> " + MainActivity.currencyName + " " + invoiceResponse.getTotalAmount();
-        holder.binding.totalAmount.setText(Html.fromHtml(totalAmount));
-        String paymentMode = "<b>Payment Mode</b>: " + PaymentSettlementHelper.displayLabel(
-                invoiceResponse.getPaymentMode(), invoiceResponse.getCashAmount(),
-                invoiceResponse.getUpiAmount(), invoiceResponse.getTotalAmount());
-        holder.binding.payableMode.setText(Html.fromHtml(paymentMode));
+        holder.binding.invoiceNumber.setText(safe(invoiceResponse.getInvoiceNumber()));
+        holder.binding.invoiceType.setText(getInvoiceType(invoiceResponse));
+        holder.binding.invoiceDate.setText(formatInvoiceDate(invoiceResponse.getInvoiceDate()));
+        holder.binding.subTotal.setText(money(invoiceResponse.getSubTotal()));
+        String halfGst = money(halfOf(invoiceResponse.getTotalGSTAmount()));
+        holder.binding.gst.setText(halfGst + "  /  " + halfGst);
+        holder.binding.discount.setText(discountText(invoiceResponse));
+        holder.binding.totalAmount.setText(money(invoiceResponse.getTotalAmount()));
+        bindPaymentChip(holder, invoiceResponse);
         holder.binding.refundedLabel.setVisibility(invoiceResponse.isRefunded() ? View.VISIBLE : View.GONE);
 
         holder.binding.invoiceCardView.setOnClickListener(new View.OnClickListener() {
@@ -145,6 +138,107 @@ public class InvoiceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 : null);
 
         RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
+    }
+
+    private void bindPaymentChip(MyViewHolder holder, InvoiceResponse invoiceResponse) {
+        String label = PaymentSettlementHelper.displayLabel(
+                invoiceResponse.getPaymentMode(), invoiceResponse.getCashAmount(),
+                invoiceResponse.getUpiAmount(), invoiceResponse.getTotalAmount());
+        if (label == null || label.trim().isEmpty()) {
+            holder.binding.payableMode.setVisibility(View.GONE);
+            return;
+        }
+        holder.binding.payableMode.setVisibility(View.VISIBLE);
+        holder.binding.payableMode.setText(label);
+
+        String mode = PaymentSettlementHelper.canonicalMode(invoiceResponse.getPaymentMode());
+        int background;
+        int text;
+        if (PaymentSettlementHelper.MODE_CASH.equals(mode)) {
+            background = ContextCompat.getColor(context, R.color.dropdownSelectedBg);
+            text = ContextCompat.getColor(context, R.color.dropdownSelectedText);
+        } else if (PaymentSettlementHelper.MODE_UPI.equals(mode)) {
+            background = ContextCompat.getColor(context, R.color.colorPrimaryLight);
+            text = ContextCompat.getColor(context, R.color.colorPrimary);
+        } else if (PaymentSettlementHelper.MODE_BANK.equals(mode)) {
+            background = ContextCompat.getColor(context, R.color.dropdown_icon_bg);
+            text = ContextCompat.getColor(context, R.color.kpiPurple);
+        } else if (PaymentSettlementHelper.MODE_SPLIT.equals(mode)) {
+            background = ContextCompat.getColor(context, R.color.colorItem2Background);
+            text = ContextCompat.getColor(context, R.color.colorItem2Tint);
+        } else {
+            background = ContextCompat.getColor(context, R.color.colorInputFill);
+            text = ContextCompat.getColor(context, R.color.colorTextSecondary);
+        }
+        Drawable chip = ContextCompat.getDrawable(context, R.drawable.bg_payment_chip);
+        if (chip != null) {
+            chip = chip.mutate();
+            if (chip instanceof GradientDrawable) {
+                ((GradientDrawable) chip).setColor(background);
+            }
+            holder.binding.payableMode.setBackground(chip);
+        }
+        holder.binding.payableMode.setTextColor(text);
+    }
+
+    private static String discountText(InvoiceResponse invoiceResponse) {
+        boolean amount = invoiceResponse.getDiscountType() != null
+                && invoiceResponse.getDiscountType().equalsIgnoreCase("Amount");
+        if (amount) {
+            return money(invoiceResponse.getDiscount());
+        }
+        String value = formatAmount(invoiceResponse.getDiscount());
+        if (value.endsWith(".00")) {
+            value = value.substring(0, value.length() - 3);
+        }
+        return value + "%";
+    }
+
+    private static String money(String raw) {
+        String currency = MainActivity.currencyName == null ? "" : MainActivity.currencyName.trim();
+        String amount = formatAmount(raw);
+        return currency.isEmpty() ? amount : currency + " " + amount;
+    }
+
+    private static String halfOf(String raw) {
+        try {
+            if (raw == null || raw.trim().isEmpty()) {
+                return "0";
+            }
+            return String.valueOf(Double.parseDouble(raw.trim()) / 2d);
+        } catch (NumberFormatException ignored) {
+            return "0";
+        }
+    }
+
+    private static String formatAmount(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return "0.00";
+        }
+        try {
+            return String.format(Locale.US, "%.2f", Double.parseDouble(raw.trim()));
+        } catch (NumberFormatException ignored) {
+            return raw.trim();
+        }
+    }
+
+    private static String formatInvoiceDate(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return "";
+        }
+        try {
+            Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(raw.trim());
+            if (date == null) {
+                return raw.trim();
+            }
+            return new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(date);
+        } catch (ParseException ignored) {
+            return raw.trim();
+        }
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value;
     }
 
     @Override

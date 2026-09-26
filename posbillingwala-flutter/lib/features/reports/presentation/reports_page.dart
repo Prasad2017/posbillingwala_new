@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/widgets/app_bottom_sheet.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/features/payment_display/presentation/payment_display_actions.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/report_export.dart';
@@ -17,38 +18,31 @@ class ReportsPage extends ConsumerWidget {
   const ReportsPage({super.key});
 
   Future<void> showPeriodMenu(BuildContext context, WidgetRef ref) async {
-    final selected = await showMenu<String>(
+    final selected = await showAppActionSheet(
       context: context,
-      position: const RelativeRect.fromLTRB(1000, 80, 16, 0),
-      color: AppColors.primary,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      items: [
-        for (final entry in const [
-          ('all', 'All Records'),
-          ('day', 'Day wise'),
-          ('month', 'Month Wise'),
-          ('year', 'Year Wise'),
-        ])
-          PopupMenuItem(
-            value: entry.$1,
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.calendar_month_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  entry.$2,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
+      title: 'Filter',
+      icon: Icons.filter_list_rounded,
+      actions: const [
+        AppSheetAction(
+          value: 'all',
+          label: 'All Records',
+          icon: Icons.list_alt_rounded,
+        ),
+        AppSheetAction(
+          value: 'day',
+          label: 'Day wise',
+          icon: Icons.calendar_today_rounded,
+        ),
+        AppSheetAction(
+          value: 'month',
+          label: 'Month Wise',
+          icon: Icons.calendar_view_month_rounded,
+        ),
+        AppSheetAction(
+          value: 'year',
+          label: 'Year Wise',
+          icon: Icons.calendar_month_rounded,
+        ),
       ],
     );
     if (selected == null || !context.mounted) return;

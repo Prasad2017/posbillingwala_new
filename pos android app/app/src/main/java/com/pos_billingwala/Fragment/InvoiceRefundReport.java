@@ -99,7 +99,7 @@ public class InvoiceRefundReport extends Fragment implements View.OnClickListene
     private void showPeriodMenu() {
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View popupView = inflater.inflate(R.layout.sale_wise_dialog, null);
-        PopupWindow popupWindow = PopupUi.create(activity, popupView);
+        com.google.android.material.bottomsheet.BottomSheetDialog popupWindow = PopupUi.create(activity, popupView);
 
         Calendar calender = Calendar.getInstance();
         mYear = calender.get(Calendar.YEAR);

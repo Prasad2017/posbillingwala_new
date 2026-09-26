@@ -240,14 +240,54 @@ public final class BottomSheetUi {
     }
 
     public static BottomSheetDialog showContent(Activity activity, View content, boolean cancelable) {
-        if (activity == null || activity.isFinishing()) {
+        BottomSheetDialog sheet = prepare(activity, content, cancelable);
+        if (sheet != null) {
+            present(sheet);
+        }
+        return sheet;
+    }
+
+    /**
+     * Build a bottom sheet from content without showing it yet — wire click listeners first,
+     * then call {@link #present(BottomSheetDialog)}.
+     */
+    public static BottomSheetDialog prepare(Activity activity, View content, boolean cancelable) {
+        if (activity == null || activity.isFinishing() || content == null) {
             return null;
         }
         BottomSheetDialog sheet = create(activity);
         sheet.setContentView(content);
         sheet.setCancelable(cancelable);
-        present(sheet);
         return sheet;
+    }
+
+    public static void present(BottomSheetDialog sheet) {
+        if (sheet == null) {
+            return;
+        }
+        if (sheet.getWindow() != null) {
+            sheet.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
+        sheet.setOnShowListener(d -> {
+            View bottomSheet = sheet.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheet != null) {
+                BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
+                behavior.setSkipCollapsed(true);
+                behavior.setFitToContents(true);
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                ViewCompat.setOnApplyWindowInsetsListener(bottomSheet, (v, insets) -> {
+                    Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                    Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+                    v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
+                            Math.max(bars.bottom, ime.bottom));
+                    return insets;
+                });
+                ViewCompat.requestApplyInsets(bottomSheet);
+            }
+        });
+        sheet.show();
+        applyFullWidth(sheet);
+        ScreenshotConfig.applyDialog(sheet);
     }
 
     public static void showNoInternet(Context context) {
@@ -279,32 +319,6 @@ public final class BottomSheetUi {
 
     private static BottomSheetDialog create(Context context) {
         return new BottomSheetDialog(context, R.style.Theme_Pos_BottomSheetDialog);
-    }
-
-    private static void present(BottomSheetDialog sheet) {
-        if (sheet.getWindow() != null) {
-            sheet.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        }
-        sheet.setOnShowListener(d -> {
-            View bottomSheet = sheet.findViewById(com.google.android.material.R.id.design_bottom_sheet);
-            if (bottomSheet != null) {
-                BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
-                behavior.setSkipCollapsed(true);
-                behavior.setFitToContents(true);
-                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                ViewCompat.setOnApplyWindowInsetsListener(bottomSheet, (v, insets) -> {
-                    Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                    Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
-                    v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
-                            Math.max(bars.bottom, ime.bottom));
-                    return insets;
-                });
-                ViewCompat.requestApplyInsets(bottomSheet);
-            }
-        });
-        sheet.show();
-        applyFullWidth(sheet);
-        ScreenshotConfig.applyDialog(sheet);
     }
 
     public static void applyFullWidth(BottomSheetDialog sheet) {

@@ -11,11 +11,13 @@ import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/staff/data/staff_store.dart';
 import 'package:pos_billingwala_v2/features/tables/data/dining_session_api.dart';
 
+/* Android TableStatus — floor visual / operational status. */
 enum FloorTableStatus {
   available,
   running,
-  hold,
-  billRequest,
+  billRequested,
+  paymentPending,
+  partiallyPaid,
   blocked,
   reserved,
 }
@@ -25,19 +27,29 @@ class FloorTableView {
     required this.table,
     required this.status,
     required this.currentAmount,
+    this.remainingAmount = 0,
     this.openSession,
     this.joinedLabel,
     this.isJoinedSecondary = false,
     this.tableTypeName = '',
+    this.unpaidInvoice,
+    this.printRetryAvailable = false,
+    this.sessionStartedAt,
+    this.guestCount = 0,
   });
 
   final PosTable table;
   final FloorTableStatus status;
   final double currentAmount;
+  final double remainingAmount;
   final DiningSession? openSession;
   final String? joinedLabel;
   final bool isJoinedSecondary;
   final String tableTypeName;
+  final Invoice? unpaidInvoice;
+  final bool printRetryAvailable;
+  final DateTime? sessionStartedAt;
+  final int guestCount;
 
   String get statusLabel {
     switch (status) {
@@ -45,10 +57,12 @@ class FloorTableView {
         return 'Available';
       case FloorTableStatus.running:
         return 'Running';
-      case FloorTableStatus.hold:
-        return 'Hold';
-      case FloorTableStatus.billRequest:
-        return 'Bill requested';
+      case FloorTableStatus.billRequested:
+        return 'Bill Requested';
+      case FloorTableStatus.paymentPending:
+        return 'Payment Pending';
+      case FloorTableStatus.partiallyPaid:
+        return 'Partially Paid';
       case FloorTableStatus.blocked:
         return 'Blocked';
       case FloorTableStatus.reserved:
@@ -56,9 +70,26 @@ class FloorTableView {
     }
   }
 
+  bool get isOccupied =>
+      status == FloorTableStatus.running ||
+      status == FloorTableStatus.billRequested ||
+      status == FloorTableStatus.paymentPending ||
+      status == FloorTableStatus.partiallyPaid;
+
   /* Cart / billing always uses the primary table number. */
   String get billingTableNumber =>
       openSession?.primaryTableNumber ?? table.tableNumber;
+
+  String get elapsedLabel {
+    final started = sessionStartedAt ?? openSession?.startedAt;
+    if (started == null) return '';
+    final minutes = DateTime.now().difference(started).inMinutes;
+    if (minutes < 0) return '';
+    if (minutes < 60) return '$minutes min';
+    final hours = minutes ~/ 60;
+    final rem = minutes % 60;
+    return '${hours}h ${rem}m';
+  }
 }
 
 final posTablesProvider = StreamProvider<List<PosTable>>((ref) async* {
@@ -75,6 +106,14 @@ final allCartItemsProvider = StreamProvider<List<CartItem>>((ref) {
   return ref.watch(appDatabaseProvider).watchAllCartItems();
 });
 
+final unpaidTableInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
+  return ref.watch(appDatabaseProvider).watchUnpaidTableInvoices();
+});
+
+final failedPrintTableInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
+  return ref.watch(appDatabaseProvider).watchFailedPrintTableInvoices();
+});
+
 final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
   final tables = ref
       .watch(posTablesProvider)
@@ -85,6 +124,12 @@ final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
   final cart = ref
       .watch(allCartItemsProvider)
       .maybeWhen(data: (rows) => rows, orElse: () => const <CartItem>[]);
+  final unpaid = ref
+      .watch(unpaidTableInvoicesProvider)
+      .maybeWhen(data: (rows) => rows, orElse: () => const <Invoice>[]);
+  final failedPrint = ref
+      .watch(failedPrintTableInvoicesProvider)
+      .maybeWhen(data: (rows) => rows, orElse: () => const <Invoice>[]);
   final typeRows = ref
       .watch(tableTypesProvider)
       .maybeWhen(data: (rows) => rows, orElse: () => const <TableType>[]);
@@ -96,10 +141,26 @@ final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
   final db = ref.watch(appDatabaseProvider);
 
   final totals = <String, double>{};
+  final hasCartByTable = <String, bool>{};
   for (final item in cart) {
     if (item.cartScope.isEmpty) continue;
     final line = item.unitPrice * item.quantity * (1 + item.gstPercent / 100);
     totals[item.cartScope] = (totals[item.cartScope] ?? 0) + line;
+    hasCartByTable[item.cartScope] = true;
+  }
+
+  final unpaidByTable = <String, Invoice>{};
+  for (final inv in unpaid) {
+    final key = inv.noOfTable.trim();
+    if (key.isEmpty) continue;
+    unpaidByTable.putIfAbsent(key, () => inv);
+  }
+
+  final failedByTable = <String, Invoice>{};
+  for (final inv in failedPrint) {
+    final key = inv.noOfTable.trim();
+    if (key.isEmpty) continue;
+    failedByTable.putIfAbsent(key, () => inv);
   }
 
   final sessionByAnyTable = <String, DiningSession>{};
@@ -116,7 +177,27 @@ final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
     return typeNameById[id] ?? '';
   }
 
-  return tables.map((table) {
+  FloorTableStatus statusFromSession(String? raw) {
+    switch ((raw ?? '').trim().toUpperCase()) {
+      case 'BILL_REQUESTED':
+      case 'BILL_REQUEST':
+        return FloorTableStatus.billRequested;
+      case 'PAYMENT_PENDING':
+        return FloorTableStatus.paymentPending;
+      case 'PARTIALLY_PAID':
+        return FloorTableStatus.partiallyPaid;
+      case 'HOLD':
+        /* Soft hold on Android — cart persists as RUNNING. */
+        return FloorTableStatus.running;
+      case 'RUNNING':
+      default:
+        return FloorTableStatus.running;
+    }
+  }
+
+  final sessionsToClose = <int>{};
+
+  final views = tables.map((table) {
     final override = table.statusOverride?.toUpperCase();
     if (override == 'BLOCKED') {
       return FloorTableView(
@@ -137,7 +218,12 @@ final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
 
     final session = sessionByAnyTable[table.tableNumber];
     final primary = session?.primaryTableNumber ?? table.tableNumber;
-    final amount = double.parse((totals[primary] ?? 0).toStringAsFixed(2));
+    final hasCart = hasCartByTable[primary] == true;
+    final cartAmount = double.parse((totals[primary] ?? 0).toStringAsFixed(2));
+    final unpaidInv = unpaidByTable[table.tableNumber] ?? unpaidByTable[primary];
+    final failedInv = failedByTable[table.tableNumber] ?? failedByTable[primary];
+    final hasUnpaid = unpaidInv != null;
+
     final joined = session == null
         ? const <String>[]
         : [
@@ -150,32 +236,90 @@ final floorTablesProvider = Provider<List<FloorTableView>>((ref) {
     final isSecondary =
         session != null && session.primaryTableNumber != table.tableNumber;
 
-    FloorTableStatus status;
-    if (session == null && amount <= 0) {
-      status = FloorTableStatus.available;
-    } else {
-      switch (session?.sessionStatus) {
-        case 'HOLD':
-          status = FloorTableStatus.hold;
-        case 'BILL_REQUEST':
-          status = FloorTableStatus.billRequest;
-        case 'PARTIALLY_PAID':
-          status = FloorTableStatus.running;
-        default:
-          status = FloorTableStatus.running;
+    FloorTableStatus status = FloorTableStatus.available;
+    var amount = 0.0;
+    var remaining = 0.0;
+    var printRetry = false;
+    Invoice? unpaidForView;
+    DateTime? startedAt = session?.startedAt;
+    var guests = session?.guestCount ?? 0;
+
+    if (session != null) {
+      final raw = session.sessionStatus.trim().toUpperCase();
+      if (raw.isNotEmpty && raw != 'AVAILABLE') {
+        status = statusFromSession(raw);
       }
+    }
+
+    if (hasCart) {
+      amount = cartAmount;
+      if (session != null) {
+        final paid = session.paidAmount;
+        remaining = (amount - paid).clamp(0, double.infinity).toDouble();
+        if (paid > 0.05 && remaining > 0.05) {
+          status = FloorTableStatus.partiallyPaid;
+        }
+      }
+      if (session == null) {
+        status = FloorTableStatus.running;
+      } else if (status == FloorTableStatus.available) {
+        status = FloorTableStatus.running;
+      }
+    } else if (hasUnpaid) {
+      unpaidForView = unpaidInv;
+      amount = unpaidInv.totalAmount;
+      remaining = unpaidInv.totalAmount;
+      if (status == FloorTableStatus.available ||
+          status == FloorTableStatus.running) {
+        status = FloorTableStatus.paymentPending;
+      }
+      if (unpaidInv.billPrintStatus.toUpperCase() == 'FAILED') {
+        printRetry = true;
+      }
+    } else {
+      if (failedInv != null) {
+        printRetry = true;
+        unpaidForView = failedInv;
+      }
+      if (session != null && failedInv == null) {
+        sessionsToClose.add(session.sessionId);
+        return FloorTableView(
+          table: table,
+          status: FloorTableStatus.available,
+          currentAmount: 0,
+          tableTypeName: typeNameFor(table),
+        );
+      }
+      status = FloorTableStatus.available;
+      amount = 0;
+      remaining = 0;
+      startedAt = null;
+      guests = 0;
     }
 
     return FloorTableView(
       table: table,
       status: status,
       currentAmount: isSecondary ? 0 : amount,
-      openSession: session,
-      joinedLabel: joinedLabel,
-      isJoinedSecondary: isSecondary,
+      remainingAmount: isSecondary ? 0 : remaining,
+      openSession: (status == FloorTableStatus.available && !printRetry)
+          ? null
+          : session,
+      joinedLabel: status == FloorTableStatus.available ? null : joinedLabel,
+      isJoinedSecondary: isSecondary && status != FloorTableStatus.available,
       tableTypeName: typeNameFor(table),
+      unpaidInvoice: unpaidForView,
+      printRetryAvailable: printRetry,
+      sessionStartedAt: startedAt,
+      guestCount: guests,
     );
   }).toList();
+
+  if (sessionsToClose.isNotEmpty) {
+    Future.microtask(() => db.closeDiningSessions(sessionsToClose));
+  }
+
+  return views;
 });
 
 class TablesController extends Notifier<AsyncValue<void>> {
@@ -210,6 +354,7 @@ class TablesController extends Notifier<AsyncValue<void>> {
                     ),
                     capacity: Value(e.capacity),
                     areaId: Value(e.areaId),
+                    tableTypeId: Value(e.tableTypeId),
                     tableActive: Value(e.tableActive),
                     sortOrder: Value(e.sortOrder),
                     statusOverride: Value(e.statusOverride),
@@ -309,6 +454,14 @@ class TablesController extends Notifier<AsyncValue<void>> {
     return ref.read(billingSessionProvider);
   }
 
+  /* Android soft Hold / Save — ensure session exists; cart stays RUNNING. */
+  Future<void> softHoldTable(FloorTableView floor) async {
+    final session = await ref
+        .read(appDatabaseProvider)
+        .openOrGetDiningSession(floor.billingTableNumber);
+    await uploadDiningSessionIfOnline(session);
+  }
+
   Future<DiningSession> joinTables({
     required String primaryTable,
     required String secondaryTable,
@@ -347,6 +500,16 @@ class TablesController extends Notifier<AsyncValue<void>> {
     if (session != null) await uploadDiningSessionIfOnline(session);
   }
 
+  Future<void> markBillRequested(FloorTableView floor) async {
+    final session = await ref
+        .read(appDatabaseProvider)
+        .openOrGetDiningSession(floor.billingTableNumber);
+    await setSessionStatus(
+      sessionId: session.sessionId,
+      status: 'BILL_REQUESTED',
+    );
+  }
+
   Future<void> moveItems({
     required String fromTable,
     required String toTable,
@@ -378,6 +541,30 @@ class TablesController extends Notifier<AsyncValue<void>> {
     );
     final session = await db.getDiningSessionById(sessionId);
     if (session != null) await uploadDiningSessionIfOnline(session);
+  }
+
+  Future<void> settleUnpaidInvoice({
+    required FloorTableView floor,
+    required Invoice invoice,
+    required String paymentMode,
+    double cashAmount = 0,
+    double upiAmount = 0,
+  }) async {
+    final db = ref.read(appDatabaseProvider);
+    await db.updateInvoiceTablePaymentMode(
+      invoiceNumber: invoice.invoiceNumber,
+      tableNumber: invoice.noOfTable,
+      paymentMode: paymentMode,
+      cashAmount: cashAmount,
+      upiAmount: upiAmount,
+    );
+    final session = floor.openSession;
+    if (session != null) {
+      await db.closeDiningSession(session.sessionId);
+    } else {
+      final open = await db.getOpenSessionForTable(floor.billingTableNumber);
+      if (open != null) await db.closeDiningSession(open.sessionId);
+    }
   }
 }
 

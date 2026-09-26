@@ -212,7 +212,7 @@
                 <TextView
                     android:id="@+id/productsTab"
                     android:layout_width="0dp"
-                    android:layout_height="36dp"
+                    android:layout_height="40dp"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/fill_button_rounded_border"
@@ -220,12 +220,12 @@
                     android:gravity="center"
                     android:text="@string/ui_products_tab"
                     android:textColor="@color/white"
-                    android:textSize="14dp" />
+                    android:textSize="@dimen/text_subtitle" />
 
                 <TextView
                     android:id="@+id/combosTab"
                     android:layout_width="0dp"
-                    android:layout_height="36dp"
+                    android:layout_height="40dp"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/button_rounded_border"
@@ -233,7 +233,7 @@
                     android:gravity="center"
                     android:text="@string/ui_combos_tab"
                     android:textColor="@color/black"
-                    android:textSize="14dp" />
+                    android:textSize="@dimen/text_subtitle" />
             </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
@@ -372,7 +372,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/ui_payable_amount"
                     android:textColor="@color/colorPrimaryLight"
-                    android:textSize="12sp" />
+                    android:textSize="13sp" />
 
                 <TextView
                     android:id="@+id/totalAmount"
@@ -383,7 +383,7 @@
                     android:gravity="center"
                     android:includeFontPadding="false"
                     android:textColor="@color/white"
-                    android:textSize="18sp" />
+                    android:textSize="@dimen/text_billing_total" />
 
                 <TextView
                     android:id="@+id/kotButton"

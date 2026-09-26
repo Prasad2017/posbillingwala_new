@@ -9,6 +9,7 @@ import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/license_modules.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
+import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -53,6 +54,13 @@ class ReportsHubPage extends ConsumerWidget {
       icon: Icons.delete_forever_rounded,
     );
     if (!confirm || !context.mounted) return;
+    final pinOk = await showReportPinGate(
+      context,
+      ref,
+      title: strings.deleteAllInvoice,
+      message: 'Enter password to permanently delete all local invoices.',
+    );
+    if (!pinOk || !context.mounted) return;
     await db.clearAllInvoices();
     ref.invalidate(todayInvoicesProvider);
     ref.invalidate(monthInvoicesProvider);

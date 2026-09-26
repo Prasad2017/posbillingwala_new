@@ -68,7 +68,7 @@ public final class TableStatus {
                 {AVAILABLE, displayLabel(AVAILABLE)},
                 {RUNNING, displayLabel(RUNNING)},
                 {BILL_REQUESTED, displayLabel(BILL_REQUESTED)},
-                {PAYMENT_PENDING, "Payment"},
+                {PAYMENT_PENDING, "Payment Pending"},
                 {RESERVED, displayLabel(RESERVED)},
                 {BLOCKED, displayLabel(BLOCKED)},
         };

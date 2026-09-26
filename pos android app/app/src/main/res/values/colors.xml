@@ -70,12 +70,12 @@
     <color name="blue_700">#1976D2</color>
     <color name="green_100">#E4C1EDC1</color>
 
-    <color name="table_status_available">#5eaa46</color>
-    <color name="table_status_running">#1976D2</color>
-    <color name="table_status_bill_requested">#F9A825</color>
-    <color name="table_status_payment">#E65100</color>
-    <color name="table_status_reserved">#7E57C2</color>
-    <color name="table_status_blocked">#757575</color>
+    <color name="table_status_available">#2E7D32</color>
+    <color name="table_status_running">#1565C0</color>
+    <color name="table_status_bill_requested">#EF6C00</color>
+    <color name="table_status_payment">#C62828</color>
+    <color name="table_status_reserved">#6A1B9A</color>
+    <color name="table_status_blocked">#616161</color>
 
     <color name="textcolor">#b12b2a</color>
 

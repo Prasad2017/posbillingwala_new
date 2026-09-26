@@ -25,6 +25,7 @@ import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.text.Html;
 import android.util.Base64;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -46,7 +47,10 @@ import com.pos_billingwala.Adapter.ThreeInvoicePrintAdapter;
 import com.pos_billingwala.Adapter.TwoInvoicePrintAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+
 import com.pos_billingwala.Extra.BottomSheetUi;
+import com.pos_billingwala.Extra.PopupUi;
 import com.pos_billingwala.Extra.PaymentUpiQrHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
@@ -267,9 +271,7 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
 
 
         binding.backToInvoice.setOnClickListener(this);
-        binding.showQrInvoiceCardView.setOnClickListener(this);
-        binding.printInvoiceCardView.setOnClickListener(this);
-        binding.shareInvoiceCardView.setOnClickListener(this);
+        binding.menuIcon.setOnClickListener(this);
         binding.editInvoiceButton.setOnClickListener(this);
         binding.refundInvoiceButton.setOnClickListener(this);
 
@@ -283,18 +285,59 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         int id = view.getId();
         if (id == R.id.backToInvoice) {
             finish();
-        } else if (id == R.id.showQrInvoiceCardView) {
-            showPaymentQr();
-        } else if (id == R.id.printInvoiceCardView) {
-            printBill();
-        } else if (id == R.id.shareInvoiceCardView) {
-            createPdf();
+        } else if (id == R.id.menuIcon) {
+            showInvoiceMenu();
         } else if (id == R.id.editInvoiceButton) {
             openEditInvoice();
         } else if (id == R.id.refundInvoiceButton) {
             confirmRefund();
         }
 
+    }
+
+    private void showInvoiceMenu() {
+        if (invoiceResponseList == null || invoiceResponseList.isEmpty()) {
+            return;
+        }
+        boolean refunded = invoiceResponseList.get(0).isRefunded();
+        View content = LayoutInflater.from(this).inflate(R.layout.invoice_options_sheet, null);
+        BottomSheetDialog sheet = PopupUi.create(this, content);
+        if (sheet == null) {
+            return;
+        }
+
+        View showQr = content.findViewById(R.id.showQrLayout);
+        View print = content.findViewById(R.id.printLayout);
+        View share = content.findViewById(R.id.shareLayout);
+        View edit = content.findViewById(R.id.editLayout);
+        View refund = content.findViewById(R.id.refundLayout);
+
+        showQr.setVisibility(refunded ? View.GONE : View.VISIBLE);
+        edit.setVisibility(refunded ? View.GONE : View.VISIBLE);
+        refund.setVisibility(refunded ? View.GONE : View.VISIBLE);
+
+        showQr.setOnClickListener(v -> {
+            sheet.dismiss();
+            showPaymentQr();
+        });
+        print.setOnClickListener(v -> {
+            sheet.dismiss();
+            printBill();
+        });
+        share.setOnClickListener(v -> {
+            sheet.dismiss();
+            createPdf();
+        });
+        edit.setOnClickListener(v -> {
+            sheet.dismiss();
+            openEditInvoice();
+        });
+        refund.setOnClickListener(v -> {
+            sheet.dismiss();
+            confirmRefund();
+        });
+
+        PopupUi.showAsToolbarMenu(sheet, binding.menuIcon);
     }
 
     private void showPaymentQr() {
@@ -842,15 +885,11 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
             threeShopSGST.setText("SGST@" + companyResponseList.get(0).getShopSGST() + "%");
             threeSGST.setText(MainActivity.currencyName + " " + String.format(Locale.US, "%.2f", (totalShopGST / 2)));
 
-            binding.printInvoiceCardView.setVisibility(View.VISIBLE);
-            binding.shareInvoiceCardView.setVisibility(View.VISIBLE);
-            binding.showQrInvoiceCardView.setVisibility(View.VISIBLE);
+            binding.menuIcon.setVisibility(View.VISIBLE);
             invoiceNestedScrollView.setVisibility(View.VISIBLE);
 
         } else {
-            binding.printInvoiceCardView.setVisibility(View.GONE);
-            binding.shareInvoiceCardView.setVisibility(View.GONE);
-            binding.showQrInvoiceCardView.setVisibility(View.GONE);
+            binding.menuIcon.setVisibility(View.GONE);
             invoiceNestedScrollView.setVisibility(View.GONE);
         }
 

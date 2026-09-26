@@ -161,7 +161,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     public static String[] discountTypeList;
     ProgressDialog progressDialog;
     View view;
-    PopupWindow mypopupWindow;
+    com.google.android.material.bottomsheet.BottomSheetDialog mypopupWindow;
     ActivityBluetoothPrintBinding binding;
     private final ExecutorService invoiceSaveExecutor = Executors.newSingleThreadExecutor();
     /** Resize + dither + BT write â€” keep off UI to avoid ANR on large bills. */

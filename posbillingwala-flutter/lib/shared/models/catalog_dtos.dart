@@ -242,6 +242,7 @@ class PosTableDto {
     this.tableName = '',
     this.capacity = 0,
     this.areaId,
+    this.tableTypeId,
     this.tableActive = '1',
     this.sortOrder = 0,
     this.statusOverride,
@@ -253,6 +254,7 @@ class PosTableDto {
   final String tableName;
   final int capacity;
   final int? areaId;
+  final int? tableTypeId;
   final String tableActive;
   final int sortOrder;
   final String? statusOverride;
@@ -265,6 +267,7 @@ class PosTableDto {
       tableName: parseString(json['tableName']) ?? '',
       capacity: parseInt(json['capacity']) ?? 0,
       areaId: parseInt(json['areaId']),
+      tableTypeId: parseInt(json['tableTypeId']),
       tableActive: parseString(json['tableActive']) ?? '1',
       sortOrder: parseInt(json['sortOrder']) ?? 0,
       statusOverride: parseString(json['statusOverride']),
@@ -278,6 +281,7 @@ class PosTableDto {
     'tableName': tableName,
     'capacity': capacity,
     'areaId': areaId,
+    'tableTypeId': tableTypeId,
     'tableActive': tableActive,
     'sortOrder': sortOrder,
     'statusOverride': statusOverride,
@@ -348,6 +352,7 @@ class TableTypeDto {
   const TableTypeDto({
     this.tableTypeId = 0,
     this.tableTypeName = '',
+    this.defaultCapacity = 4,
     this.tableTypeSortOrder = 0,
     this.tableTypeActive = '1',
     this.tableTypeNetworkStatus,
@@ -355,6 +360,7 @@ class TableTypeDto {
 
   final int tableTypeId;
   final String tableTypeName;
+  final int defaultCapacity;
   final int tableTypeSortOrder;
   final String tableTypeActive;
   final String? tableTypeNetworkStatus;
@@ -364,6 +370,7 @@ class TableTypeDto {
       tableTypeId: parseInt(json['tableTypeId']) ?? 0,
       tableTypeName:
           parseString(json['tableTypeName'] ?? json['typeName']) ?? '',
+      defaultCapacity: parseInt(json['defaultCapacity']) ?? 4,
       tableTypeSortOrder:
           parseInt(json['tableTypeSortOrder'] ?? json['sortOrder']) ?? 0,
       tableTypeActive:

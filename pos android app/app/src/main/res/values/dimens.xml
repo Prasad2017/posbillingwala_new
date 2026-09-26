@@ -34,13 +34,20 @@
     <dimen name="bottom_nav_height">64dp</dimen>
     <dimen name="touch_min">48dp</dimen>
 
-    <dimen name="text_caption">11sp</dimen>
-    <dimen name="text_body">14sp</dimen>
-    <dimen name="text_subtitle">15sp</dimen>
-    <dimen name="text_title">17sp</dimen>
-    <dimen name="text_heading">20sp</dimen>
+    <dimen name="text_caption">12sp</dimen>
+    <dimen name="text_body">15sp</dimen>
+    <dimen name="text_subtitle">16sp</dimen>
+    <dimen name="text_title">18sp</dimen>
+    <dimen name="text_heading">21sp</dimen>
     <dimen name="text_display">24sp</dimen>
-    <dimen name="text_button">15sp</dimen>
+    <dimen name="text_button">16sp</dimen>
+
+    <!-- Fast billing readability -->
+    <dimen name="text_billing_product">16sp</dimen>
+    <dimen name="text_billing_price">14sp</dimen>
+    <dimen name="text_billing_total">20sp</dimen>
+    <dimen name="qty_btn_size">40dp</dimen>
+    <dimen name="stock_qty_value">22sp</dimen>
 
     <!-- KPI / report cards — same in portrait and landscape -->
     <dimen name="text_kpi_label">12sp</dimen>

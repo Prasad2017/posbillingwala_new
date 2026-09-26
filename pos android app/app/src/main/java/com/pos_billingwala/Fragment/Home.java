@@ -49,6 +49,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.karumi.dexter.Dexter;
@@ -56,6 +57,7 @@ import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
+import com.pos_billingwala.Adapter.HomeBannerAdapter;
 import com.pos_billingwala.Activity.CompanyPrinterSetting;
 import com.pos_billingwala.Activity.Login;
 import com.pos_billingwala.Activity.MainActivity;
@@ -75,12 +77,12 @@ import com.pos_billingwala.Extra.InAppNotificationStore;
 import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.CompanyResponse;
+import com.pos_billingwala.Model.HomeBannerListResponse;
+import com.pos_billingwala.Model.HomeBannerResponse;
 import com.pos_billingwala.Model.InAppNotification;
 import com.pos_billingwala.Model.LocalSalesSnapshot;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Retrofit.Api;
-import com.pos_billingwala.NetworkToOffline.CloudSyncNav;
-import com.pos_billingwala.NetworkToOffline.CloudSyncTracker;
 import com.pos_billingwala.NetworkToOffline.NetworkDataFetcher;
 import com.pos_billingwala.NetworkToOffline.Receiver.LicenceKeyReceiver;
 import com.pos_billingwala.NetworkToOffline.Receiver.OfflineToNetworkReceiver;
@@ -145,6 +147,9 @@ public class Home extends Fragment implements View.OnClickListener {
             updateOnlineStatusUi();
             if (DetectConnection.checkInternetConnection(context)) {
                 ErrorLogQueue.flushAsync();
+                loadHomeBanners();
+            } else {
+                hideHomeBanners();
             }
         }
     };
@@ -160,12 +165,24 @@ public class Home extends Fragment implements View.OnClickListener {
     private final Handler homeClockHandler = new Handler(Looper.getMainLooper());
     private final SimpleDateFormat homeDateTimeFormat =
             new SimpleDateFormat("EEE, dd MMM yyyy | hh:mm:ss a", Locale.getDefault());
-    private final SimpleDateFormat homeSyncTimeFormat =
-            new SimpleDateFormat("dd MMM yyyy • hh:mm a", Locale.getDefault());
     private int lastGreetingHour = -1;
     private Bitmap cachedStoreLogo;
     private String cachedStoreLogoRaw;
     private List<CompanyResponse> cachedCompanyDetails;
+    private HomeBannerAdapter homeBannerAdapter;
+    private int homeBannerCount;
+    private final Handler homeBannerHandler = new Handler(Looper.getMainLooper());
+    private final Runnable homeBannerAutoScroll = new Runnable() {
+        @Override
+        public void run() {
+            if (binding == null || binding.homeBannerPager == null || homeBannerCount <= 1) {
+                return;
+            }
+            int next = (binding.homeBannerPager.getCurrentItem() + 1) % homeBannerCount;
+            binding.homeBannerPager.setCurrentItem(next, true);
+            homeBannerHandler.postDelayed(this, 4000);
+        }
+    };
     private final Runnable notificationBadgeListener = () -> {
         if (activity != null) {
             activity.runOnUiThread(this::refreshNotificationBadge);
@@ -315,15 +332,20 @@ public class Home extends Fragment implements View.OnClickListener {
                 getTotalCount();
                 if (DetectConnection.checkInternetConnection(activity)) {
                     LicenceKeyReceiver.getLicenceKeyData(activity, true);
+                    loadHomeBanners();
+                } else {
+                    hideHomeBanners();
                 }
                 binding.swipeRefreshLayout.setRefreshing(false);
             }
         });
 
         initViews();
+        setupHomeBanners();
         applyTabletHomeLayout();
         binding.swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
         setValidationUI();
+        loadHomeBanners();
 
         return view;
 
@@ -414,7 +436,6 @@ public class Home extends Fragment implements View.OnClickListener {
         binding.hideShowTotalSale.setOnClickListener(this);
         binding.hideShowTodaySale.setOnClickListener(this);
         binding.fetchDataLayout.setOnClickListener(this);
-        binding.synchronizeLayout.setOnClickListener(this);
         binding.catalogViewAll.setOnClickListener(this);
         binding.salesPeriodFilter.setOnClickListener(this);
         totalSalesCardView.setOnClickListener(this);
@@ -557,8 +578,6 @@ public class Home extends Fragment implements View.OnClickListener {
             }
         } else if (id == R.id.fetchDataLayout) {
             confirmFetchData();
-        } else if (id == R.id.synchronizeLayout) {
-            CloudSyncNav.openFromUi(activity);
         } else if (id == R.id.totalSalesCardView) {
             if (LicenseModules.isEnabled(MainActivity.totalSaleData)) {
                 ((MainActivity) activity).loadFragment(new SalesOverview(), true);
@@ -1128,6 +1147,7 @@ public class Home extends Fragment implements View.OnClickListener {
     public void onPause() {
         super.onPause();
         stopHomeClock();
+        stopHomeBannerAutoScroll();
         AppExecutors.get().removeMainCallbacks(deferredPrinterConnectRunnable);
         unregisterConnectivityReceivers();
         InAppNotificationStore.removeListener(notificationBadgeListener);
@@ -1144,6 +1164,7 @@ public class Home extends Fragment implements View.OnClickListener {
         setValidationUI();
         maybePostLicenceNotifications();
         refreshNotificationBadge();
+        loadHomeBanners();
     }
 
     private void refreshNotificationBadge() {
@@ -1336,7 +1357,6 @@ public class Home extends Fragment implements View.OnClickListener {
         updateHomeDateTime();
         updateHomeStatusPill();
         updatePrinterStatusUi();
-        updateSyncSubtitle();
         updateOnlineStatusUi();
         loadHomeStoreImage();
     }
@@ -1501,22 +1521,154 @@ public class Home extends Fragment implements View.OnClickListener {
         syncHomeStatusPrinterRow();
     }
 
-    private void updateSyncSubtitle() {
-        if (binding == null || binding.homeSyncSubtitle == null || activity == null) {
+    private void setupHomeBanners() {
+        if (binding == null || binding.homeBannerPager == null) {
             return;
         }
-        String raw = Common.getSavedUserData(activity, CloudSyncTracker.KEY_LAST_CLOUD_SYNC_MS);
-        if (raw == null || raw.trim().isEmpty()) {
-            binding.homeSyncSubtitle.setText(getString(R.string.home_never_synced));
+        homeBannerAdapter = new HomeBannerAdapter();
+        binding.homeBannerPager.setAdapter(homeBannerAdapter);
+        binding.homeBannerPager.setOffscreenPageLimit(1);
+        binding.homeBannerPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                updateHomeBannerDots(position);
+                restartHomeBannerAutoScroll();
+            }
+        });
+    }
+
+    private void loadHomeBanners() {
+        if (activity == null || binding == null) {
             return;
         }
-        try {
-            long ms = Long.parseLong(raw.trim());
-            binding.homeSyncSubtitle.setText(getString(
-                    R.string.home_last_synced, homeSyncTimeFormat.format(new Date(ms))));
-        } catch (NumberFormatException e) {
-            binding.homeSyncSubtitle.setText(getString(R.string.home_never_synced));
+        if (!DetectConnection.checkInternetConnection(activity)
+                || MainActivity.userId == null
+                || MainActivity.userId.trim().isEmpty()) {
+            hideHomeBanners();
+            return;
         }
+        AppExecutors.get().io().execute(() -> {
+            try {
+                Call<HomeBannerListResponse> call = Api.getClient(activity)
+                        .getHomeBannerList(MainActivity.userId);
+                Response<HomeBannerListResponse> response = call.execute();
+                if (!response.isSuccessful() || response.body() == null || !response.body().isSuccess()) {
+                    AppExecutors.get().main(this::hideHomeBanners);
+                    return;
+                }
+                List<HomeBannerResponse> raw = response.body().bannerResponse;
+                List<HomeBannerResponse> items = new ArrayList<>();
+                if (raw != null) {
+                    for (HomeBannerResponse banner : raw) {
+                        if (banner != null && banner.normalizedImageUrl() != null) {
+                            items.add(banner);
+                        }
+                    }
+                }
+                AppExecutors.get().main(() -> showHomeBanners(items));
+            } catch (Exception e) {
+                Log.e("Home", "loadHomeBanners", e);
+                AppExecutors.get().main(this::hideHomeBanners);
+            }
+        });
+    }
+
+    private void showHomeBanners(List<HomeBannerResponse> items) {
+        if (binding == null || binding.homeBannerSection == null || homeBannerAdapter == null) {
+            return;
+        }
+        if (items == null || items.isEmpty()) {
+            hideHomeBanners();
+            return;
+        }
+        homeBannerCount = items.size();
+        homeBannerAdapter.submit(items);
+        binding.homeBannerSection.setVisibility(View.VISIBLE);
+        buildHomeBannerDots(homeBannerCount);
+        updateHomeBannerDots(Math.min(binding.homeBannerPager.getCurrentItem(), homeBannerCount - 1));
+        restartHomeBannerAutoScroll();
+    }
+
+    private void hideHomeBanners() {
+        stopHomeBannerAutoScroll();
+        homeBannerCount = 0;
+        if (homeBannerAdapter != null) {
+            homeBannerAdapter.submit(null);
+        }
+        if (binding == null) {
+            return;
+        }
+        if (binding.homeBannerSection != null) {
+            binding.homeBannerSection.setVisibility(View.GONE);
+        }
+        if (binding.homeBannerDots != null) {
+            binding.homeBannerDots.removeAllViews();
+            binding.homeBannerDots.setVisibility(View.GONE);
+        }
+    }
+
+    private void buildHomeBannerDots(int count) {
+        if (binding == null || binding.homeBannerDots == null || activity == null) {
+            return;
+        }
+        binding.homeBannerDots.removeAllViews();
+        if (count <= 1) {
+            binding.homeBannerDots.setVisibility(View.GONE);
+            return;
+        }
+        binding.homeBannerDots.setVisibility(View.VISIBLE);
+        float density = activity.getResources().getDisplayMetrics().density;
+        int height = (int) (7 * density);
+        int inactiveWidth = (int) (7 * density);
+        int margin = (int) (3 * density);
+        for (int i = 0; i < count; i++) {
+            View dot = new View(activity);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(inactiveWidth, height);
+            params.setMargins(margin, 0, margin, 0);
+            dot.setLayoutParams(params);
+            dot.setBackgroundResource(R.drawable.bg_home_banner_dot);
+            binding.homeBannerDots.addView(dot);
+        }
+    }
+
+    private void updateHomeBannerDots(int selected) {
+        if (binding == null || binding.homeBannerDots == null || activity == null) {
+            return;
+        }
+        int count = binding.homeBannerDots.getChildCount();
+        if (count <= 1) {
+            return;
+        }
+        float density = activity.getResources().getDisplayMetrics().density;
+        int activeWidth = (int) (18 * density);
+        int inactiveWidth = (int) (7 * density);
+        int height = (int) (7 * density);
+        int primary = ContextCompat.getColor(activity, R.color.colorPrimary);
+        int inactive = Color.argb(71, Color.red(primary), Color.green(primary), Color.blue(primary));
+        for (int i = 0; i < count; i++) {
+            View dot = binding.homeBannerDots.getChildAt(i);
+            if (dot == null) {
+                continue;
+            }
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) dot.getLayoutParams();
+            params.width = i == selected ? activeWidth : inactiveWidth;
+            params.height = height;
+            dot.setLayoutParams(params);
+            if (dot.getBackground() != null) {
+                dot.getBackground().mutate().setTint(i == selected ? primary : inactive);
+            }
+        }
+    }
+
+    private void restartHomeBannerAutoScroll() {
+        stopHomeBannerAutoScroll();
+        if (homeBannerCount > 1) {
+            homeBannerHandler.postDelayed(homeBannerAutoScroll, 4000);
+        }
+    }
+
+    private void stopHomeBannerAutoScroll() {
+        homeBannerHandler.removeCallbacks(homeBannerAutoScroll);
     }
 
     private String getGreeting() {

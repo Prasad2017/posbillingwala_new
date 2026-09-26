@@ -43,7 +43,7 @@ public class InvoiceTakeAway extends Fragment implements View.OnClickListener {
     List<CompanyResponse> companyResponseList = new ArrayList<>();
     List<ProductCartResponse> productTakeAwayResponseList = new ArrayList<>();
     InvoiceTakAwayAdapter invoiceTakAwayAdapter;
-    PopupWindow mypopupWindow;
+    com.google.android.material.bottomsheet.BottomSheetDialog mypopupWindow;
     FragmentInvoiceTakeAwayBinding binding;
 
 

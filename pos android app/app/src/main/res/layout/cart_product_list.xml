@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:minHeight="52dp"
+        android:minHeight="60dp"
         android:orientation="horizontal"
         android:paddingStart="12dp"
         android:paddingTop="10dp"
@@ -20,27 +20,29 @@
             android:id="@+id/productName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="2.4"
+            android:layout_weight="1"
             android:ellipsize="end"
             android:fontFamily="@font/poppinsmedium"
             android:gravity="start|center_vertical"
             android:hyphenationFrequency="none"
+            android:includeFontPadding="false"
             android:lineSpacingExtra="1dp"
             android:maxLines="2"
-            android:paddingEnd="6dp"
+            android:paddingEnd="8dp"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="14sp" />
+            android:textSize="@dimen/text_billing_product" />
 
         <LinearLayout
-            android:layout_width="88dp"
-            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
             android:gravity="center"
+            android:minWidth="112dp"
             android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/productRemove"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:background="@drawable/bg_cart_qty_btn"
                 android:clickable="true"
                 android:focusable="true"
@@ -48,28 +50,28 @@
                 android:includeFontPadding="false"
                 android:text="−"
                 android:textColor="@color/colorPrimary"
-                android:textSize="16sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/productQuantity"
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                android:layout_marginStart="2dp"
-                android:layout_marginEnd="2dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:fontFamily="@font/poppinsbold"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:minWidth="24dp"
+                android:minWidth="28dp"
                 android:textColor="@color/kpiBlue"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/productAdd"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:background="@drawable/bg_cart_qty_btn"
                 android:clickable="true"
                 android:focusable="true"
@@ -77,27 +79,29 @@
                 android:includeFontPadding="false"
                 android:text="+"
                 android:textColor="@color/colorPrimary"
-                android:textSize="16sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/productPrice"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="0.75"
+            android:layout_marginStart="8dp"
             android:fontFamily="@font/poppinsmedium"
-            android:gravity="center"
+            android:gravity="end|center_vertical"
+            android:includeFontPadding="false"
             android:maxLines="1"
+            android:minWidth="64dp"
             android:textColor="@color/colorTextPrimary"
-            android:textSize="13sp" />
+            android:textSize="@dimen/text_billing_price" />
 
         <ImageView
             android:id="@+id/productDelete"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:contentDescription="@null"
-            android:padding="4dp"
+            android:padding="8dp"
             android:src="@drawable/ic_delete"
             app:tint="@color/statusExpired" />
 

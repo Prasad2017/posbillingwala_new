@@ -100,7 +100,7 @@ public class SaleReport extends Fragment implements View.OnClickListener {
     public void setPopUpWindow() {
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View popupView = inflater.inflate(R.layout.sale_wise_dialog, null);
-        PopupWindow mypopupWindow = PopupUi.create(activity, popupView);
+        com.google.android.material.bottomsheet.BottomSheetDialog mypopupWindow = PopupUi.create(activity, popupView);
 
         LinearLayout dayWiseLayout = popupView.findViewById(R.id.dayWiseLayout);
         LinearLayout monthWiseLayout = popupView.findViewById(R.id.monthWiseLayout);

@@ -6,10 +6,12 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Extra.RowDividerUi;
 import com.pos_billingwala.Model.InventoryResponse;
+import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.InventoryListBinding;
 
 import java.util.List;
@@ -42,7 +44,25 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.MyVi
         holder.binding.afterSaleInventoryQty.setText(inventoryResponse.getAfterSaleInventoryQuantity());
         holder.binding.saleInventoryQty.setText(inventoryResponse.getSaleInventoryQuantity());
 
+        float remaining = parseQty(inventoryResponse.getAfterSaleInventoryQuantity());
+        int stockColor = ContextCompat.getColor(context,
+                remaining <= 0 ? R.color.statusExpired
+                        : remaining <= 5 ? R.color.table_status_bill_requested
+                        : R.color.green_600);
+        holder.binding.afterSaleInventoryQty.setTextColor(stockColor);
+
         RowDividerUi.bindLastItem(holder.binding.rowDivider, position, getItemCount());
+    }
+
+    private static float parseQty(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return 0f;
+        }
+        try {
+            return Float.parseFloat(value.trim());
+        } catch (NumberFormatException e) {
+            return 0f;
+        }
     }
 
     @Override

@@ -7,17 +7,15 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
-import com.pos_billingwala.Extra.DetectConnection;
+import com.pos_billingwala.Extra.ClearInvoicesGuard;
 import com.pos_billingwala.Extra.LicenseModules;
 import com.pos_billingwala.Extra.TabletFormUi;
-import com.pos_billingwala.NetworkToOffline.UserSynchronizeData;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentReportSettingBinding;
 
@@ -132,21 +130,7 @@ public class ReportSetting extends Fragment implements View.OnClickListener {
         } else if (id == R.id.refundWiseReportLayout) {
             ((MainActivity) activity).loadFragment(new InvoiceRefundReport(), true);
         } else if (id == R.id.clearInvoiceLayout) {
-            int unsynced = posBillingWalaDatabase.countUnsyncedInvoices();
-            if (unsynced > 0) {
-                Toast.makeText(activity,
-                        unsynced + " unsynced bill(s). Upload to cloud first — clear blocked to protect data.",
-                        Toast.LENGTH_LONG).show();
-                if (DetectConnection.checkInternetConnection(activity)) {
-                    ((MainActivity) activity).openCloudSyncStatus();
-                    UserSynchronizeData.start(activity, false);
-                } else {
-                    DetectConnection.noInternetConnection(activity);
-                }
-                return;
-            }
-            posBillingWalaDatabase.clearInvoice();
-            Toast.makeText(activity, getString(R.string.toast_invoice_cleared), Toast.LENGTH_SHORT).show();
+            ClearInvoicesGuard.requestClear(activity, posBillingWalaDatabase);
         }
     }
 

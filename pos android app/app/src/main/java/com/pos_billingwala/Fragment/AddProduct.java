@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ProductImageSectionHelper;
 import com.pos_billingwala.Extra.ProductPortionSectionHelper;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.Model.ProductResponse;
@@ -40,6 +41,7 @@ public class AddProduct extends Fragment implements View.OnClickListener {
     POSBillingWalaDatabase posBillingWalaDatabase;
     FragmentAddProductBinding binding;
     ProductPortionSectionHelper portionSectionHelper;
+    ProductImageSectionHelper imageSectionHelper;
 
 
     @Override
@@ -57,6 +59,7 @@ public class AddProduct extends Fragment implements View.OnClickListener {
                 activity, posBillingWalaDatabase, view);
         portionSectionHelper.setOnPortionMasterLinkClick(this::openPortionMaster);
         portionSectionHelper.setOnPortionsChanged(this::syncProductCostVisibility);
+        imageSectionHelper = new ProductImageSectionHelper(this, view);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -157,7 +160,8 @@ public class AddProduct extends Fragment implements View.OnClickListener {
                 productPrice,
                 unitName, binding.productFormBody.productCGST.getText().toString(),
                 binding.productFormBody.productSGST.getText().toString(), 0, networkStatus, "0", subcategoryId,
-                openPrice);
+                openPrice,
+                imageSectionHelper != null ? imageSectionHelper.getProductImage() : null);
 
         String newProductId = rowId > 0 ? String.valueOf(rowId) : null;
         if (newProductId == null) {
@@ -285,6 +289,14 @@ public class AddProduct extends Fragment implements View.OnClickListener {
             binding.productFormBody.productCode.setText(String.valueOf(productCode));
         }
 
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (imageSectionHelper != null) {
+            imageSectionHelper.handleActivityResult(requestCode, resultCode, data);
+        }
     }
 
 }

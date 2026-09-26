@@ -1,6 +1,5 @@
 package com.pos_billingwala.Fragment;
 
-import com.pos_billingwala.Extra.PopupUi;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -21,7 +20,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,7 +34,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pos_billingwala.Activity.BluetoothPrint;
-import com.pos_billingwala.Activity.DuplicateBluetoothPrint;
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.CartAdapter;
 import com.pos_billingwala.Adapter.HomeCategoryAdapter;
@@ -90,7 +87,6 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
     View view;
     POSBillingWalaDatabase posBillingWalaDatabase;
     private CartAdapter cartAdapter;
-    PopupWindow mypopupWindow;
     private final Handler productSearchHandler = new Handler(Looper.getMainLooper());
     private Runnable pendingProductSearch;
     private boolean showingCombos = false;
@@ -157,7 +153,8 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 binding.posHeading.setText(getString(R.string.fast_billing));
                 binding.posSubtitle.setText(getString(R.string.ui_product_menu));
                 binding.posSubtitle.setVisibility(View.VISIBLE);
-                binding.menuIcon.setVisibility(View.VISIBLE);
+                // Duplicate bill is only after invoice generation — keep billing toolbar clean.
+                binding.menuIcon.setVisibility(View.GONE);
             }
         }
 
@@ -823,31 +820,45 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
             return;
         }
 
-        LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        view = inflater.inflate(R.layout.share_dialog, null);
-        mypopupWindow = PopupUi.create(activity, view);
+        // Fast billing / non–dine-in: no overflow menu (duplicate print only after bill is done).
+    }
 
-        LinearLayout saveInvoiceLayout = view.findViewById(R.id.saveInvoiceLayout);
-        LinearLayout duplicateInvoicePrintLayout = view.findViewById(R.id.duplicateInvoicePrintLayout);
-
-        saveInvoiceLayout.setVisibility(View.GONE);
-
-        duplicateInvoicePrintLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                mypopupWindow.dismiss();
-
-                Intent intent = new Intent(activity, DuplicateBluetoothPrint.class);
-                intent.putExtra("invoiceRunningStatus", "printBill");
-                intent.putExtra("cartOrderStatus", "fast_billing");
-                activity.startActivity(intent);
-
+    @Override
+    public void productQuantityDecreased(ProductResponse productResponse) {
+        if (productResponse == null || productResponse.getProductId() == null) {
+            return;
+        }
+        final String productId = productResponse.getProductId();
+        final String table = tableNumber;
+        final String orderStatus = cartOrderStatus;
+        final ProductCartResponse[] targetLine = new ProductCartResponse[1];
+        AppExecutors.get().runDbThenMain(this, () -> {
+            List<ProductCartResponse> lines = posBillingWalaDatabase.getCartProductList(table, orderStatus);
+            if (lines == null) {
+                return;
+            }
+            for (ProductCartResponse line : lines) {
+                if (productId.equals(line.getProductId())) {
+                    targetLine[0] = line;
+                }
+            }
+        }, () -> {
+            if (!isAdded() || targetLine[0] == null) {
+                return;
+            }
+            ProductCartResponse line = targetLine[0];
+            int quantity = parseCartQuantity(line.getProductQuantity());
+            if (quantity <= 1) {
+                AppExecutors.get().runDbThenMain(this, () -> {
+                    posBillingWalaDatabase.deleteCartProduct(line.getCartId());
+                }, () -> {
+                    getCartCount();
+                    refreshCatalogAfterCart();
+                });
+            } else {
+                updateCart(line.getCartId(), String.valueOf(quantity - 1), line.getResolvedLinePrice());
             }
         });
-
-        PopupUi.showAsToolbarMenu(mypopupWindow, binding.menuIcon);
-
     }
 
     @Override

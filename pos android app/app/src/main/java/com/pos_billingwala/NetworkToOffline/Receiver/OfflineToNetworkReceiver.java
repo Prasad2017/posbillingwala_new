@@ -98,7 +98,8 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
                         cursor.getString(cursor.getColumnIndex("productNetworkStatus")),
                         cursor.getString(cursor.getColumnIndex("productDeletedStatus")),
                         columnOrEmpty(cursor, "subcategoryId"),
-                        columnOrEmpty(cursor, "openPrice"));
+                        columnOrEmpty(cursor, "openPrice"),
+                        columnOrEmpty(cursor, "productImage"));
             } while (cursor.moveToNext());
         }
         cursor = posBillingWalaDatabase.getUnSynchronizePortionMaster(NAME_NOT_SYNCED_WITH_SERVER);
@@ -608,10 +609,11 @@ public class OfflineToNetworkReceiver extends BroadcastReceiver {
         }
 }
 
-    public void saveProduct(String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String productUnit, String productCGST, String productSGST, String productNetworkStatus, String productDeletedStatus, String subcategoryId, String openPrice) {
+    public void saveProduct(String productId, String categoryId, String categoryName, String productCode, String productName, String productPrice, String productUnit, String productCGST, String productSGST, String productNetworkStatus, String productDeletedStatus, String subcategoryId, String openPrice, String productImage) {
 
         String openPriceValue = (openPrice == null || openPrice.trim().isEmpty()) ? "off" : openPrice;
-        Call<AllApiResponse> call = Api.getClient(context).saveProduct(MainActivity.ownerId, categoryId, categoryName, productCode, productName, productPrice, productUnit, productCGST, productSGST, productNetworkStatus, productDeletedStatus, subcategoryId, openPriceValue);
+        String imageValue = productImage != null ? productImage : "";
+        Call<AllApiResponse> call = Api.getClient(context).saveProduct(MainActivity.ownerId, categoryId, categoryName, productCode, productName, productPrice, productUnit, productCGST, productSGST, productNetworkStatus, productDeletedStatus, subcategoryId, openPriceValue, imageValue);
         if (executeCall(call)) {
             posBillingWalaDatabase.updateSyncProduct(productId, NAME_SYNCED_WITH_SERVER);
         }

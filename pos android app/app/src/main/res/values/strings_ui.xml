@@ -7,6 +7,7 @@
     <string name="ui__payment_mode_">***** Payment Mode *****</string>
     <string name="ui_about_us_आमचं_बद्दल_थडस">About Us (आमचं बद्दल थोडस)</string>
     <string name="ui_action">Action</string>
+    <string name="ui_add">+ Add</string>
     <string name="ui_add_customer">Add Customer</string>
     <string name="ui_add_discount">Add Discount</string>
     <string name="ui_add_packing">Add Packing</string>
@@ -101,6 +102,7 @@
     <string name="ui_expenses_name">Expenses Name</string>
     <string name="ui_fetch_data_from_cloud_डेट_सर्वरकडून_घेणे">Fetch Data From Cloud (डेटा सर्वरकडून घेणे )</string>
     <string name="ui_fetch_data_सर्वर_से_लेन_">Fetch Data\n(सर्वर से लेना )</string>
+    <string name="ui_filter">Filter</string>
     <string name="ui_food">Food</string>
     <string name="ui_forgot_licence_key">Forgot Licence key?</string>
     <string name="ui_gst">GST</string>
@@ -133,6 +135,9 @@
     <string name="ui_invoice_take_away_report">Invoice Take Away Report</string>
     <string name="ui_invoice_terms_amp_conditions">Invoice Terms &amp; Conditions</string>
     <string name="ui_invoice_type">Invoice Type</string>
+    <string name="ui_label_sub_total">Sub Total</string>
+    <string name="ui_label_cgst_sgst">CGST / SGST</string>
+    <string name="ui_label_discount">Discount</string>
     <string name="ui_issue_a_onetime_qr_token_for_walkin_cust">Issue a one-time QR token for walk-in customers. Existing member coupon flow is unchanged.</string>
     <string name="ui_issue_qr_token_amp_print">Issue QR Token &amp; Print</string>
     <string name="ui_item">ITEM</string>
@@ -144,6 +149,7 @@
     <string name="ui_login">Login</string>
     <string name="ui_logout_बहेर_पडणे">Logout (बाहेर पडणे)</string>
     <string name="ui_meal_lunch">Meal: Lunch</string>
+    <string name="ui_menu">Menu</string>
     <string name="ui_member_address">Member Address (Optional)</string>
     <string name="ui_member_list">Member List</string>
     <string name="ui_member_name">Member Name*</string>
@@ -216,7 +222,13 @@
     <string name="ui_product_2">Product</string>
     <string name="ui_product_category">Product Category*</string>
     <string name="ui_product_details">Product Details</string>
+    <string name="ui_product_image">Product Image (Optional)</string>
+    <string name="ui_product_image_hint">Shown on the billing screen for this product only</string>
+    <string name="ui_gallery">Gallery</string>
+    <string name="ui_camera">Camera</string>
+    <string name="ui_remove_image">Remove</string>
     <string name="ui_tax_gst">Tax / GST</string>
+    <string name="toast_product_image_too_large">Photo too large — try a smaller photo</string>
     <string name="ui_product_category_2">Product Category</string>
     <string name="ui_product_cgst">Product CGST</string>
     <string name="ui_product_code">Product Code</string>
@@ -244,6 +256,12 @@
     <string name="ui_report_setting">Report Setting</string>
     <string name="ui_data_management">Data Management</string>
     <string name="ui_delete_all_invoices_hint">Remove all local invoice records after cloud sync</string>
+    <string name="ui_delete_all_invoices_title">Delete All Invoices</string>
+    <string name="ui_delete_all_invoices_confirm">This will permanently delete all local invoices. This cannot be undone. Continue?</string>
+    <string name="ui_delete_all_invoices_pin_title">Enter password to delete invoices</string>
+    <string name="ui_incorrect_pin">Incorrect password. Invoices were not deleted.</string>
+    <string name="ui_stock_remaining">In Stock</string>
+    <string name="ui_stock_manage_hint">Quick view of remaining stock</string>
     <string name="ui_this_branch_only">This branch only</string>
     <string name="ui_reports_hub">Reports Hub</string>
     <string name="ui_sales_dashboard">Sales Dashboard</string>

@@ -44,6 +44,9 @@ public class ProductResponse {
     @SerializedName("openPrice")
     @Expose
     String openPrice;
+    @SerializedName("productImage")
+    @Expose
+    String productImage;
     @SerializedName("productUnit")
     @Expose
     String productUnit;
@@ -131,6 +134,14 @@ public class ProductResponse {
 
     public boolean isOpenPrice() {
         return openPrice != null && "on".equalsIgnoreCase(openPrice.trim());
+    }
+
+    public String getProductImage() {
+        return productImage;
+    }
+
+    public void setProductImage(String productImage) {
+        this.productImage = productImage;
     }
 
     public String getProductUnit() {

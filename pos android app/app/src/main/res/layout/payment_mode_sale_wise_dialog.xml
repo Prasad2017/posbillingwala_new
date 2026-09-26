@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.pos_billingwala.Extra.PosCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    
     style="@style/PopupMenuCard">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
@@ -23,7 +24,7 @@
                 android:layout_height="20dp"
                 android:layout_gravity="center"
                 android:src="@drawable/rupee_pending"
-                app:tint="@color/white" />
+                app:tint="@color/colorPrimary" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -34,7 +35,7 @@
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="@string/ui_cash_mode_wise"
-                android:textColor="@color/white"
+                android:textColor="@color/colorTextPrimary"
                 android:textSize="15dp" />
 
         </LinearLayout>
@@ -65,7 +66,7 @@
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="@string/ui_upi_mode_wise"
-                android:textColor="@color/white"
+                android:textColor="@color/colorTextPrimary"
                 android:textSize="15dp" />
 
         </LinearLayout>
@@ -85,7 +86,7 @@
                 android:layout_height="20dp"
                 android:layout_gravity="center"
                 android:src="@drawable/rupee_pending"
-                app:tint="@color/white" />
+                app:tint="@color/colorPrimary" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -96,7 +97,7 @@
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="@string/ui_cash_plus_upi_mode_wise"
-                android:textColor="@color/white"
+                android:textColor="@color/colorTextPrimary"
                 android:textSize="15dp" />
 
         </LinearLayout>
@@ -126,7 +127,7 @@
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="@string/ui_bank_mode_wise"
-                android:textColor="@color/white"
+                android:textColor="@color/colorTextPrimary"
                 android:textSize="15dp" />
 
         </LinearLayout>
@@ -145,7 +146,7 @@
                 android:layout_height="20dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_calendar"
-                app:tint="@color/white" />
+                app:tint="@color/colorPrimary" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -156,7 +157,7 @@
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="@string/ui_day_wise"
-                android:textColor="@color/white"
+                android:textColor="@color/colorTextPrimary"
                 android:textSize="15dp" />
 
         </LinearLayout>
@@ -175,7 +176,7 @@
                 android:layout_height="20dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_calendar"
-                app:tint="@color/white" />
+                app:tint="@color/colorPrimary" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -186,7 +187,7 @@
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="@string/ui_month_wise"
-                android:textColor="@color/white"
+                android:textColor="@color/colorTextPrimary"
                 android:textSize="15dp" />
 
         </LinearLayout>
@@ -203,7 +204,7 @@
                 android:layout_height="20dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_calendar"
-                app:tint="@color/white" />
+                app:tint="@color/colorPrimary" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -214,7 +215,7 @@
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="@string/ui_year_wise"
-                android:textColor="@color/white"
+                android:textColor="@color/colorTextPrimary"
                 android:textSize="15dp" />
 
         </LinearLayout>

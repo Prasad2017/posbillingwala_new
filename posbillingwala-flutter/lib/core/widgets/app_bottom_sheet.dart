@@ -117,3 +117,63 @@ Future<bool> showAppConfirmBottomSheet({
   );
   return result == true;
 }
+
+class AppSheetAction {
+  const AppSheetAction({
+    required this.value,
+    required this.label,
+    this.icon,
+    this.destructive = false,
+  });
+
+  final String value;
+  final String label;
+  final IconData? icon;
+  final bool destructive;
+}
+
+/* Toolbar overflow / filter menus as a bottom sheet (replaces PopupMenu). */
+Future<String?> showAppActionSheet({
+  required BuildContext context,
+  required String title,
+  required List<AppSheetAction> actions,
+  IconData? icon,
+}) {
+  if (actions.isEmpty) return Future.value(null);
+  return showAppBottomSheet<String>(
+    context: context,
+    title: title,
+    icon: icon ?? Icons.more_horiz_rounded,
+    child: Builder(
+      builder: (sheetContext) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final action in actions)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: action.icon == null
+                  ? null
+                  : Icon(
+                      action.icon,
+                      color: action.destructive
+                          ? AppColors.danger
+                          : AppColors.primary,
+                    ),
+              title: Text(
+                action.label,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: action.destructive
+                      ? AppColors.danger
+                      : AppColors.navy,
+                ),
+              ),
+              onTap: () => Navigator.of(sheetContext).pop(action.value),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+

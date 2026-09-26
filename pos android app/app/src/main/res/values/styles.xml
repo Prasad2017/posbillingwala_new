@@ -80,11 +80,21 @@
     <style name="ColorfulKpiCard" parent="HomeKpiCard" />
 
     <style name="PopupMenuCard" parent="PosCardView">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="cardBackgroundColor">@color/white</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardUseCompatPadding">false</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <style name="PopupAnchorCard" parent="PosCardView">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="cardBackgroundColor">@color/colorPrimary</item>
         <item name="cardCornerRadius">10dp</item>
         <item name="cardUseCompatPadding">true</item>
+        <item name="strokeWidth">0dp</item>
     </style>
 
     <style name="PosKpiLabel">

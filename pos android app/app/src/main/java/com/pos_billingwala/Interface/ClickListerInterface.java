@@ -8,4 +8,8 @@ public interface ClickListerInterface {
 
     void productClicked(ProductResponse productResponse);
 
+    /** Decrease quantity for a product already in the cart (product grid − button). */
+    default void productQuantityDecreased(ProductResponse productResponse) {
+    }
+
 }

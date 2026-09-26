@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/features/pos/domain/payment_mode.dart';
+import 'package:pos_billingwala_v2/features/pos/presentation/payment_mode_sheet.dart';
 import 'package:pos_billingwala_v2/features/tables/domain/tables_providers.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -39,6 +42,95 @@ Future<void> printLatestInvoiceDuplicate(
     return;
   }
   context.push('/print/bill/${invoice.invoiceId}?duplicate=1');
+}
+
+Future<void> retryFailedBillPrint(
+  BuildContext context,
+  WidgetRef ref,
+  FloorTableView floor,
+) async {
+  final db = ref.read(appDatabaseProvider);
+  final failed =
+      floor.unpaidInvoice ??
+      await db.latestFailedPrintInvoiceForTable(floor.billingTableNumber);
+  if (!context.mounted) return;
+  if (failed == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No failed bill to reprint')),
+    );
+    return;
+  }
+  await db.updateInvoiceBillPrintStatus(
+    invoiceNumber: failed.invoiceNumber,
+    billPrintStatus: 'PENDING',
+  );
+  if (!context.mounted) return;
+  context.push('/print/bill/${failed.invoiceId}?duplicate=1');
+}
+
+Future<void> settleUnpaidTableInvoice(
+  BuildContext context,
+  WidgetRef ref,
+  FloorTableView floor,
+) async {
+  final db = ref.read(appDatabaseProvider);
+  final unpaidList = await db.unpaidInvoicesForTable(floor.billingTableNumber);
+  final unpaid = floor.unpaidInvoice ??
+      (unpaidList.isEmpty ? null : unpaidList.first);
+  if (!context.mounted) return;
+  if (unpaid == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No unpaid bill for this table')),
+    );
+    return;
+  }
+
+  final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+  final settled = await showModalBottomSheet<PaymentTender?>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) {
+      PaymentTender? result;
+      return PaymentModeSheet(
+        totalAmount: unpaid.totalAmount,
+        currency: currency,
+        initialMode: PaymentMode.cash,
+        initialCash: unpaid.totalAmount,
+        initialUpi: 0,
+        onContinue: (mode, cash, upi) {
+          result = PaymentTender.resolve(
+            mode: mode,
+            totalAmount: unpaid.totalAmount,
+            cashAmount: cash,
+            upiAmount: upi,
+          );
+          Navigator.pop(ctx, result);
+        },
+      );
+    },
+  );
+  if (settled == null || !context.mounted) return;
+  if (!settled.isValidFor(unpaid.totalAmount)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cash + UPI must equal bill total')),
+    );
+    return;
+  }
+
+  await ref
+      .read(tablesControllerProvider.notifier)
+      .settleUnpaidInvoice(
+        floor: floor,
+        invoice: unpaid,
+        paymentMode: settled.mode.label,
+        cashAmount: settled.cashAmount,
+        upiAmount: settled.upiAmount,
+      );
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(const SnackBar(content: Text('Payment saved')));
 }
 
 Future<void> editDiningGuestsWaiter(
@@ -101,74 +193,70 @@ Future<void> editDiningGuestsWaiter(
   ).showSnackBar(SnackBar(content: Text(AppStrings.of(ref).tableDetailsSaved)));
 }
 
+/* Android DineInOpsUi.showTableActionsMenu — long-press more actions. */
 Future<void> showPosTableOverflow(
   BuildContext context,
   WidgetRef ref,
   FloorTableView floor,
 ) async {
+  if (floor.status == FloorTableStatus.blocked) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Table is blocked')));
+    return;
+  }
+
   final all = ref.read(floorTablesProvider);
   final strings = AppStrings.of(ref);
-  final more = await showModalBottomSheet<String>(
+  final joined =
+      floor.openSession != null &&
+      (floor.joinedLabel?.contains('+') ?? false) &&
+      !floor.isJoinedSecondary;
+
+  final more = await showAppActionSheet(
     context: context,
-    showDragHandle: true,
-    builder: (context) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(title: Text(strings.tableActions)),
-          const Divider(height: 1),
-          ListTile(
-            title: Text(strings.guestsWaiter),
-            onTap: () => Navigator.pop(context, 'meta'),
-          ),
-          ListTile(
-            title: Text(strings.joinTable),
-            onTap: () => Navigator.pop(context, 'join'),
-          ),
-          ListTile(
-            title: Text(strings.transferTable),
-            onTap: () => Navigator.pop(context, 'transfer'),
-          ),
-          ListTile(
-            title: Text(strings.moveItemsTable),
-            onTap: () => Navigator.pop(context, 'move'),
-          ),
-          ListTile(
-            title: Text(strings.splitBill),
-            onTap: () => Navigator.pop(context, 'split_bill'),
-          ),
-          if (floor.openSession?.sessionStatus != 'HOLD')
-            ListTile(
-              title: Text(strings.holdTable),
-              onTap: () => Navigator.pop(context, 'hold'),
-            ),
-          if (floor.openSession?.sessionStatus == 'HOLD')
-            ListTile(
-              title: Text(strings.resumeTable),
-              onTap: () => Navigator.pop(context, 'resume'),
-            ),
-          ListTile(
-            title: Text(strings.markBillRequested),
-            onTap: () => Navigator.pop(context, 'bill'),
-          ),
-          ListTile(
-            title: Text(strings.duplicatePrintLastBill),
-            onTap: () => Navigator.pop(context, 'print'),
-          ),
-          if (floor.openSession != null &&
-              (floor.joinedLabel?.contains('+') ?? false) &&
-              !floor.isJoinedSecondary)
-            ListTile(
-              title: Text(strings.splitJoined),
-              onTap: () => Navigator.pop(context, 'split'),
-            ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    ),
+    title: '${strings.tableActions} • T${floor.billingTableNumber}',
+    actions: [
+      AppSheetAction(label: strings.joinTable, value: 'join'),
+      AppSheetAction(label: strings.markBillRequested, value: 'bill'),
+      if (joined) AppSheetAction(label: strings.splitJoined, value: 'split'),
+      AppSheetAction(label: strings.moveItemsTable, value: 'move'),
+      AppSheetAction(label: strings.transferTable, value: 'transfer'),
+      AppSheetAction(label: strings.splitBill, value: 'split_bill'),
+      AppSheetAction(label: strings.duplicatePrintLastBill, value: 'print'),
+      AppSheetAction(label: 'Hold / Save', value: 'hold'),
+      AppSheetAction(label: strings.guestsWaiter, value: 'meta'),
+    ],
   );
   if (!context.mounted || more == null) return;
   await handleTableOpsAction(context, ref, floor, all, more);
+}
+
+Future<FloorTableView?> pickTargetTable({
+  required BuildContext context,
+  required List<FloorTableView> candidates,
+  required String title,
+}) {
+  if (candidates.isEmpty) return Future.value(null);
+  return showAppActionSheet(
+    context: context,
+    title: title,
+    actions: [
+      for (final c in candidates)
+        AppSheetAction(
+          label: c.table.displayName.isEmpty
+              ? 'Table ${c.table.tableNumber} — ${c.statusLabel}'
+              : '${c.table.displayName} — ${c.statusLabel}',
+          value: c.table.tableNumber,
+        ),
+    ],
+  ).then((value) {
+    if (value == null) return null;
+    for (final c in candidates) {
+      if (c.table.tableNumber == value) return c;
+    }
+    return null;
+  });
 }
 
 Future<void> handleTableOpsAction(
@@ -212,41 +300,17 @@ Future<void> handleTableOpsAction(
     return;
   }
 
-  if (action == 'hold' && floor.openSession != null) {
-    await ref
-        .read(tablesControllerProvider.notifier)
-        .setSessionStatus(
-          sessionId: floor.openSession!.sessionId,
-          status: 'HOLD',
-        );
+  if (action == 'hold') {
+    await ref.read(tablesControllerProvider.notifier).softHoldTable(floor);
     if (!context.mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Table on hold')));
+    ).showSnackBar(const SnackBar(content: Text('Table held')));
     return;
   }
 
-  if (action == 'resume' && floor.openSession != null) {
-    await ref
-        .read(tablesControllerProvider.notifier)
-        .setSessionStatus(
-          sessionId: floor.openSession!.sessionId,
-          status: 'RUNNING',
-        );
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Table resumed')));
-    return;
-  }
-
-  if (action == 'bill' && floor.openSession != null) {
-    await ref
-        .read(tablesControllerProvider.notifier)
-        .setSessionStatus(
-          sessionId: floor.openSession!.sessionId,
-          status: 'BILL_REQUEST',
-        );
+  if (action == 'bill') {
+    await ref.read(tablesControllerProvider.notifier).markBillRequested(floor);
     if (!context.mounted) return;
     ScaffoldMessenger.of(
       context,
@@ -254,7 +318,7 @@ Future<void> handleTableOpsAction(
     return;
   }
 
-  if (action == 'transfer' || action == 'move') {
+  if (action == 'transfer') {
     final candidates = all
         .where(
           (t) =>
@@ -264,72 +328,87 @@ Future<void> handleTableOpsAction(
         .toList();
     if (candidates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No available target tables')),
+        const SnackBar(content: Text('No available table to transfer')),
       );
       return;
     }
-    final target = await showDialog<FloorTableView>(
+    final target = await pickTargetTable(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: Text(action == 'transfer' ? 'Transfer to' : 'Move items to'),
-        children: candidates
-            .map(
-              (c) => SimpleDialogOption(
-                onPressed: () => Navigator.pop(context, c),
-                child: Text(
-                  c.table.displayName.isEmpty
-                      ? 'Table ${c.table.tableNumber}'
-                      : c.table.displayName,
-                ),
-              ),
-            )
-            .toList(),
-      ),
+      candidates: candidates,
+      title: 'Transfer to',
     );
     if (target == null || !context.mounted) return;
     try {
-      if (action == 'transfer') {
-        await ref
-            .read(tablesControllerProvider.notifier)
-            .transferTable(
-              fromTable: floor.billingTableNumber,
-              toTable: target.table.tableNumber,
-            );
-      } else {
-        final items = await ref
-            .read(appDatabaseProvider)
-            .getCartItems(cartScope: floor.billingTableNumber);
-        if (items.isEmpty) {
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('No items to move')));
-          return;
-        }
-        if (!context.mounted) return;
-        final selected = await showModalBottomSheet<List<CartItem>>(
-          context: context,
-          isScrollControlled: true,
-          showDragHandle: true,
-          builder: (context) => MoveItemsSheet(items: items),
-        );
-        if (selected == null || selected.isEmpty || !context.mounted) return;
-        await ref
-            .read(tablesControllerProvider.notifier)
-            .moveItems(
-              fromTable: floor.billingTableNumber,
-              toTable: target.table.tableNumber,
-              items: selected,
-            );
-      }
+      await ref
+          .read(tablesControllerProvider.notifier)
+          .transferTable(
+            fromTable: floor.billingTableNumber,
+            toTable: target.table.tableNumber,
+          );
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            action == 'transfer'
-                ? 'Transferred to T${target.table.tableNumber}'
-                : 'Items moved to T${target.table.tableNumber}',
-          ),
+          content: Text('Transferred to T${target.table.tableNumber}'),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+    return;
+  }
+
+  if (action == 'move') {
+    /* Android: any non-blocked target. */
+    final candidates = all
+        .where(
+          (t) =>
+              t.table.tableNumber != floor.billingTableNumber &&
+              t.status != FloorTableStatus.blocked,
+        )
+        .toList();
+    if (candidates.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No target table')));
+      return;
+    }
+    final items = await ref
+        .read(appDatabaseProvider)
+        .getCartItems(cartScope: floor.billingTableNumber);
+    if (items.isEmpty) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No items to move')));
+      return;
+    }
+    if (!context.mounted) return;
+    final selected = await showModalBottomSheet<List<CartItem>>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => MoveItemsSheet(items: items),
+    );
+    if (selected == null || selected.isEmpty || !context.mounted) return;
+    final target = await pickTargetTable(
+      context: context,
+      candidates: candidates,
+      title: 'Move items to',
+    );
+    if (target == null || !context.mounted) return;
+    try {
+      await ref
+          .read(tablesControllerProvider.notifier)
+          .moveItems(
+            fromTable: floor.billingTableNumber,
+            toTable: target.table.tableNumber,
+            items: selected,
+          );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Items moved to T${target.table.tableNumber}'),
         ),
       );
     } catch (e) {
@@ -340,36 +419,24 @@ Future<void> handleTableOpsAction(
   }
 
   if (action == 'join') {
+    /* Android: any non-blocked table (not only available). */
     final candidates = all
         .where(
           (t) =>
               t.table.tableNumber != floor.billingTableNumber &&
-              t.status == FloorTableStatus.available,
+              t.status != FloorTableStatus.blocked,
         )
         .toList();
     if (candidates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No available tables to join')),
+        const SnackBar(content: Text('No tables available to join')),
       );
       return;
     }
-    final secondary = await showDialog<FloorTableView>(
+    final secondary = await pickTargetTable(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: const Text('Join with'),
-        children: candidates
-            .map(
-              (c) => SimpleDialogOption(
-                onPressed: () => Navigator.pop(context, c),
-                child: Text(
-                  c.table.displayName.isEmpty
-                      ? 'Table ${c.table.tableNumber}'
-                      : c.table.displayName,
-                ),
-              ),
-            )
-            .toList(),
-      ),
+      candidates: candidates,
+      title: 'Join with',
     );
     if (secondary == null || !context.mounted) return;
     await ref
@@ -380,7 +447,11 @@ Future<void> handleTableOpsAction(
         );
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Joined with T${secondary.table.tableNumber}')),
+      SnackBar(
+        content: Text(
+          'Joined T${floor.billingTableNumber} + T${secondary.table.tableNumber}',
+        ),
+      ),
     );
   }
 }

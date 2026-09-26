@@ -10,10 +10,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceAdapter;
@@ -21,7 +21,6 @@ import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.ListLoader;
 import com.pos_billingwala.Extra.ResponsiveUi;
 import com.pos_billingwala.Extra.TabletUi;
-import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Model.InvoiceResponse;
 import com.pos_billingwala.R;
 import com.pos_billingwala.databinding.FragmentOrderInvoiceBinding;
@@ -70,13 +69,20 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
             }
         });
 
-        binding.nestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
+        binding.recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollChange(@NonNull NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                if (ReportCursorHelper.isNestedScrollAtBottom(v, scrollY)) {
-                    if (!isLoading && pageNumber < totalPages) {
-                        new LoadMoreInvoices().execute();
-                    }
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (dy <= 0 || isLoading || pageNumber >= totalPages || adapter == null) {
+                    return;
+                }
+                RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+                if (!(layoutManager instanceof LinearLayoutManager)) {
+                    return;
+                }
+                LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
+                int lastVisible = linearLayoutManager.findLastVisibleItemPosition();
+                if (lastVisible >= linearLayoutManager.getItemCount() - 2) {
+                    new LoadMoreInvoices().execute();
                 }
             }
         });
@@ -157,11 +163,11 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
                         binding.recyclerView.setLayoutManager(new LinearLayoutManager(activity));
                     }
                     binding.recyclerView.setAdapter(adapter);
-                    binding.nestedScrollView.setVisibility(View.VISIBLE);
+                    binding.invoiceListCard.setVisibility(View.VISIBLE);
                     EmptyListUi.bind(binding.noDataFound, true, R.string.empty_sub_invoices);
                     pageNumber = page.size();
                 } else {
-                    binding.nestedScrollView.setVisibility(View.GONE);
+                    binding.invoiceListCard.setVisibility(View.GONE);
                     EmptyListUi.bind(binding.noDataFound, false, R.string.empty_sub_invoices);
                     pageNumber = 0;
                 }
@@ -201,9 +207,13 @@ public class OrderInvoice extends Fragment implements View.OnClickListener {
             }
             removeLoadingFooter();
             if (page != null && !page.isEmpty()) {
+                int previousLast = invoiceResponseList.size() - 1;
                 int start = invoiceResponseList.size();
                 invoiceResponseList.addAll(page);
                 adapter.notifyItemRangeInserted(start, page.size());
+                if (previousLast >= 0) {
+                    adapter.notifyItemChanged(previousLast);
+                }
                 pageNumber += page.size();
             }
             isLoading = false;

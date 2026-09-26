@@ -589,25 +589,34 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
                     ),
                   ),
                 ),
-                PopupMenuButton<String>(
+                IconButton(
                   icon: const Icon(
                     Icons.more_vert_rounded,
                     color: Colors.white,
                   ),
-                  onSelected: (value) async {
+                  onPressed: () async {
+                    final value = await showAppActionSheet(
+                      context: context,
+                      title: 'Invoice actions',
+                      actions: const [
+                        AppSheetAction(
+                          value: 'save',
+                          label: 'Save Invoice',
+                          icon: Icons.save_outlined,
+                        ),
+                        AppSheetAction(
+                          value: 'share',
+                          label: 'Share Invoice',
+                          icon: Icons.share_outlined,
+                        ),
+                      ],
+                    );
                     if (value == 'save') {
                       await openSaveInvoiceFlow();
                     } else if (value == 'share') {
                       await openShareInvoiceFlow();
                     }
                   },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'save', child: Text('Save Invoice')),
-                    PopupMenuItem(
-                      value: 'share',
-                      child: Text('Share Invoice'),
-                    ),
-                  ],
                 ),
               ],
               if (session.tableNumber != null)

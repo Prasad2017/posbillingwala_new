@@ -195,22 +195,14 @@ class PosPageState extends ConsumerState<PosPage> {
                 ),
               ),
             ),
-          PopupMenuButton<String>(
-            icon: Icon(
-              Icons.more_vert_rounded,
-              color: isFastBilling ? AppColors.navy : Colors.white,
-            ),
-            onSelected: (value) async {
-              if (value == 'duplicate') {
-                await printLatestInvoiceDuplicate(
-                  context,
-                  ref,
-                  tableNumber: isTable ? session.tableNumber : null,
-                  invoiceType: isTable ? null : session.invoiceType,
-                );
-                return;
-              }
-              if (value == 'table_ops') {
+          if (isTable)
+            IconButton(
+              icon: Icon(
+                Icons.more_vert_rounded,
+                color: isFastBilling ? AppColors.navy : Colors.white,
+              ),
+              tooltip: strings.tableActions,
+              onPressed: () async {
                 final floor = floorForTable(ref, session.tableNumber);
                 if (floor == null) {
                   if (!context.mounted) return;
@@ -220,20 +212,8 @@ class PosPageState extends ConsumerState<PosPage> {
                   return;
                 }
                 await showPosTableOverflow(context, ref, floor);
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'duplicate',
-                child: Text(strings.duplicatePrint),
-              ),
-              if (isTable)
-                PopupMenuItem(
-                  value: 'table_ops',
-                  child: Text(strings.tableActions),
-                ),
-            ],
-          ),
+              },
+            ),
         ],
       ),
       body: SafeArea(
@@ -962,23 +942,23 @@ class ProductCard extends ConsumerWidget {
                           children: [
                             Text(
                               product.productName,
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
-                                fontSize: 13,
+                                fontSize: 15,
                                 color: AppColors.navy,
-                                height: 1.15,
+                                height: 1.2,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 4),
                             Text(
                               priceLabel,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 12,
+                                fontSize: 14,
                                 color: AppColors.textPrimary,
                                 height: 1.1,
                               ),
@@ -1052,7 +1032,7 @@ class ProductQtyButton extends ConsumerWidget {
     if (qtyInCart <= 0) {
       return SizedBox(
         width: double.infinity,
-        height: 32,
+        height: 40,
         child: Material(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(10),
@@ -1062,14 +1042,14 @@ class ProductQtyButton extends ConsumerWidget {
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add, color: Colors.white, size: 18),
+                Icon(Icons.add, color: Colors.white, size: 22),
                 SizedBox(width: 4),
                 Text(
                   'Add',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
-                    fontSize: 13,
+                    fontSize: 15,
                   ),
                 ),
               ],
@@ -1081,7 +1061,7 @@ class ProductQtyButton extends ConsumerWidget {
 
     return Container(
       width: double.infinity,
-      height: 32,
+      height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         color: AppColors.primaryLight,
@@ -1098,7 +1078,7 @@ class ProductQtyButton extends ConsumerWidget {
               style: const TextStyle(
                 color: AppColors.navy,
                 fontWeight: FontWeight.w800,
-                fontSize: 13,
+                fontSize: 16,
               ),
             ),
           ),
@@ -1116,9 +1096,9 @@ class ProductQtyButton extends ConsumerWidget {
         customBorder: const CircleBorder(),
         onTap: onTap,
         child: SizedBox(
-          width: 28,
-          height: 28,
-          child: Icon(icon, size: 16, color: AppColors.primary),
+          width: 40,
+          height: 40,
+          child: Icon(icon, size: 22, color: AppColors.primary),
         ),
       ),
     );
@@ -1352,7 +1332,7 @@ class CartItemTile extends ConsumerWidget {
                 ),
               ),
               SizedBox(
-                width: narrow ? 96 : 108,
+                width: narrow ? 112 : 124,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -1371,7 +1351,7 @@ class CartItemTile extends ConsumerWidget {
                           maxWidth: narrow ? 40 : 48,
                         ),
                         child: SizedBox(
-                          height: 32,
+                          height: 40,
                           child: Center(
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
@@ -1382,8 +1362,8 @@ class CartItemTile extends ConsumerWidget {
                                 ),
                                 maxLines: 1,
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: narrow ? 12 : 14,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: narrow ? 14 : 16,
                                 ),
                               ),
                             ),
@@ -1453,12 +1433,12 @@ class QtyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = dense ? 24.0 : 28.0;
+    final size = dense ? 36.0 : 40.0;
     return Material(
       color: AppColors.primaryLight,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: SizedBox(
           width: size,
@@ -1469,7 +1449,7 @@ class QtyButton extends StatelessWidget {
               style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w700,
-                fontSize: dense ? 14 : 16,
+                fontSize: dense ? 20 : 22,
               ),
             ),
           ),

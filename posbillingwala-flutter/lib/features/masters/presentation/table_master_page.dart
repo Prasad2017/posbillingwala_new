@@ -98,7 +98,7 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
   Future<void> addType({TableType? existing}) async {
     final name = TextEditingController(text: existing?.tableTypeName ?? '');
     final seats = TextEditingController(
-      text: seatsFromTypeName(existing?.tableTypeName ?? '') ?? '4',
+      text: '${existing?.defaultCapacity ?? seatsFromTypeName(existing?.tableTypeName ?? '') ?? 4}',
     );
     final ok = await showAppBottomSheet<bool>(
       context: context,
@@ -139,6 +139,7 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
       ),
     );
     final typeName = name.text.trim();
+    final capacity = int.tryParse(seats.text.trim()) ?? 4;
     name.dispose();
     seats.dispose();
     if (ok != true || typeName.isEmpty) return;
@@ -150,12 +151,17 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
         await db.updateLocalTableType(
           tableTypeId: existing.tableTypeId,
           tableTypeName: typeName,
+          defaultCapacity: capacity,
         );
       } else {
         final userId = ref.read(authControllerProvider).session?.userId ?? '';
         await ref
             .read(mastersRepositoryProvider)
-            .createTableType(userId: userId, tableTypeName: typeName);
+            .createTableType(
+              userId: userId,
+              tableTypeName: typeName,
+              defaultCapacity: capacity,
+            );
       }
     } catch (e) {
       if (!mounted) return;
@@ -193,7 +199,10 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
           ? existing!.displayName
           : 'T$nextNo',
     );
-    final seats = TextEditingController(text: '${existing?.capacity ?? 2}');
+    final seats = TextEditingController(
+      text:
+          '${existing?.capacity ?? (types.isNotEmpty ? types.first.defaultCapacity : 2)}',
+    );
     DiningArea? area;
     if (existing?.areaId != null) {
       for (final a in areas) {
@@ -204,11 +213,19 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
       }
     }
     area ??= areas.isNotEmpty ? areas.first : null;
-    TableType? type = types.isNotEmpty ? types.first : null;
-    if (existing != null && types.isNotEmpty) {
+    TableType? type;
+    if (existing?.tableTypeId != null) {
       for (final t in types) {
-        final seatsHint = seatsFromTypeName(t.tableTypeName);
-        if (seatsHint != null && seatsHint == '${existing.capacity}') {
+        if (t.tableTypeId == existing!.tableTypeId) {
+          type = t;
+          break;
+        }
+      }
+    }
+    type ??= types.isNotEmpty ? types.first : null;
+    if (existing != null && type == null && types.isNotEmpty) {
+      for (final t in types) {
+        if (t.defaultCapacity == existing.capacity) {
           type = t;
           break;
         }
@@ -249,17 +266,12 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
               value: type,
               items: types,
               hint: 'Table Type',
-              itemLabel: (t) {
-                final s = seatsFromTypeName(t.tableTypeName);
-                return s == null
-                    ? t.tableTypeName
-                    : '${t.tableTypeName} ($s seats)';
-              },
+              itemLabel: (t) =>
+                  '${t.tableTypeName} (${t.defaultCapacity} seats)',
               onChanged: (v) {
                 setLocal(() {
                   type = v;
-                  final s = seatsFromTypeName(v?.tableTypeName ?? '');
-                  if (s != null) seats.text = s;
+                  if (v != null) seats.text = '${v.defaultCapacity}';
                 });
               },
             ),
@@ -293,6 +305,19 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
     name.dispose();
     seats.dispose();
     if (ok != true || tableNo.isEmpty) return;
+    if (!mounted) return;
+    if (area == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Select area')));
+      return;
+    }
+    if (type == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Select table type')));
+      return;
+    }
 
     setState(() => busy = true);
     try {
@@ -306,6 +331,7 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
           displayName: display,
           capacity: capacity,
           areaId: area?.areaId,
+          tableTypeId: type?.tableTypeId,
         );
       } else {
         await repo.createPosTable(
@@ -314,6 +340,7 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
           displayName: display,
           capacity: capacity,
           areaId: area?.areaId,
+          tableTypeId: type?.tableTypeId,
         );
       }
       if (!mounted) return;
@@ -351,8 +378,7 @@ class TableMasterPageState extends ConsumerState<TableMasterPage> {
   }
 
   String typeSubtitle(TableType type) {
-    final seats = seatsFromTypeName(type.tableTypeName);
-    return seats == null ? 'Seating type' : '$seats seats default';
+    return '${type.defaultCapacity} seats default';
   }
 
   String tableSubtitle(PosTable table, Map<int, String> areas) {

@@ -36,6 +36,14 @@ class AppColors {
   static const Color danger = red;
   static const Color error = red;
 
+  /* Dine-in table floor status fills (match Android POS). */
+  static const Color tableAvailable = Color(0xFF2E7D32);
+  static const Color tableRunning = Color(0xFF1565C0);
+  static const Color tableBillRequested = Color(0xFFEF6C00);
+  static const Color tablePayment = Color(0xFFC62828);
+  static const Color tableReserved = Color(0xFF6A1B9A);
+  static const Color tableBlocked = Color(0xFF616161);
+
   static const Color secondary = orange;
   static const Color secondaryLight = orangeLight;
   static const Color background = surface;

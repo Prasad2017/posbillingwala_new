@@ -4,12 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Fragment.AddProduct">
+    android:background="@color/colorBackground"
+    tools:context=".Fragment.Inventory">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="56dp"
         android:layout_alignParentTop="true">
 
         <RelativeLayout
@@ -18,20 +19,22 @@
 
             <ImageView
                 android:id="@+id/backToSetting"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_alignParentStart="true"
-                android:layout_centerInParent="true"
-                android:layout_gravity="center"
-                android:layout_marginStart="15dp"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="12dp"
+                android:padding="8dp"
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginStart="10dp"
+                android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@+id/addInventory"
                 android:layout_toEndOf="@+id/backToSetting"
                 android:orientation="vertical">
 
@@ -44,7 +47,7 @@
                     android:maxLines="1"
                     android:text="@string/ui_inventory"
                     android:textColor="@color/white"
-                    android:textSize="16sp" />
+                    android:textSize="@dimen/text_title" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/toolbarSubtitle"
@@ -53,31 +56,30 @@
                     android:ellipsize="end"
                     android:fontFamily="@font/poppinsregular"
                     android:maxLines="1"
+                    android:text="@string/ui_stock_manage_hint"
                     android:textColor="#CCFFFFFF"
-                    android:textSize="11sp"
-                    android:visibility="gone" />
+                    android:textSize="12sp"
+                    android:visibility="visible" />
 
             </LinearLayout>
-
-
 
             <TextView
                 android:id="@+id/addInventory"
                 android:layout_width="wrap_content"
-                android:layout_height="35dp"
+                android:layout_height="40dp"
                 android:layout_alignParentEnd="true"
-                android:layout_centerInParent="true"
-                android:layout_marginEnd="15dp"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="12dp"
                 android:background="@drawable/button_rounded_border"
                 android:backgroundTint="@color/white"
-                android:fontFamily="@font/poppinsregular"
+                android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
                 android:text="@string/ui_add_inventory"
-                android:textColor="@color/black"
-                android:textSize="15dp" />
-</RelativeLayout>
+                android:textColor="@color/colorPrimary"
+                android:textSize="14sp" />
+        </RelativeLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -87,105 +89,17 @@
         android:layout_height="match_parent"
         android:layout_below="@+id/appBarLayout"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
 
-        <com.pos_billingwala.Extra.PosCardView
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-
-            app:cardCornerRadius="12dp"
-
-
->
-
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fillViewport="true"
-                android:overScrollMode="ifContentScrolls"
-                android:scrollbars="horizontal">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:minWidth="600dp"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="12dp"
-                        android:paddingTop="10dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="10dp">
-
-                        <TextView
-                            android:layout_width="48dp"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:maxLines="1"
-                            android:text="@string/ui_sr_no_2"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="200dp"
-                            android:layout_height="wrap_content"
-                            android:maxLines="1"
-                            android:text="@string/ui_product_2"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="88dp"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:maxLines="1"
-                            android:text="@string/ui_total_qty"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="110dp"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:maxLines="1"
-                            android:text="@string/ui_after_sale_qty"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="80dp"
-                            android:layout_height="wrap_content"
-                            android:gravity="end"
-                            android:maxLines="1"
-                            android:text="@string/ui_sale_qty"
-                            android:textColor="@color/colorTextSecondary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="@color/colorBorder" />
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recyclerView"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:clipToPadding="false"
-                        android:nestedScrollingEnabled="true"
-                        android:overScrollMode="never" />
-                </LinearLayout>
-            </HorizontalScrollView>
-        </com.pos_billingwala.Extra.PosCardView>
+            android:clipToPadding="false"
+            android:nestedScrollingEnabled="true"
+            android:overScrollMode="never"
+            android:paddingBottom="8dp" />
     </LinearLayout>
 
     <include

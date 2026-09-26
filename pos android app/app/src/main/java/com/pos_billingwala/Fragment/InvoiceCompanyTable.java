@@ -51,7 +51,7 @@ public class InvoiceCompanyTable extends Fragment implements View.OnClickListene
     static TableAdapter tableAdapter;
     private static InvoiceCompanyTable activeInstance;
     View view;
-    PopupWindow mypopupWindow;
+    com.google.android.material.bottomsheet.BottomSheetDialog mypopupWindow;
     FragmentInvoiceCompanyTableBinding binding;
     private String selectedAreaId = null;
     private List<DiningAreaResponse> diningAreas = new ArrayList<>();

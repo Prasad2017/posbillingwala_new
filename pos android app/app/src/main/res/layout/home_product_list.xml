@@ -5,91 +5,136 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="5dp"
-    app:cardCornerRadius="@dimen/radius_md"
-
->
+    app:cardCornerRadius="@dimen/radius_md">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:minHeight="64dp"
-        android:orientation="horizontal"
-        android:paddingStart="10dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="8dp"
-        android:paddingBottom="8dp">
-
-        <ImageView
-            android:id="@+id/productIcon"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:contentDescription="@null"
-            android:visibility="gone" />
+        android:orientation="vertical"
+        android:paddingStart="12dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="10dp">
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/productName"
-                android:layout_width="match_parent"
+            <ImageView
+                android:id="@+id/productIcon"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/bg_product_thumb"
+                android:clipToOutline="true"
+                android:contentDescription="@null"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:fontFamily="@font/poppinsmedium"
-                android:hyphenationFrequency="none"
-                android:lineSpacingExtra="1dp"
-                android:maxLines="2"
-                android:textColor="@color/colorTextPrimary"
-                android:textSize="14sp" />
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/productPriceUnit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:fontFamily="@font/poppinsregular"
-                android:singleLine="true"
-                android:textColor="@color/colorTextSecondary"
-                android:textSize="12sp" />
+                <TextView
+                    android:id="@+id/productName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:hyphenationFrequency="none"
+                    android:includeFontPadding="false"
+                    android:lineSpacingExtra="1dp"
+                    android:maxLines="2"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="@dimen/text_billing_product" />
 
+                <TextView
+                    android:id="@+id/productPriceUnit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="@font/poppinsregular"
+                    android:includeFontPadding="false"
+                    android:singleLine="true"
+                    android:textColor="@color/colorTextSecondary"
+                    android:textSize="@dimen/text_billing_price" />
+            </LinearLayout>
         </LinearLayout>
 
+        <!-- Empty: full-width Add ; In cart: circular − qty + -->
         <FrameLayout
-            android:layout_width="36dp"
-            android:layout_height="36dp">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
 
             <TextView
                 android:id="@+id/productAdd"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:background="@drawable/bg_billing_add_btn"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_billing_add_wide_btn"
                 android:clickable="true"
                 android:focusable="true"
                 android:fontFamily="@font/poppinsmedium"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="+"
+                android:text="@string/ui_add"
                 android:textColor="@color/white"
-                android:textSize="20sp" />
+                android:textSize="14sp" />
 
-            <TextView
-                android:id="@+id/productQuantity"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:background="@drawable/bg_billing_add_btn"
-                android:fontFamily="@font/poppinsmedium"
+            <LinearLayout
+                android:id="@+id/qtyControls"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
                 android:gravity="center"
-                android:includeFontPadding="false"
-                android:textColor="@color/white"
-                android:textSize="13sp"
-                android:visibility="gone" />
+                android:orientation="horizontal"
+                android:visibility="gone">
 
+                <TextView
+                    android:id="@+id/productRemove"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_cart_qty_btn"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:text="−"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="22sp" />
+
+                <TextView
+                    android:id="@+id/productQuantity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp"
+                    android:fontFamily="@font/poppinsbold"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:minWidth="36dp"
+                    android:textColor="@color/kpiBlue"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/productAddMore"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_billing_add_btn"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:text="+"
+                    android:textColor="@color/white"
+                    android:textSize="22sp" />
+            </LinearLayout>
         </FrameLayout>
-
     </LinearLayout>
 
 </com.pos_billingwala.Extra.PosCardView>

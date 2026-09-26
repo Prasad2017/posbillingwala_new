@@ -383,7 +383,7 @@
                     android:gravity="center"
                     android:includeFontPadding="false"
                     android:textColor="@color/white"
-                    android:textSize="18sp" />
+                    android:textSize="@dimen/text_billing_total" />
 
                 <TextView
                     android:id="@+id/kotButton"

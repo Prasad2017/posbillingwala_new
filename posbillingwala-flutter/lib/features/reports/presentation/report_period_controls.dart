@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/widgets/app_bottom_sheet.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -175,80 +176,35 @@ const List<ButtonSegment<ReportPeriodKind>> kReportPeriodSegments = [
   ButtonSegment(value: ReportPeriodKind.year, label: Text('Year')),
 ];
 
-/* Blue period filter menu used across refreshed report screens. */
+/* Period filter menu used across refreshed report screens (bottom sheet). */
 Future<void> showReportPeriodFilterMenu(
   BuildContext context,
   WidgetRef ref, {
-  List<PopupMenuEntry<String>> extraItems = const [],
+  List<AppSheetAction> extraActions = const [],
   Future<void> Function(String value)? onExtra,
 }) async {
-  final selected = await showMenu<String>(
+  final strings = AppStrings.of(ref);
+  final selected = await showAppActionSheet(
     context: context,
-    position: const RelativeRect.fromLTRB(1000, 80, 16, 0),
-    color: AppColors.primary,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-    items: [
-      PopupMenuItem(
+    title: 'Filter',
+    icon: Icons.filter_alt_outlined,
+    actions: [
+      AppSheetAction(
         value: 'day',
-        child: Row(
-          children: [
-            const Icon(
-              Icons.calendar_today_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            const SizedBox(width: 10),
-            Text(
-              AppStrings.of(ref).dayWise,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+        label: strings.dayWise,
+        icon: Icons.calendar_today_rounded,
       ),
-      PopupMenuItem(
+      AppSheetAction(
         value: 'month',
-        child: Row(
-          children: [
-            const Icon(
-              Icons.calendar_view_month_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            const SizedBox(width: 10),
-            Text(
-              AppStrings.of(ref).monthWise,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+        label: strings.monthWise,
+        icon: Icons.calendar_view_month_rounded,
       ),
-      PopupMenuItem(
+      AppSheetAction(
         value: 'year',
-        child: Row(
-          children: [
-            const Icon(
-              Icons.calendar_month_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            const SizedBox(width: 10),
-            Text(
-              AppStrings.of(ref).yearWise,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+        label: strings.yearWise,
+        icon: Icons.calendar_month_rounded,
       ),
-      ...extraItems,
+      ...extraActions,
     ],
   );
   if (!context.mounted || selected == null) return;

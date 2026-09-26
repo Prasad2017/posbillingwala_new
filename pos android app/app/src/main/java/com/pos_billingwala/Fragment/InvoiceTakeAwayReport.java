@@ -122,7 +122,7 @@ public class InvoiceTakeAwayReport extends Fragment implements View.OnClickListe
 
         LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = inflater.inflate(R.layout.sale_wise_dialog, null);
-        PopupWindow mypopupWindow = PopupUi.create(activity, view);
+        com.google.android.material.bottomsheet.BottomSheetDialog mypopupWindow = PopupUi.create(activity, view);
 
         LinearLayout dayWiseLayout = view.findViewById(R.id.dayWiseLayout);
         LinearLayout monthWiseLayout = view.findViewById(R.id.monthWiseLayout);

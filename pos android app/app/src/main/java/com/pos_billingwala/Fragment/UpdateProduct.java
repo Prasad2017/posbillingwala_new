@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 
 import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.ProductImageSectionHelper;
 import com.pos_billingwala.Extra.ProductPortionSectionHelper;
 import com.pos_billingwala.Model.ProductCategoryResponse;
 import com.pos_billingwala.Model.ProductResponse;
@@ -39,6 +40,7 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
     POSBillingWalaDatabase posBillingWalaDatabase;
     FragmentUpdateProductBinding binding;
     ProductPortionSectionHelper portionSectionHelper;
+    ProductImageSectionHelper imageSectionHelper;
 
 
     @Override
@@ -59,6 +61,7 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
         portionSectionHelper.setOnPortionMasterLinkClick(this::openPortionMaster);
         portionSectionHelper.setOnPortionsChanged(this::syncProductCostVisibility);
         portionSectionHelper.loadExistingForProduct(productId);
+        imageSectionHelper = new ProductImageSectionHelper(this, view);
 
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -148,7 +151,8 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
         String openPrice = openPriceOn ? "on" : "off";
 
         posBillingWalaDatabase.updateProduct(MainActivity.userId, productId, categoryId, categoryName, binding.productFormBody.productCode.getText().toString(), binding.productFormBody.productName.getText().toString(), productPrice,
-                unitName, binding.productFormBody.productCGST.getText().toString(), binding.productFormBody.productSGST.getText().toString(), 0, subcategoryId, openPrice);
+                unitName, binding.productFormBody.productCGST.getText().toString(), binding.productFormBody.productSGST.getText().toString(), 0, subcategoryId, openPrice,
+                imageSectionHelper != null ? imageSectionHelper.getProductImage() : null);
 
         portionSectionHelper.savePortionsForProduct(productId);
 
@@ -211,6 +215,9 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
             binding.productFormBody.productSGST.setText(productResponse.getProductSGST());
             binding.productFormBody.productCode.setText(productResponse.getProductCode());
             binding.productFormBody.openPriceSwitch.setChecked(productResponse.isOpenPrice());
+            if (imageSectionHelper != null) {
+                imageSectionHelper.setProductImage(productResponse.getProductImage());
+            }
 
             unitNameList = activity.getResources().getStringArray(R.array.product_unit);
             binding.productFormBody.unitDropdown.setItems(unitNameList);
@@ -286,5 +293,13 @@ public class UpdateProduct extends Fragment implements View.OnClickListener {
         }
         binding.productFormBody.subcategoryDropdown.setSelectedIndex(selection);
         subcategoryId = subcategoryIdList[selection];
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (imageSectionHelper != null) {
+            imageSectionHelper.handleActivityResult(requestCode, resultCode, data);
+        }
     }
 }

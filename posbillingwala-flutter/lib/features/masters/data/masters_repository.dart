@@ -377,6 +377,7 @@ class MastersRepository {
                 ),
                 capacity: Value(e.capacity),
                 areaId: Value(e.areaId),
+                tableTypeId: Value(e.tableTypeId),
                 tableActive: Value(e.tableActive),
                 sortOrder: Value(e.sortOrder),
                 statusOverride: Value(e.statusOverride),
@@ -418,6 +419,7 @@ class MastersRepository {
               (e) => TableTypesCompanion.insert(
                 tableTypeId: Value(e.tableTypeId),
                 tableTypeName: Value(e.tableTypeName),
+                defaultCapacity: Value(e.defaultCapacity),
                 tableTypeSortOrder: Value(e.tableTypeSortOrder),
                 tableTypeActive: Value(e.tableTypeActive),
                 tableTypeNetworkStatus: Value(e.tableTypeNetworkStatus),
@@ -760,11 +762,13 @@ class MastersRepository {
   Future<int> createTableType({
     required String userId,
     required String tableTypeName,
+    int defaultCapacity = 4,
     bool uploadNow = true,
   }) async {
     await _requireOnlineIfWeb();
     final id = await db.insertLocalTableType(
       tableTypeName: tableTypeName.trim(),
+      defaultCapacity: defaultCapacity,
     );
     await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
@@ -876,6 +880,7 @@ class MastersRepository {
     required String displayName,
     int capacity = 4,
     int? areaId,
+    int? tableTypeId,
     bool uploadNow = true,
   }) async {
     await _requireOnlineIfWeb();
@@ -884,6 +889,7 @@ class MastersRepository {
       displayName: displayName.trim(),
       capacity: capacity,
       areaId: areaId,
+      tableTypeId: tableTypeId,
     );
     await _pushPendingToApi(userId, uploadNow: uploadNow);
     return id;
@@ -896,6 +902,7 @@ class MastersRepository {
     required String displayName,
     required int capacity,
     int? areaId,
+    int? tableTypeId,
     bool uploadNow = true,
   }) async {
     await _requireOnlineIfWeb();
@@ -905,6 +912,7 @@ class MastersRepository {
       displayName: displayName.trim(),
       capacity: capacity,
       areaId: areaId,
+      tableTypeId: tableTypeId,
     );
     await _pushPendingToApi(userId, uploadNow: uploadNow);
   }
