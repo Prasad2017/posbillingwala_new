@@ -358,6 +358,14 @@ class SettingsHubPage extends ConsumerWidget {
     final storeItems = <SettingsItem>[
       if (perms.allows('settings.view'))
         SettingsItem(
+          icon: Icons.category_rounded,
+          color: AppColors.primary,
+          title: 'Business Type',
+          subtitle: 'Retail, Restaurant, Hotel, Clothing…',
+          onTap: () => context.push('/settings/business-type'),
+        ),
+      if (perms.allows('settings.view'))
+        SettingsItem(
           icon: Icons.storefront_rounded,
           color: AppColors.orange,
           title: strings.shopDetails,
@@ -417,6 +425,38 @@ class SettingsHubPage extends ConsumerWidget {
           title: strings.paymentDisplayTitle,
           subtitle: strings.paymentDisplaySubtitle,
           onTap: () => context.push('/settings/payment-display'),
+        ),
+      if (perms.allows('settings.view'))
+        SettingsItem(
+          icon: Icons.percent_rounded,
+          color: AppColors.orange,
+          title: 'Max Discount %',
+          subtitle: 'Cap staff discounts without max_discount permission',
+          onTap: () => context.push('/settings/max-discount'),
+        ),
+      if (perms.allows('approval.view'))
+        SettingsItem(
+          icon: Icons.fact_check_rounded,
+          color: const Color(0xFF00897B),
+          title: 'Approvals',
+          subtitle: 'Purchase / discount / transfer queue',
+          onTap: () => context.push('/approvals'),
+        ),
+      if (perms.allows('offer.view'))
+        SettingsItem(
+          icon: Icons.local_offer_rounded,
+          color: const Color(0xFFE91E63),
+          title: 'Offers & Coupons',
+          subtitle: 'Campaigns and coupon codes',
+          onTap: () => context.push('/offers'),
+        ),
+      if (perms.allows('audit.view') || perms.allows('report.view'))
+        SettingsItem(
+          icon: Icons.history_rounded,
+          color: AppColors.navy,
+          title: 'Audit Log',
+          subtitle: 'Who changed what and when',
+          onTap: () => context.push('/audit-log'),
         ),
       if (perms.allows('inventory.view'))
         SettingsItem(

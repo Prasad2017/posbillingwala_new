@@ -26,6 +26,8 @@ class PaymentModeChip extends StatelessWidget {
       PaymentMode.cash => 'CASH',
       PaymentMode.upi => 'UPI',
       PaymentMode.cashPlusUpi => 'SPLIT',
+      PaymentMode.credit => 'CREDIT',
+      PaymentMode.wallet => 'WALLET',
     };
 
     return Material(
@@ -167,18 +169,19 @@ class PaymentModeSheetState extends ConsumerState<PaymentModeSheet> {
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
             ),
             const SizedBox(height: 16),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                for (final mode in PaymentMode.values) ...[
-                  Expanded(
+                for (final mode in PaymentMode.values)
+                  SizedBox(
+                    width: (MediaQuery.sizeOf(context).width - 52) / 3,
                     child: PaymentModeChip(
                       mode: mode,
                       selected: paymentPageMode == mode,
                       onTap: () => paymentPageSelectMode(mode),
                     ),
                   ),
-                  if (mode != PaymentMode.values.last) const SizedBox(width: 8),
-                ],
               ],
             ),
             if (paymentPageMode == PaymentMode.cashPlusUpi) ...[

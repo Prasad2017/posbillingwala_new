@@ -5,6 +5,10 @@ import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
+import 'package:pos_billingwala_v2/core/business_type/app_feature.dart';
+import 'package:pos_billingwala_v2/core/business_type/business_profile.dart';
+import 'package:pos_billingwala_v2/core/business_type/business_type_providers.dart';
+import 'package:pos_billingwala_v2/core/business_type/feature_gate.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
@@ -23,6 +27,7 @@ class WebNavDestination {
     this.permission,
     this.aliases = const [],
     this.licenceAllows,
+    this.feature,
   });
 
   final String label;
@@ -31,6 +36,7 @@ class WebNavDestination {
   final String? permission;
   final List<String> aliases;
   final bool Function(UserSession session)? licenceAllows;
+  final AppFeature? feature;
 
   bool matches(String location) {
     if (route == '/') return location == '/';
@@ -40,8 +46,32 @@ class WebNavDestination {
     }
     return false;
   }
+
+  factory WebNavDestination.fromBusiness(BusinessNavItem item) {
+    return WebNavDestination(
+      label: item.label,
+      icon: item.icon,
+      route: item.route,
+      permission: item.permission,
+      aliases: item.aliases,
+      feature: item.feature,
+      licenceAllows: item.feature == null
+          ? null
+          : (session) => FeatureGate.allowBillingMode(
+              session,
+              feature: item.feature!,
+            ),
+    );
+  }
 }
 
+List<WebNavDestination> webNavForProfile(BusinessProfile profile) {
+  return [
+    for (final item in profile.navItems) WebNavDestination.fromBusiness(item),
+  ];
+}
+
+/* Legacy static list kept for reference / tests. Prefer [webNavForProfile]. */
 const webNavDestinations = <WebNavDestination>[
   WebNavDestination(label: 'Home', icon: Icons.home_rounded, route: '/'),
   WebNavDestination(
@@ -50,6 +80,7 @@ const webNavDestinations = <WebNavDestination>[
     route: '/pos',
     permission: 'billing.create',
     licenceAllows: _licenceFastBilling,
+    feature: AppFeature.quickBilling,
   ),
   WebNavDestination(
     label: 'Tables',
@@ -57,6 +88,7 @@ const webNavDestinations = <WebNavDestination>[
     route: '/tables',
     permission: 'table.view',
     licenceAllows: _licenceDineIn,
+    feature: AppFeature.tables,
   ),
   WebNavDestination(
     label: 'Takeaway',
@@ -64,6 +96,7 @@ const webNavDestinations = <WebNavDestination>[
     route: '/takeaway',
     permission: 'takeaway.view',
     licenceAllows: _licenceTakeAway,
+    feature: AppFeature.takeaway,
   ),
   WebNavDestination(
     label: 'Mess',
@@ -71,6 +104,7 @@ const webNavDestinations = <WebNavDestination>[
     route: '/mess',
     permission: 'mess.view',
     licenceAllows: _licenceMess,
+    feature: AppFeature.mess,
   ),
   WebNavDestination(
     label: 'Masters',
@@ -84,12 +118,14 @@ const webNavDestinations = <WebNavDestination>[
     route: '/inventory',
     permission: 'inventory.view',
     aliases: ['/expenses'],
+    feature: AppFeature.inventory,
   ),
   WebNavDestination(
     label: 'Reports',
     icon: Icons.bar_chart_rounded,
     route: '/reports',
     permission: 'report.view',
+    feature: AppFeature.reports,
   ),
   WebNavDestination(
     label: 'Settings',
@@ -222,6 +258,7 @@ class WebSideNav extends ConsumerWidget {
     final loc = location ?? GoRouterState.of(context).uri.path;
     final session = ref.watch(authControllerProvider).session;
     final perms = ref.watch(permissionControllerProvider);
+    final profile = ref.watch(businessProfileProvider);
     final unread = ref.watch(unreadNotificationCountProvider);
     final online = ref
         .watch(deviceOnlineProvider)
@@ -236,12 +273,25 @@ class WebSideNav extends ConsumerWidget {
         ? perms.staff!.roleLabel.trim()
         : 'Licence';
 
-    final items = webNavDestinations.where((item) {
+    final items = webNavForProfile(profile).where((item) {
+      if (item.feature != null && !profile.has(item.feature!)) {
+        return false;
+      }
       if (item.permission != null && !perms.allows(item.permission!)) {
         return false;
       }
       if (session != null &&
           item.licenceAllows != null &&
+          item.feature != null &&
+          {
+            AppFeature.quickBilling,
+            AppFeature.barcodeBilling,
+            AppFeature.dineIn,
+            AppFeature.tables,
+            AppFeature.takeaway,
+            AppFeature.parcel,
+            AppFeature.mess,
+          }.contains(item.feature) &&
           !item.licenceAllows!(session)) {
         return false;
       }

@@ -2672,15 +2672,22 @@ WHERE $where
     return (row.read(maxExp) ?? 0) + 1;
   }
 
-  /* Creates a delta KOT for unprinted cart qty on a dine-in table. */
+  /* Creates a delta KOT for unprinted cart qty on a dine-in table.
+   * [onlyProductIds] limits which cart lines are included (multi-kitchen). */
   Future<KotTicket> createKotFromUnprintedCart({
     required int sessionId,
     required String tableNumber,
     String cartScope = '',
     String kitchenName = 'Main Kitchen',
+    Set<int>? onlyProductIds,
   }) async {
     final scope = cartScope.isEmpty ? tableNumber : cartScope;
-    final unprinted = await getUnprintedCartItems(cartScope: scope);
+    var unprinted = await getUnprintedCartItems(cartScope: scope);
+    if (onlyProductIds != null && onlyProductIds.isNotEmpty) {
+      unprinted = unprinted
+          .where((e) => onlyProductIds.contains(e.productId))
+          .toList();
+    }
     if (unprinted.isEmpty) {
       throw StateError('No new items to send to kitchen');
     }

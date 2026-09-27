@@ -7,10 +7,15 @@ class BillingSession {
     required this.title,
     required this.billingRoute,
     required this.paymentRoute,
+    this.customerId,
     this.customerName,
     this.customerPhone,
     this.customerEmail,
     this.customerAddress,
+    this.loyaltyPoints = 0,
+    this.walletBalance = 0,
+    this.creditLimit = 0,
+    this.offerCode,
     this.invoicePrefix = 'PB',
     this.cartScope = '',
     this.tableNumber,
@@ -21,10 +26,15 @@ class BillingSession {
   final String title;
   final String billingRoute;
   final String paymentRoute;
+  final String? customerId;
   final String? customerName;
   final String? customerPhone;
   final String? customerEmail;
   final String? customerAddress;
+  final double loyaltyPoints;
+  final double walletBalance;
+  final double creditLimit;
+  final String? offerCode;
   final String invoicePrefix;
   final String cartScope;
   final String? tableNumber;
@@ -42,22 +52,29 @@ class BillingSession {
     String? title,
     String? billingRoute,
     String? paymentRoute,
+    String? customerId,
     String? customerName,
     String? customerPhone,
     String? customerEmail,
     String? customerAddress,
+    double? loyaltyPoints,
+    double? walletBalance,
+    double? creditLimit,
+    String? offerCode,
     String? invoicePrefix,
     String? cartScope,
     String? tableNumber,
     int? diningSessionId,
     bool clearCustomer = false,
     bool clearTable = false,
+    bool clearOffer = false,
   }) {
     return BillingSession(
       invoiceType: invoiceType ?? this.invoiceType,
       title: title ?? this.title,
       billingRoute: billingRoute ?? this.billingRoute,
       paymentRoute: paymentRoute ?? this.paymentRoute,
+      customerId: clearCustomer ? null : (customerId ?? this.customerId),
       customerName: clearCustomer ? null : (customerName ?? this.customerName),
       customerPhone: clearCustomer
           ? null
@@ -68,6 +85,10 @@ class BillingSession {
       customerAddress: clearCustomer
           ? null
           : (customerAddress ?? this.customerAddress),
+      loyaltyPoints: clearCustomer ? 0 : (loyaltyPoints ?? this.loyaltyPoints),
+      walletBalance: clearCustomer ? 0 : (walletBalance ?? this.walletBalance),
+      creditLimit: clearCustomer ? 0 : (creditLimit ?? this.creditLimit),
+      offerCode: clearOffer ? null : (offerCode ?? this.offerCode),
       invoicePrefix: invoicePrefix ?? this.invoicePrefix,
       cartScope: cartScope ?? this.cartScope,
       tableNumber: clearTable ? null : (tableNumber ?? this.tableNumber),
@@ -119,27 +140,31 @@ class BillingSessionController extends Notifier<BillingSession> {
   }
 
   void updateCustomer({
+    String? id,
     String? name,
     String? phone,
     String? email,
     String? address,
+    double? loyaltyPoints,
+    double? walletBalance,
+    double? creditLimit,
   }) {
-    state = BillingSession(
-      invoiceType: state.invoiceType,
-      title: state.title,
-      billingRoute: state.billingRoute,
-      paymentRoute: state.paymentRoute,
+    state = state.copyWith(
+      customerId: id ?? state.customerId,
       customerName: name != null ? trimOrNull(name) : state.customerName,
       customerPhone: phone != null ? trimOrNull(phone) : state.customerPhone,
       customerEmail: email != null ? trimOrNull(email) : state.customerEmail,
-      customerAddress: address != null
-          ? trimOrNull(address)
-          : state.customerAddress,
-      invoicePrefix: state.invoicePrefix,
-      cartScope: state.cartScope,
-      tableNumber: state.tableNumber,
-      diningSessionId: state.diningSessionId,
+      customerAddress:
+          address != null ? trimOrNull(address) : state.customerAddress,
+      loyaltyPoints: loyaltyPoints ?? state.loyaltyPoints,
+      walletBalance: walletBalance ?? state.walletBalance,
+      creditLimit: creditLimit ?? state.creditLimit,
     );
+  }
+
+  void setOfferCode(String? code) {
+    final c = trimOrNull(code);
+    state = state.copyWith(offerCode: c, clearOffer: c == null);
   }
 
   String? trimOrNull(String? value) {

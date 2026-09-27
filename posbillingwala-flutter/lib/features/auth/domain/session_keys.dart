@@ -32,4 +32,5 @@ class SessionKeys {
   static const maxDevices = 'maxDevices';
   static const maxPrinters = 'maxPrinters';
   static const permissionVersion = 'permissionVersion';
+  static const businessType = 'businessType';
 }

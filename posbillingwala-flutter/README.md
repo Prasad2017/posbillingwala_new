@@ -1,7 +1,12 @@
 # POS Billingwala Flutter (`pos_billingwala_v2`)
 
-Offline-first POS for restaurants and messes — **Android**, **iOS**, and **Web**.  
+Offline-first POS for **all business types** (Retail, Clothing, Supermarket,
+Restaurant, Hotel, Pharmacy, and more) — **Android**, **iOS**, and **Web**.  
 Version **2.0.1+76** · Dart SDK `^3.12.2`
+
+One codebase: select a business type and the dashboard, navigation, masters,
+terminology and modules adapt automatically. See
+[`docs/ARCHITECTURE_MULTI_BUSINESS.md`](docs/ARCHITECTURE_MULTI_BUSINESS.md).
 
 Local sales, catalog, tables, takeaway, and mess data live in **Drift (SQLite)** and sync to PHP APIs under `https://posbillingwala.com/androidApp/`.
 
@@ -18,8 +23,11 @@ Local sales, catalog, tables, takeaway, and mess data live in **Drift (SQLite)**
 | Session | SharedPreferences |
 | Print | Bluetooth / USB / network ESC-POS |
 | Push | Firebase Messaging + local notifications |
+| Business verticals | `lib/core/business_type/` feature registry |
 
 Feature code lives under `lib/features/*`. Shared code: `lib/core`, `lib/app`, `lib/language`.
+
+**Change vertical:** Settings → Business Type (`/settings/business-type`).
 
 ---
 

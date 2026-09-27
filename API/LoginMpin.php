@@ -46,6 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $response["status"] = "0";
                 $response["message"] = "licence key expired or user disable. Please contact our customer care or dealer";
             } elseif (pos_device_authorized($con, $check, $android_device_id)) {
+                    pos_schema_ensure($con);
                     $response["status"] = "1";
                     $response["message"] = "Login successfully.";
 
@@ -59,6 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $response["takeAway"] = $check["takeAway"];
                     $response["dineIn"] = $check["dineIn"];
                     $response["mess"] = $check["mess"];
+                    $response["businessType"] = isset($check["businessType"]) ? $check["businessType"] : "";
                     $response["licenceKey"] = $check["licenseKey"];
                     $response["mpin"] = $check["mpin"];
                     $response["licence_key_reg_date"] = $check["created_at"];

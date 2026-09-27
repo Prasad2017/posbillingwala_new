@@ -98,6 +98,24 @@ abstract final class ApiEndpoints {
   static const String insertExpenses = 'insertExpenses.php';
   static const String getExpensesList = 'getExpensesList.php';
 
+  /* Enterprise — purchase / CRM / hotel / variants */
+  static const String saveBusinessType = 'saveBusinessType.php';
+  static const String saveVendor = 'saveVendor.php';
+  static const String getVendorList = 'getVendorList.php';
+  static const String savePurchaseDocument = 'savePurchaseDocument.php';
+  static const String getPurchaseDocumentList = 'getPurchaseDocumentList.php';
+  static const String saveCustomer = 'saveCustomer.php';
+  static const String getCustomerList = 'getCustomerList.php';
+  static const String saveHotelRoom = 'saveHotelRoom.php';
+  static const String getHotelRoomList = 'getHotelRoomList.php';
+  static const String saveHotelBooking = 'saveHotelBooking.php';
+  static const String getHotelBookingList = 'getHotelBookingList.php';
+  static const String saveProductVariant = 'saveProductVariant.php';
+  static const String getProductVariantList = 'getProductVariantList.php';
+  static const String saveOpsRecord = 'saveOpsRecord.php';
+  static const String getOpsList = 'getOpsList.php';
+  static const String getAuditLogList = 'getAuditLogList.php';
+
   /* Mess */
   static const String getMessMemberList = 'getMessMemberList.php';
   static const String insertMessMember = 'insertMessMember.php';
@@ -193,6 +211,14 @@ abstract final class ApiResponseKeys {
   static const String invoiceComboItemResponse = 'invoiceComboItemResponse';
   static const String inventoryResponse = 'inventoryResponse';
   static const String expensesResponse = 'expensesResponse';
+  static const String vendorResponse = 'vendorResponse';
+  static const String purchaseResponse = 'purchaseResponse';
+  static const String customerResponse = 'customerResponse';
+  static const String hotelRoomResponse = 'hotelRoomResponse';
+  static const String hotelBookingResponse = 'hotelBookingResponse';
+  static const String variantResponse = 'variantResponse';
+  static const String opsResponse = 'opsResponse';
+  static const String auditResponse = 'auditResponse';
   static const String tickets = 'tickets';
   static const String status = 'status';
   static const String message = 'message';

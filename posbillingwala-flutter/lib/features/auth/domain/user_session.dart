@@ -30,6 +30,7 @@ class UserSession {
     this.maxDevices = 5,
     this.maxPrinters = 0,
     this.permissionVersion = '1',
+    this.businessType,
   });
 
   final String userId;
@@ -59,6 +60,8 @@ class UserSession {
   final int maxDevices;
   final int maxPrinters;
   final String permissionVersion;
+  /* Stable id from [BusinessType.id], e.g. restaurant / clothing_store. */
+  final String? businessType;
 
   String get displayName =>
       (shopName?.trim().isNotEmpty ?? false) ? shopName!.trim() : 'Billingwala';
@@ -105,6 +108,7 @@ class UserSession {
       maxDevices: int.tryParse(response.maxDevices ?? '') ?? 5,
       maxPrinters: int.tryParse(response.maxPrinters ?? '') ?? 0,
       permissionVersion: response.permissionVersion ?? '1',
+      businessType: response.businessType,
     );
   }
 
@@ -139,6 +143,7 @@ class UserSession {
       maxDevices: int.tryParse(map[SessionKeys.maxDevices] ?? '') ?? 5,
       maxPrinters: int.tryParse(map[SessionKeys.maxPrinters] ?? '') ?? 0,
       permissionVersion: map[SessionKeys.permissionVersion] ?? '1',
+      businessType: map[SessionKeys.businessType],
     );
   }
 
@@ -175,6 +180,7 @@ class UserSession {
       SessionKeys.maxDevices: '$maxDevices',
       SessionKeys.maxPrinters: '$maxPrinters',
       SessionKeys.permissionVersion: permissionVersion,
+      SessionKeys.businessType: businessType ?? '',
     };
   }
 
@@ -206,6 +212,7 @@ class UserSession {
     int? maxDevices,
     int? maxPrinters,
     String? permissionVersion,
+    String? businessType,
   }) {
     return UserSession(
       userId: userId ?? this.userId,
@@ -236,6 +243,7 @@ class UserSession {
       maxDevices: maxDevices ?? this.maxDevices,
       maxPrinters: maxPrinters ?? this.maxPrinters,
       permissionVersion: permissionVersion ?? this.permissionVersion,
+      businessType: businessType ?? this.businessType,
     );
   }
 }

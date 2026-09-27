@@ -280,6 +280,9 @@ if (!function_exists('pos_schema_ensure')) {
           PRIMARY KEY (`id`),
           KEY `idx_pos_audit_license` (`licenseId`, `createdAt`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        require_once __DIR__ . '/enterprise_schema.php';
+        enterprise_schema_ensure($con);
     }
 }
 

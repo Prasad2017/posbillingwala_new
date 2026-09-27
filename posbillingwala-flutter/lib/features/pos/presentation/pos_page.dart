@@ -22,6 +22,7 @@ import 'package:pos_billingwala_v2/features/print/domain/print_job_dispatcher.da
 import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
+import 'package:pos_billingwala_v2/features/enterprise_ops/presentation/gap_pages.dart';
 import 'package:pos_billingwala_v2/features/tables/presentation/table_ops.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -166,6 +167,43 @@ class PosPageState extends ConsumerState<PosPage> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Scan barcode',
+            icon: Icon(
+              Icons.qr_code_scanner_rounded,
+              color: isFastBilling ? AppColors.navy : Colors.white,
+            ),
+            onPressed: () => context.push('/pos/scan'),
+          ),
+          IconButton(
+            tooltip: 'Hold bill',
+            icon: Icon(
+              Icons.pause_circle_outline_rounded,
+              color: isFastBilling ? AppColors.navy : Colors.white,
+            ),
+            onPressed: () async {
+              try {
+                await holdCurrentCart(ref);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Bill held')),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('$e'.replaceFirst('Bad state: ', ''))),
+                );
+              }
+            },
+          ),
+          IconButton(
+            tooltip: 'Held bills',
+            icon: Icon(
+              Icons.history_rounded,
+              color: isFastBilling ? AppColors.navy : Colors.white,
+            ),
+            onPressed: () => context.push('/pos/held'),
+          ),
           if (!cartSummary.isEmpty)
             Padding(
               padding: const EdgeInsets.only(right: 4),
@@ -399,11 +437,24 @@ class CatalogPane extends ConsumerWidget {
               child: TextField(
                 controller: searchController,
                 autofocus: AppPlatform.useDesktopShell,
-                textInputAction: TextInputAction.search,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (raw) async {
+                  final code = raw.trim();
+                  if (code.isEmpty) return;
+                  final ok = await addProductByBarcode(ref, code);
+                  if (ok) {
+                    searchController.clear();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Added $code')),
+                      );
+                    }
+                  }
+                },
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
-                  hintText: 'search product by name, product code',
+                  hintText: 'Name / code / scan barcode + Enter',
                   hintStyle: TextStyle(
                     color: AppColors.textSecondary.withValues(alpha: 0.85),
                     fontSize: 14,
@@ -417,8 +468,16 @@ class CatalogPane extends ConsumerWidget {
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  suffixIcon: query.isNotEmpty
-                      ? IconButton(
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Scan',
+                        onPressed: () => context.push('/pos/scan'),
+                        icon: const Icon(Icons.qr_code_scanner_rounded),
+                      ),
+                      if (query.isNotEmpty)
+                        IconButton(
                           onPressed: searchController.clear,
                           icon: const AppSvg(
                             AppAssets.svgClose,
@@ -426,8 +485,9 @@ class CatalogPane extends ConsumerWidget {
                             height: 18,
                             color: AppColors.textSecondary,
                           ),
-                        )
-                      : null,
+                        ),
+                    ],
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(28),
                     borderSide: BorderSide(color: AppColors.border),

@@ -9,7 +9,11 @@ import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_date.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_mode.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
+import 'package:pos_billingwala_v2/features/enterprise_ops/domain/enterprise_runtime.dart';
+import 'package:pos_billingwala_v2/features/enterprise_ops/domain/ops_providers.dart';
+import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 import 'package:pos_billingwala_v2/features/staff/data/staff_store.dart';
+import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/staff_user.dart';
 
 class PaymentCheckoutState {
@@ -21,6 +25,10 @@ class PaymentCheckoutState {
     this.discountType = 'Amount',
     this.packingCharge = 0,
     this.packingChargeType = 'Amount',
+    this.loyaltyRedeem = 0,
+    this.offerCode = '',
+    this.offerLabel = '',
+    this.serialByProductId = const {},
     this.busy = false,
     this.errorMessage,
     this.result,
@@ -33,6 +41,10 @@ class PaymentCheckoutState {
   final String discountType;
   final double packingCharge;
   final String packingChargeType;
+  final double loyaltyRedeem;
+  final String offerCode;
+  final String offerLabel;
+  final Map<int, String> serialByProductId;
   final bool busy;
   final String? errorMessage;
   final SavedInvoiceResult? result;
@@ -60,7 +72,8 @@ class PaymentCheckoutState {
   double payableTotal({required double subtotal, required double taxTotal}) {
     final disc = discountValue(subtotal);
     final pack = packingValue(subtotal);
-    final raw = (subtotal + taxTotal + pack - disc)
+    final loyalty = loyaltyRedeem.clamp(0, double.infinity);
+    final raw = (subtotal + taxTotal + pack - disc - loyalty)
         .clamp(0, double.infinity)
         .toDouble();
     /* Match Android CreatePos / BluetoothPrint — bill total rounds up to ₹. */
@@ -75,6 +88,10 @@ class PaymentCheckoutState {
     String? discountType,
     double? packingCharge,
     String? packingChargeType,
+    double? loyaltyRedeem,
+    String? offerCode,
+    String? offerLabel,
+    Map<int, String>? serialByProductId,
     bool? busy,
     String? errorMessage,
     SavedInvoiceResult? result,
@@ -89,6 +106,10 @@ class PaymentCheckoutState {
       discountType: discountType ?? this.discountType,
       packingCharge: packingCharge ?? this.packingCharge,
       packingChargeType: packingChargeType ?? this.packingChargeType,
+      loyaltyRedeem: loyaltyRedeem ?? this.loyaltyRedeem,
+      offerCode: offerCode ?? this.offerCode,
+      offerLabel: offerLabel ?? this.offerLabel,
+      serialByProductId: serialByProductId ?? this.serialByProductId,
       busy: busy ?? this.busy,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       result: clearResult ? null : (result ?? this.result),
@@ -116,6 +137,14 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
           upiAmount: totalAmount,
           clearError: true,
         );
+      case PaymentMode.credit:
+      case PaymentMode.wallet:
+        state = state.copyWith(
+          mode: mode,
+          cashAmount: 0,
+          upiAmount: 0,
+          clearError: true,
+        );
       case PaymentMode.cashPlusUpi:
         state = state.copyWith(
           mode: mode,
@@ -124,6 +153,60 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
           clearError: true,
         );
     }
+  }
+
+  void setLoyaltyRedeem(double points) {
+    final session = ref.read(billingSessionProvider);
+    final maxPts = session.loyaltyPoints;
+    final next = points.clamp(0, maxPts).toDouble();
+    state = state.copyWith(
+      loyaltyRedeem: double.parse(next.toStringAsFixed(2)),
+      clearError: true,
+    );
+  }
+
+  Future<String?> applyOfferCode(String code, double subtotal) async {
+    final offer = await EnterpriseRuntime.findActiveOffer(ref, code);
+    if (offer == null) {
+      state = state.copyWith(
+        offerCode: '',
+        offerLabel: '',
+        errorMessage: 'Invalid or expired coupon',
+      );
+      return 'Invalid or expired coupon';
+    }
+    final cart = await ref.read(cartItemsProvider.future);
+    var cheapest = 0.0;
+    for (final line in cart) {
+      final linePrice = line.unitPrice;
+      if (cheapest <= 0 || linePrice < cheapest) cheapest = linePrice;
+    }
+    final amt = EnterpriseRuntime.offerDiscountAmount(
+      offer,
+      subtotal,
+      cartLineCount: cart.fold<int>(0, (s, e) => s + e.quantity.round()),
+      cheapestLine: cheapest,
+    );
+    setDiscount(amt, type: 'Amount', subtotal: subtotal);
+    final label = (offer['name'] ?? offer['title'] ?? code).toString();
+    state = state.copyWith(
+      offerCode: code.trim().toUpperCase(),
+      offerLabel: label,
+      clearError: true,
+    );
+    ref.read(billingSessionProvider.notifier).setOfferCode(code);
+    return null;
+  }
+
+  void clearOffer() {
+    state = state.copyWith(offerCode: '', offerLabel: '', discount: 0);
+    ref.read(billingSessionProvider.notifier).setOfferCode(null);
+  }
+
+  void setSerialForProduct(int productId, String serialNo) {
+    final next = Map<int, String>.from(state.serialByProductId)
+      ..[productId] = serialNo.trim();
+    state = state.copyWith(serialByProductId: next, clearError: true);
   }
 
   void setCashAmount(double value, double totalAmount) {
@@ -166,10 +249,19 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
     final nextType = type ?? state.discountType;
     final isPercent = nextType.toLowerCase().startsWith('p');
     var next = value < 0 ? 0.0 : value;
+    final perms = ref.read(permissionControllerProvider);
+    final cap = ref.read(maxDiscountPctProvider).asData?.value ?? 100.0;
     if (isPercent) {
       next = next.clamp(0, 100).toDouble();
+      if (!perms.allows('billing.max_discount') && next > cap) {
+        next = cap;
+      }
     } else if (subtotal != null) {
       next = next.clamp(0, subtotal).toDouble();
+      if (!perms.allows('billing.max_discount') && subtotal > 0) {
+        final maxAmt = subtotal * cap / 100;
+        if (next > maxAmt) next = maxAmt;
+      }
     }
     state = state.copyWith(
       discount: double.parse(next.toStringAsFixed(2)),
@@ -200,6 +292,79 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
         state = state.copyWith(
           busy: false,
           errorMessage: kOnlineRequiredMessage,
+        );
+        return null;
+      }
+
+      final billing = ref.read(billingSessionProvider);
+
+      /* Block sale when expired lots are linked to cart products. */
+      final cart = await ref.read(cartItemsProvider.future);
+      final productIds = cart.map((e) => e.productId).toSet();
+      final warnings = await EnterpriseRuntime.expiredLotWarnings(
+        ref,
+        productIds: productIds,
+      );
+      final expired = warnings.where((w) => w.startsWith('Expired')).toList();
+      if (expired.isNotEmpty) {
+        state = state.copyWith(
+          busy: false,
+          errorMessage: expired.first,
+        );
+        return null;
+      }
+
+      final serialErr = await EnterpriseRuntime.validateSerialsForSale(
+        ref,
+        productIds: productIds,
+        serialByProductId: state.serialByProductId,
+      );
+      if (serialErr != null) {
+        state = state.copyWith(busy: false, errorMessage: serialErr);
+        return null;
+      }
+
+      if (state.mode == PaymentMode.credit) {
+        if ((billing.customerId ?? '').isEmpty) {
+          state = state.copyWith(
+            busy: false,
+            errorMessage: 'Select a CRM customer for credit sale',
+          );
+          return null;
+        }
+        if (billing.creditLimit > 0 && totalAmount > billing.creditLimit) {
+          state = state.copyWith(
+            busy: false,
+            errorMessage:
+                'Credit limit ₹${billing.creditLimit.toStringAsFixed(0)} exceeded',
+          );
+          return null;
+        }
+      }
+
+      if (state.mode == PaymentMode.wallet) {
+        if ((billing.customerId ?? '').isEmpty) {
+          state = state.copyWith(
+            busy: false,
+            errorMessage: 'Select a CRM customer for wallet payment',
+          );
+          return null;
+        }
+        if (totalAmount > billing.walletBalance + 0.01) {
+          state = state.copyWith(
+            busy: false,
+            errorMessage:
+                'Wallet balance ₹${billing.walletBalance.toStringAsFixed(2)} insufficient',
+          );
+          return null;
+        }
+      }
+
+      if (state.loyaltyRedeem > 0 &&
+          state.loyaltyRedeem > billing.loyaltyPoints + 0.01) {
+        state = state.copyWith(
+          busy: false,
+          errorMessage: 'Not enough loyalty points',
         );
         return null;
       }
@@ -263,7 +428,7 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
             cartScope: session.cartScope,
             tableNumber: session.tableNumber,
             diningSessionId: session.diningSessionId,
-            discount: state.discount,
+            discount: state.discount + state.loyaltyRedeem,
             discountType: state.discountType,
             packingCharge: state.packingCharge,
             packingChargeType: state.packingChargeType,
@@ -272,6 +437,37 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
             createdByStaffName: staff?.name,
             billingDate: resolveBillingDateTimeFromRef(ref),
           );
+
+      /* Post-sale: loyalty earn/redeem, wallet debit, offer use count. */
+      final cid = session.customerId;
+      if (cid != null && cid.isNotEmpty) {
+        final earn = EnterpriseRuntime.earnPoints(totalAmount);
+        await EnterpriseRuntime.adjustLoyalty(
+          ref,
+          customerId: cid,
+          earn: earn,
+          redeem: state.loyaltyRedeem,
+        );
+        if (state.mode == PaymentMode.wallet) {
+          await EnterpriseRuntime.adjustWallet(
+            ref,
+            customerId: cid,
+            debit: totalAmount,
+          );
+        }
+      }
+      if (state.offerCode.isNotEmpty) {
+        final offer =
+            await EnterpriseRuntime.findActiveOffer(ref, state.offerCode);
+        if (offer != null) {
+          await EnterpriseRuntime.bumpOfferUse(ref, offer);
+        }
+      }
+      for (final sn in state.serialByProductId.values) {
+        if (sn.trim().isEmpty) continue;
+        await EnterpriseRuntime.markSerialSold(ref, serialNo: sn);
+      }
+
       state = state.copyWith(busy: false, result: result);
       return result;
     } catch (e) {

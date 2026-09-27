@@ -198,6 +198,7 @@ if ($coldLogin) {
     $response['takeAway'] = $check['takeAway'];
     $response['dineIn'] = $check['dineIn'];
     $response['mess'] = $check['mess'];
+    $response['businessType'] = isset($check['businessType']) ? $check['businessType'] : '';
     $response['licenceKey'] = $check['licenseKey'];
     $response['mpin'] = $check['mpin'];
     $response['licence_key_reg_date'] = $check['created_at'];

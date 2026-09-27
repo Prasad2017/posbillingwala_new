@@ -68,11 +68,21 @@ import 'package:pos_billingwala_v2/features/reports/presentation/table_list_repo
 import 'package:pos_billingwala_v2/features/payment_display/presentation/payment_display_settings_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/about_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/business_hours_page.dart';
+import 'package:pos_billingwala_v2/features/settings/presentation/business_type_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/change_pin_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/company_settings_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/settings_hub_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/settings_page.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/share_app_page.dart';
+import 'package:pos_billingwala_v2/features/hotel/presentation/hotel_pages.dart';
+import 'package:pos_billingwala_v2/features/purchase/presentation/purchase_pages.dart';
+import 'package:pos_billingwala_v2/features/retail/presentation/retail_module_pages.dart';
+import 'package:pos_billingwala_v2/features/enterprise_ops/presentation/ops_pages.dart';
+import 'package:pos_billingwala_v2/features/enterprise_ops/presentation/gap_pages.dart';
+import 'package:pos_billingwala_v2/features/crm/presentation/customers_page.dart';
+import 'package:pos_billingwala_v2/core/business_type/app_feature.dart';
+import 'package:pos_billingwala_v2/core/business_type/business_type_providers.dart';
+import 'package:pos_billingwala_v2/core/business_type/feature_gate.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
 import 'package:pos_billingwala_v2/features/staff/presentation/salary_page.dart';
 import 'package:pos_billingwala_v2/features/staff/presentation/staff_detail_page.dart';
@@ -192,6 +202,41 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/pos/payment',
             name: 'payment',
             builder: (context, state) => const PaymentPage(),
+          ),
+          GoRoute(
+            path: '/pos/scan',
+            name: 'pos-scan',
+            builder: (context, state) => const PosBarcodeScanPage(),
+          ),
+          GoRoute(
+            path: '/pos/held',
+            name: 'pos-held',
+            builder: (context, state) => const HeldInvoicesPage(),
+          ),
+          GoRoute(
+            path: '/hotel/night-audit',
+            name: 'hotel-night-audit',
+            builder: (context, state) => const NightAuditPage(),
+          ),
+          GoRoute(
+            path: '/pharmacy/schedule',
+            name: 'pharmacy-schedule',
+            builder: (context, state) => const PharmacySchedulePage(),
+          ),
+          GoRoute(
+            path: '/masters/modifiers',
+            name: 'masters-modifiers',
+            builder: (context, state) => const ModifiersPage(),
+          ),
+          GoRoute(
+            path: '/masters/kitchen-depts',
+            name: 'masters-kitchen-depts',
+            builder: (context, state) => const KitchenDepartmentsPage(),
+          ),
+          GoRoute(
+            path: '/reports/enterprise',
+            name: 'reports-enterprise',
+            builder: (context, state) => const EnterpriseReportsPage(),
           ),
           GoRoute(
             path: '/tables',
@@ -561,9 +606,152 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const SettingsHubPage(),
           ),
           GoRoute(
+            path: '/settings/business-type',
+            name: 'settings-business-type',
+            builder: (context, state) => const BusinessTypePage(),
+          ),
+          GoRoute(
             path: '/settings/company',
             name: 'settings-company',
             builder: (context, state) => const CompanySettingsPage(),
+          ),
+          GoRoute(
+            path: '/hotel/rooms',
+            name: 'hotel-rooms',
+            builder: (context, state) => const HotelRoomsPage(),
+          ),
+          GoRoute(
+            path: '/hotel/bookings',
+            name: 'hotel-bookings',
+            builder: (context, state) => const HotelBookingsPage(),
+          ),
+          GoRoute(
+            path: '/hotel/room-types',
+            name: 'hotel-room-types',
+            builder: (context, state) => const HotelRoomTypesPage(),
+          ),
+          GoRoute(
+            path: '/hotel/room-master',
+            name: 'hotel-room-master',
+            builder: (context, state) => const HotelRoomMasterPage(),
+          ),
+          GoRoute(
+            path: '/purchase',
+            name: 'purchase',
+            builder: (context, state) => const PurchaseHubPage(),
+          ),
+          GoRoute(
+            path: '/purchase/vendors',
+            name: 'purchase-vendors',
+            builder: (context, state) => const VendorsPage(),
+          ),
+          GoRoute(
+            path: '/purchase/vendors/new',
+            name: 'purchase-vendors-new',
+            builder: (context, state) => const VendorFormPage(),
+          ),
+          GoRoute(
+            path: '/purchase/vendors/:id',
+            name: 'purchase-vendors-edit',
+            builder: (context, state) => VendorFormPage(
+              vendorId: state.pathParameters['id'],
+            ),
+          ),
+          GoRoute(
+            path: '/purchase/orders',
+            name: 'purchase-orders',
+            builder: (context, state) => const PurchaseOrdersPage(),
+          ),
+          GoRoute(
+            path: '/purchase/orders/new',
+            name: 'purchase-orders-new',
+            builder: (context, state) => const PurchaseOrderFormPage(),
+          ),
+          GoRoute(
+            path: '/purchase/orders/:id/edit',
+            name: 'purchase-orders-edit',
+            builder: (context, state) => PurchaseOrderFormPage(
+              orderId: state.pathParameters['id'],
+            ),
+          ),
+          GoRoute(
+            path: '/purchase/orders/:id',
+            name: 'purchase-orders-detail',
+            builder: (context, state) => PurchaseOrderDetailPage(
+              orderId: state.pathParameters['id']!,
+            ),
+          ),
+          GoRoute(
+            path: '/purchase/grns',
+            name: 'purchase-grns',
+            builder: (context, state) => const PurchaseGrnsPage(),
+          ),
+          GoRoute(
+            path: '/crm/customers',
+            name: 'crm-customers',
+            builder: (context, state) => const CustomersPage(),
+          ),
+          GoRoute(
+            path: '/crm/customers/new',
+            name: 'crm-customers-new',
+            builder: (context, state) => const CustomerFormPage(),
+          ),
+          GoRoute(
+            path: '/crm/customers/:id',
+            name: 'crm-customers-edit',
+            builder: (context, state) => CustomerFormPage(
+              customerId: state.pathParameters['id'],
+            ),
+          ),
+          GoRoute(
+            path: '/masters/variants',
+            name: 'masters-variants',
+            builder: (context, state) => const VariantMatrixPage(),
+          ),
+          GoRoute(
+            path: '/masters/variants/new',
+            name: 'masters-variants-new',
+            builder: (context, state) => const VariantFormPage(),
+          ),
+          GoRoute(
+            path: '/masters/brands',
+            name: 'masters-brands',
+            builder: (context, state) => const BrandsPage(),
+          ),
+          GoRoute(
+            path: '/inventory/warehouses',
+            name: 'inventory-warehouses',
+            builder: (context, state) => const WarehousesPage(),
+          ),
+          GoRoute(
+            path: '/returns/exchange',
+            name: 'returns-exchange',
+            builder: (context, state) => const ExchangePage(),
+          ),
+          GoRoute(
+            path: '/offers',
+            name: 'offers',
+            builder: (context, state) => const OffersPage(),
+          ),
+          GoRoute(
+            path: '/approvals',
+            name: 'approvals',
+            builder: (context, state) => const ApprovalsPage(),
+          ),
+          GoRoute(
+            path: '/audit-log',
+            name: 'audit-log',
+            builder: (context, state) => const AuditLogPage(),
+          ),
+          GoRoute(
+            path: '/inventory/lots',
+            name: 'inventory-lots',
+            builder: (context, state) => const StockLotsPage(),
+          ),
+          GoRoute(
+            path: '/settings/max-discount',
+            name: 'settings-max-discount',
+            builder: (context, state) => const MaxDiscountSettingsPage(),
           ),
           GoRoute(
             path: '/settings/devices',
@@ -716,6 +904,45 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 String? staffRoutePermissionRedirect(Ref ref, String loc) {
+  final session = ref.read(authControllerProvider).session;
+  final profile = ref.read(businessProfileProvider);
+
+  /* Business-type feature isolation — hide F&B routes from retail, etc. */
+  final featureGates = <String, AppFeature>{
+    '/tables': AppFeature.tables,
+    '/mess': AppFeature.mess,
+    '/hotel': AppFeature.rooms,
+    '/purchase': AppFeature.purchaseFlow,
+    '/crm': AppFeature.customers,
+    '/masters/variants': AppFeature.sizeColorMatrix,
+    '/masters/brands': AppFeature.brands,
+    '/inventory/warehouses': AppFeature.warehouses,
+    '/inventory/lots': AppFeature.batchExpiry,
+    '/offers': AppFeature.offers,
+    '/approvals': AppFeature.approvals,
+    '/audit-log': AppFeature.auditLog,
+  };
+  for (final entry in featureGates.entries) {
+    if (loc == entry.key || loc.startsWith('${entry.key}/')) {
+      if (!profile.has(entry.value) &&
+          !FeatureGate.has(session, entry.value)) {
+        return '/';
+      }
+    }
+  }
+  if ((loc == '/returns' || loc.startsWith('/returns/')) &&
+      !profile.has(AppFeature.exchange) &&
+      !profile.has(AppFeature.returns) &&
+      !FeatureGate.has(session, AppFeature.exchange) &&
+      !FeatureGate.has(session, AppFeature.returns)) {
+    return '/';
+  }
+  if ((loc == '/takeaway' || loc.startsWith('/takeaway/')) &&
+      !profile.has(AppFeature.takeaway) &&
+      !profile.has(AppFeature.parcel)) {
+    return '/';
+  }
+
   const prefixes = <String, String>{
     '/pos/payment': 'bill.create',
     '/tables/payment': 'bill.create',

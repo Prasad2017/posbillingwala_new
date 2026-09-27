@@ -375,6 +375,15 @@ class AuthController extends Notifier<AuthState> {
     state = state.copyWith(session: updated);
     return true;
   }
+
+  /* Patch selected session fields (e.g. business type) and persist. */
+  Future<void> updateSessionFields({String? businessType}) async {
+    final session = state.session;
+    if (session == null) return;
+    final updated = session.copyWith(businessType: businessType);
+    await SessionStore().saveSession(updated);
+    state = state.copyWith(session: updated);
+  }
 }
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(

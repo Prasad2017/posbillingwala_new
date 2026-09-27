@@ -8,6 +8,9 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/license_modules.dart';
+import 'package:pos_billingwala_v2/core/business_type/app_feature.dart';
+import 'package:pos_billingwala_v2/core/business_type/business_type_providers.dart';
+import 'package:pos_billingwala_v2/core/business_type/feature_gate.dart';
 import 'package:pos_billingwala_v2/features/reports/domain/reports_providers.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_pin_gate.dart';
 import 'package:pos_billingwala_v2/features/reports/presentation/report_widgets.dart';
@@ -76,6 +79,7 @@ class ReportsHubPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authControllerProvider).session;
     final strings = AppStrings.of(ref);
+    final profile = ref.watch(businessProfileProvider);
     final salesItems = <ReportItem>[
       ReportItem(
         icon: Icons.dashboard_customize_rounded,
@@ -119,7 +123,9 @@ class ReportsHubPage extends ConsumerWidget {
           context.push('/reports/invoices');
         },
       ),
-      if (LicenseModules.fastBilling(session))
+      if (LicenseModules.fastBilling(session) &&
+          (profile.has(AppFeature.quickBilling) ||
+              profile.has(AppFeature.barcodeBilling)))
         ReportItem(
           icon: Icons.trending_up_rounded,
           color: AppColors.orange,
@@ -127,7 +133,7 @@ class ReportsHubPage extends ConsumerWidget {
           subtitle: strings.saleReports,
           onTap: () => context.push('/reports/sale'),
         ),
-      if (LicenseModules.dineIn(session)) ...[
+      if (LicenseModules.dineIn(session) && FeatureGate.showTables(session)) ...[
         ReportItem(
           icon: Icons.table_restaurant_rounded,
           color: const Color(0xFF1A4FD8),
@@ -143,7 +149,9 @@ class ReportsHubPage extends ConsumerWidget {
           onTap: () => context.push('/reports/table-list'),
         ),
       ],
-      if (LicenseModules.takeAway(session))
+      if (LicenseModules.takeAway(session) &&
+          (profile.has(AppFeature.takeaway) ||
+              profile.has(AppFeature.parcel)))
         ReportItem(
           icon: Icons.shopping_basket_rounded,
           color: AppColors.purple,
@@ -179,13 +187,61 @@ class ReportsHubPage extends ConsumerWidget {
         subtitle: strings.saleReports,
         onTap: () => context.push('/reports/products'),
       ),
+      if (profile.has(AppFeature.combos))
+        ReportItem(
+          icon: Icons.filter_none_rounded,
+          color: AppColors.primary,
+          title: strings.comboWiseReport,
+          subtitle: strings.saleReports,
+          onTap: () => context.push('/reports/products?type=combo'),
+        ),
+      if (profile.has(AppFeature.purchaseFlow))
+        ReportItem(
+          icon: Icons.local_shipping_rounded,
+          color: AppColors.green,
+          title: 'Purchase documents',
+          subtitle: 'PR / PO / GRN / PI',
+          onTap: () => context.push('/purchase'),
+        ),
+      if (profile.has(AppFeature.offers) || profile.has(AppFeature.coupons))
+        ReportItem(
+          icon: Icons.local_offer_rounded,
+          color: const Color(0xFFE91E63),
+          title: 'Offers & coupons',
+          subtitle: 'Active campaigns',
+          onTap: () => context.push('/offers'),
+        ),
+      if (profile.has(AppFeature.batchExpiry))
+        ReportItem(
+          icon: Icons.science_rounded,
+          color: AppColors.green,
+          title: 'Batch / expiry',
+          subtitle: 'Lots nearing expiry',
+          onTap: () => context.push('/inventory/lots'),
+        ),
+      if (profile.has(AppFeature.auditLog))
+        ReportItem(
+          icon: Icons.history_rounded,
+          color: AppColors.navy,
+          title: 'Audit log',
+          subtitle: 'User actions trail',
+          onTap: () => context.push('/audit-log'),
+        ),
       ReportItem(
-        icon: Icons.filter_none_rounded,
-        color: AppColors.primary,
-        title: strings.comboWiseReport,
-        subtitle: strings.saleReports,
-        onTap: () => context.push('/reports/products?type=combo'),
+        icon: Icons.analytics_rounded,
+        color: const Color(0xFF5B6CFF),
+        title: 'Enterprise KPIs',
+        subtitle: 'Lots ageing, transfers, returns, approvals',
+        onTap: () => context.push('/reports/enterprise'),
       ),
+      if (profile.has(AppFeature.rooms))
+        ReportItem(
+          icon: Icons.nightlight_round,
+          color: AppColors.navy,
+          title: 'Night audit',
+          subtitle: 'In-house folios and day close',
+          onTap: () => context.push('/hotel/night-audit'),
+        ),
       ReportItem(
         icon: Icons.money_off_rounded,
         color: AppColors.purple,
@@ -193,7 +249,7 @@ class ReportsHubPage extends ConsumerWidget {
         subtitle: strings.saleReports,
         onTap: () => context.push('/reports/expense'),
       ),
-      if (LicenseModules.mess(session)) ...[
+      if (FeatureGate.showMess(session)) ...[
         ReportItem(
           icon: Icons.groups_rounded,
           color: AppColors.green,
@@ -216,6 +272,14 @@ class ReportsHubPage extends ConsumerWidget {
           onTap: () => context.push('/reports/mess'),
         ),
       ],
+      if (FeatureGate.showRooms(session))
+        ReportItem(
+          icon: Icons.hotel_rounded,
+          color: const Color(0xFF5B6CFF),
+          title: 'Room-wise sales',
+          subtitle: 'Hotel folio and room billing',
+          onTap: () => context.push('/hotel/rooms'),
+        ),
     ];
 
     return Scaffold(

@@ -26,7 +26,7 @@ if (!function_exists('pos_permission_catalog')) {
     {
         return array(
             'dashboard' => array('view'),
-            'billing' => array('view', 'create', 'edit', 'delete'),
+            'billing' => array('view', 'create', 'edit', 'delete', 'discount', 'max_discount'),
             'order' => array('view', 'create', 'edit', 'delete'),
             'kot' => array('view', 'create', 'edit', 'delete', 'print', 'reprint'),
             'bill' => array('view', 'create', 'edit', 'delete', 'print', 'reprint'),
@@ -34,6 +34,10 @@ if (!function_exists('pos_permission_catalog')) {
             'takeaway' => array('view', 'create'),
             'product' => array('view', 'create', 'edit', 'delete'),
             'inventory' => array('view', 'manage'),
+            'purchase' => array('view', 'manage', 'approve'),
+            'approval' => array('view', 'manage'),
+            'offer' => array('view', 'manage'),
+            'audit' => array('view'),
             'customer' => array('view', 'manage'),
             'report' => array('view', 'export'),
             'expense' => array('view', 'manage'),
@@ -66,6 +70,8 @@ if (!function_exists('pos_permission_dependencies')) {
             'billing.create' => 'billing.view',
             'billing.edit' => 'billing.view',
             'billing.delete' => 'billing.view',
+            'billing.discount' => 'billing.view',
+            'billing.max_discount' => 'billing.discount',
             'order.create' => 'order.view',
             'order.edit' => 'order.view',
             'order.delete' => 'order.view',
@@ -85,6 +91,10 @@ if (!function_exists('pos_permission_dependencies')) {
             'product.edit' => 'product.view',
             'product.delete' => 'product.view',
             'inventory.manage' => 'inventory.view',
+            'purchase.manage' => 'purchase.view',
+            'purchase.approve' => 'purchase.view',
+            'approval.manage' => 'approval.view',
+            'offer.manage' => 'offer.view',
             'customer.manage' => 'customer.view',
             'report.export' => 'report.view',
             'expense.manage' => 'expense.view',
@@ -189,9 +199,22 @@ if (!function_exists('pos_permissions_seed_defaults')) {
     {
         pos_schema_ensure($con);
         $count = db_stmt_scalar_int($con, 'SELECT COUNT(*) AS c FROM `pos_role_permission`', '');
-        if ($count > 0) {
+        if ($count <= 0) {
+            foreach (pos_role_default_map() as $role => $map) {
+                foreach ($map as $key => $allowed) {
+                    db_stmt_execute(
+                        $con,
+                        'INSERT IGNORE INTO `pos_role_permission` (`role`, `permissionKey`, `allowed`) VALUES (?, ?, ?)',
+                        'ssi',
+                        $role,
+                        $key,
+                        (int) $allowed
+                    );
+                }
+            }
             return;
         }
+        /* Backfill newly added catalog keys without wiping existing overrides. */
         foreach (pos_role_default_map() as $role => $map) {
             foreach ($map as $key => $allowed) {
                 db_stmt_execute(

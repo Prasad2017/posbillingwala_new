@@ -7,6 +7,10 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/api_constants.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/business_type/app_feature.dart';
+import 'package:pos_billingwala_v2/core/business_type/business_type.dart';
+import 'package:pos_billingwala_v2/core/business_type/business_type_providers.dart';
+import 'package:pos_billingwala_v2/core/business_type/feature_gate.dart';
 import 'package:pos_billingwala_v2/core/permissions/app_permission_service.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
@@ -182,14 +186,24 @@ class HomePageState extends ConsumerState<HomePage> {
 
     final flagsMissing = session == null || anyBilling(session);
     final perms = ref.watch(permissionControllerProvider);
+    final profile = ref.watch(businessProfileProvider);
     final allowFast =
-        (flagsMissing || session.fastBilling) && perms.allows('billing.create');
+        (flagsMissing || session.fastBilling) &&
+        perms.allows('billing.create') &&
+        (profile.has(AppFeature.quickBilling) ||
+            profile.has(AppFeature.barcodeBilling));
     final allowDine =
-        (flagsMissing || session.dineIn) && perms.allows('table.view');
+        (flagsMissing || session.dineIn) &&
+        perms.allows('table.view') &&
+        FeatureGate.showTables(session);
     final allowTake =
-        (flagsMissing || session.takeAway) && perms.allows('takeaway.view');
+        (flagsMissing || session.takeAway) &&
+        perms.allows('takeaway.view') &&
+        (profile.has(AppFeature.takeaway) || profile.has(AppFeature.parcel));
     final allowMess =
-        (flagsMissing || session.mess) && perms.allows('mess.view');
+        (flagsMissing || session.mess) &&
+        perms.allows('mess.view') &&
+        FeatureGate.showMess(session);
     final showTotalSales =
         session == null || session.totalSaleData || session.todaySaleData;
     final showTodaySales = session == null || session.todaySaleData;
@@ -409,63 +423,119 @@ class HomeDashboardBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(ref);
     final perms = ref.watch(permissionControllerProvider);
+    final profile = ref.watch(businessProfileProvider);
+    final session = ref.watch(authControllerProvider).session;
     final allowCatalog = perms.allows('product.view');
     final allowReports = perms.allows('report.view');
     final widthClass = context.widthClass;
+    final terms = profile.terminology;
+
+    void openRoute(String route) {
+      if (AppPlatform.useDesktopShell) {
+        context.go(route);
+      } else {
+        context.push(route);
+      }
+    }
+
     final billingTiles = <Widget>[
-      BillingTile(
-        title: strings.fastBilling,
-        subtitle: 'Quick billing for walk-in customers',
-        icon: Icons.receipt_long_rounded,
-        colors: const [AppColors.primaryBright, AppColors.primary],
-        onTap: () {
-          if (!allowFast) {
-            onModuleLocked();
-            return;
-          }
-          onFastBilling();
-        },
-      ),
-      BillingTile(
-        title: strings.dineIn,
-        subtitle: 'Create bill for dine-in customers',
-        icon: Icons.table_restaurant_rounded,
-        colors: const [AppColors.green, Color(0xFF15803D)],
-        onTap: () {
-          if (!allowDine) {
-            onModuleLocked();
-            return;
-          }
-          onDineIn();
-        },
-      ),
-      BillingTile(
-        title: strings.takeAway,
-        subtitle: 'Create bill for takeaway orders',
-        icon: Icons.shopping_bag_rounded,
-        colors: const [AppColors.orangeLight, AppColors.orange],
-        onTap: () {
-          if (!allowTake) {
-            onModuleLocked();
-            return;
-          }
-          onTakeAway();
-        },
-      ),
-      BillingTile(
-        title: strings.mess,
-        subtitle: 'Manage mess billing easily',
-        icon: Icons.restaurant_rounded,
-        colors: const [AppColors.cyan, AppColors.primaryDark],
-        onTap: () async {
-          if (!allowMess) {
-            onModuleLocked();
-            return;
-          }
-          await onMess();
-        },
-      ),
+      for (final action in profile.homeActions)
+        BillingTile(
+          title: action.title,
+          subtitle: action.subtitle,
+          icon: action.icon,
+          colors: action.colors,
+          onTap: () {
+            final featureOk = FeatureGate.allowBillingMode(
+              session,
+              feature: action.feature,
+            );
+            final permOk =
+                action.permission == null || perms.allows(action.permission!);
+            /* Non-licence features (purchase/CRM/hotel) only need profile + perm. */
+            final needsLicence = switch (action.feature) {
+              AppFeature.quickBilling ||
+              AppFeature.barcodeBilling ||
+              AppFeature.dineIn ||
+              AppFeature.tables ||
+              AppFeature.takeaway ||
+              AppFeature.parcel ||
+              AppFeature.mess =>
+                true,
+              _ => false,
+            };
+            if (needsLicence) {
+              if (!featureOk || !permOk) {
+                onModuleLocked();
+                return;
+              }
+            } else if (!profile.has(action.feature) || !permOk) {
+              onModuleLocked();
+              return;
+            }
+            if (action.route == '/pos') {
+              onFastBilling();
+              return;
+            }
+            if (action.route == '/tables') {
+              onDineIn();
+              return;
+            }
+            if (action.route == '/takeaway') {
+              onTakeAway();
+              return;
+            }
+            if (action.route == '/mess') {
+              onMess();
+              return;
+            }
+            openRoute(action.route);
+          },
+        ),
     ];
+
+    /* Fallback for legacy restaurant licences if profile somehow empty. */
+    if (billingTiles.isEmpty) {
+      billingTiles.addAll([
+        BillingTile(
+          title: strings.fastBilling,
+          subtitle: 'Quick billing for walk-in customers',
+          icon: Icons.receipt_long_rounded,
+          colors: const [AppColors.primaryBright, AppColors.primary],
+          onTap: () {
+            if (!allowFast) {
+              onModuleLocked();
+              return;
+            }
+            onFastBilling();
+          },
+        ),
+        if (allowDine)
+          BillingTile(
+            title: strings.dineIn,
+            subtitle: 'Create bill for dine-in customers',
+            icon: Icons.table_restaurant_rounded,
+            colors: const [AppColors.green, Color(0xFF15803D)],
+            onTap: onDineIn,
+          ),
+        if (allowTake)
+          BillingTile(
+            title: strings.takeAway,
+            subtitle: 'Create bill for takeaway orders',
+            icon: Icons.shopping_bag_rounded,
+            colors: const [AppColors.orangeLight, AppColors.orange],
+            onTap: onTakeAway,
+          ),
+        if (allowMess)
+          BillingTile(
+            title: strings.mess,
+            subtitle: 'Manage mess billing easily',
+            icon: Icons.restaurant_rounded,
+            colors: const [AppColors.cyan, AppColors.primaryDark],
+            onTap: () async => onMess(),
+          ),
+      ]);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -555,7 +625,7 @@ class HomeDashboardBody extends ConsumerWidget {
           const SizedBox(height: 22),
         ],
         Text(
-          strings.catalog,
+          terms.products == 'Menu' ? 'Menu Catalog' : terms.products,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
             color: AppColors.navy,
@@ -568,7 +638,7 @@ class HomeDashboardBody extends ConsumerWidget {
             final tiles = [
               CatalogTile(
                 icon: Icons.category_rounded,
-                label: strings.categories,
+                label: terms.categories,
                 value: '$categoriesCount',
                 color: AppColors.primary,
                 soft: const Color(0xFFE8F1FF),
@@ -582,7 +652,7 @@ class HomeDashboardBody extends ConsumerWidget {
               ),
               CatalogTile(
                 icon: Icons.grid_view_rounded,
-                label: strings.subcategories,
+                label: terms.subcategories,
                 value: '$subcategoriesCount',
                 color: AppColors.purple,
                 soft: const Color(0xFFF3EEFF),
@@ -596,7 +666,7 @@ class HomeDashboardBody extends ConsumerWidget {
               ),
               CatalogTile(
                 icon: Icons.inventory_2_rounded,
-                label: strings.products,
+                label: terms.products,
                 value: '$productsCount',
                 color: AppColors.green,
                 soft: const Color(0xFFE8F8F0),
@@ -608,42 +678,42 @@ class HomeDashboardBody extends ConsumerWidget {
                   context.push('/masters/products');
                 },
               ),
-              CatalogTile(
-                icon: Icons.layers_rounded,
-                label: strings.combos,
-                value: '$combosCount',
-                color: AppColors.orange,
-                soft: const Color(0xFFFFF3E8),
-                onTap: () {
-                  if (!allowCatalog) {
-                    onModuleLocked();
-                    return;
-                  }
-                  context.push('/masters/catalog?tab=combos');
-                },
-              ),
+              if (profile.has(AppFeature.combos))
+                CatalogTile(
+                  icon: Icons.layers_rounded,
+                  label: strings.combos,
+                  value: '$combosCount',
+                  color: AppColors.orange,
+                  soft: const Color(0xFFFFF3E8),
+                  onTap: () {
+                    if (!allowCatalog) {
+                      onModuleLocked();
+                      return;
+                    }
+                    context.push('/masters/catalog?tab=combos');
+                  },
+                ),
             ];
             final compact = context.isMobileWidth;
             if (compact) {
-              return Column(
-                children: [
+              final rows = <Widget>[];
+              for (var i = 0; i < tiles.length; i += 2) {
+                if (i > 0) rows.add(const SizedBox(height: 10));
+                rows.add(
                   Row(
                     children: [
-                      Expanded(child: tiles[0]),
+                      Expanded(child: tiles[i]),
                       const SizedBox(width: 10),
-                      Expanded(child: tiles[1]),
+                      Expanded(
+                        child: i + 1 < tiles.length
+                            ? tiles[i + 1]
+                            : const SizedBox.shrink(),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(child: tiles[2]),
-                      const SizedBox(width: 10),
-                      Expanded(child: tiles[3]),
-                    ],
-                  ),
-                ],
-              );
+                );
+              }
+              return Column(children: rows);
             }
             return Row(
               children: [
@@ -657,7 +727,7 @@ class HomeDashboardBody extends ConsumerWidget {
         ),
         const SizedBox(height: 22),
         Text(
-          'Start Billing',
+          profile.type.isFoodService ? 'Start Billing' : 'Quick Actions',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
             color: AppColors.navy,

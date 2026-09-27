@@ -11,6 +11,9 @@ import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/features/crm/domain/crm_providers.dart';
+import 'package:pos_billingwala_v2/features/enterprise_ops/presentation/gap_pages.dart';
+import 'package:pos_billingwala_v2/features/hotel/presentation/hotel_pages.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_date.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_checkout_controller.dart';
@@ -47,6 +50,9 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
   final customerPhoneController = TextEditingController();
   final customerEmailController = TextEditingController();
   final customerAddressController = TextEditingController();
+  final couponController = TextEditingController();
+  final loyaltyRedeemController = TextEditingController();
+  final serialController = TextEditingController();
   late final NumberFormat paymentPageCurrency;
   bool billSummaryExpanded = true;
 
@@ -89,6 +95,9 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     customerPhoneController.dispose();
     customerEmailController.dispose();
     customerAddressController.dispose();
+    couponController.dispose();
+    loyaltyRedeemController.dispose();
+    serialController.dispose();
     super.dispose();
   }
 
@@ -101,6 +110,170 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
           email: customerEmailController.text,
           address: customerAddressController.text,
         );
+  }
+
+  Future<void> applyCoupon() async {
+    final summary = ref.read(cartSummaryProvider);
+    final err = await ref
+        .read(paymentCheckoutControllerProvider.notifier)
+        .applyOfferCode(couponController.text, summary.subtotal);
+    if (!mounted) return;
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Coupon applied')),
+      );
+      syncControllers();
+    }
+  }
+
+  Future<void> chargeToRoom() async {
+    final bookings = await ref.read(hotelBookingsProvider.future);
+    if (!mounted) return;
+    final inHouse =
+        bookings.where((b) => b.bookingStatus == 'CHECKED_IN').toList();
+    if (inHouse.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No checked-in guests')),
+      );
+      return;
+    }
+    final picked = await showModalBottomSheet<HotelBooking>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          children: [
+            for (final b in inHouse)
+              ListTile(
+                title: Text('${b.roomNumber} · ${b.guestName}'),
+                subtitle: Text('Folio ₹${b.folioTotal.toStringAsFixed(0)}'),
+                onTap: () => Navigator.pop(ctx, b),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    final summary = ref.read(cartSummaryProvider);
+    final total = ref.read(paymentCheckoutControllerProvider).payableTotal(
+          subtotal: summary.subtotal,
+          taxTotal: summary.taxTotal,
+        );
+    try {
+      await chargeBillToRoom(ref, bookingId: picked.id, amount: total);
+      ref.read(billingSessionProvider.notifier).updateCustomer(
+            name: picked.guestName,
+            phone: picked.guestMobile,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Charged ₹${total.toStringAsFixed(0)} to room ${picked.roomNumber}',
+          ),
+        ),
+      );
+      ref.read(paymentCheckoutControllerProvider.notifier).selectMode(
+            PaymentMode.cash,
+            total,
+          );
+      await ref.read(paymentCheckoutControllerProvider.notifier).completePayment(
+            subtotal: summary.subtotal,
+            taxTotal: summary.taxTotal,
+          );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e'.replaceFirst('Bad state: ', ''))),
+      );
+    }
+  }
+
+  Future<void> pickCrmCustomer({double? summarySubtotal}) async {
+    final customers = await ref.read(customersProvider.future);
+    if (!mounted) return;
+    final picked = await showModalBottomSheet<CrmCustomer>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final q = TextEditingController();
+        var filtered = customers;
+        return StatefulBuilder(
+          builder: (context, setLocal) {
+            return SafeArea(
+              child: SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.65,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: TextField(
+                        controller: q,
+                        decoration: const InputDecoration(
+                          labelText: 'Search customer',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                        onChanged: (v) {
+                          final s = v.trim().toLowerCase();
+                          setLocal(() {
+                            filtered = customers
+                                .where(
+                                  (c) =>
+                                      c.name.toLowerCase().contains(s) ||
+                                      c.mobile.contains(s),
+                                )
+                                .toList();
+                          });
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filtered.length,
+                        itemBuilder: (context, i) {
+                          final c = filtered[i];
+                          return ListTile(
+                            title: Text(c.name),
+                            subtitle: Text(
+                              [
+                                c.mobile,
+                                if (c.loyaltyPoints > 0)
+                                  'Pts ${c.loyaltyPoints.toStringAsFixed(0)}',
+                                if (c.walletBalance > 0)
+                                  'Wallet ₹${c.walletBalance.toStringAsFixed(0)}',
+                              ].where((e) => e.isNotEmpty).join(' · '),
+                            ),
+                            onTap: () => Navigator.pop(ctx, c),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+    if (picked == null || !mounted) return;
+    customerNameController.text = picked.name;
+    customerPhoneController.text = picked.mobile;
+    customerEmailController.text = picked.email;
+    customerAddressController.text = picked.address;
+    ref.read(billingSessionProvider.notifier).updateCustomer(
+          id: picked.id,
+          name: picked.name,
+          phone: picked.mobile,
+          email: picked.email,
+          address: picked.address,
+          loyaltyPoints: picked.loyaltyPoints,
+          walletBalance: picked.walletBalance,
+          creditLimit: picked.creditLimit,
+        );
+    setState(() {});
   }
 
   Future<void> confirmClearCart() async {
@@ -711,11 +884,22 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  strings.customer,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        strings.customer,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => pickCrmCustomer(summarySubtotal: null),
+                      icon: const Icon(Icons.person_search_rounded, size: 18),
+                      label: const Text('CRM'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 ResponsiveFormColumns(
                   maxColumns: 2,
                   children: [
@@ -745,7 +929,74 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
                       minLines: 2,
                       onChanged: (_) => persistCustomer(),
                     ),
+                    AppTextField(
+                      controller: couponController,
+                      label: 'Coupon code',
+                      textCapitalization: TextCapitalization.characters,
+                      onSubmitted: (_) => applyCoupon(),
+                    ),
+                    FilledButton.tonal(
+                      onPressed: applyCoupon,
+                      child: const Text('Apply coupon'),
+                    ),
+                    AppTextField(
+                      controller: loyaltyRedeemController,
+                      label: 'Redeem loyalty pts',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      onChanged: (v) {
+                        final pts = double.tryParse(v) ?? 0;
+                        ref
+                            .read(paymentCheckoutControllerProvider.notifier)
+                            .setLoyaltyRedeem(pts);
+                      },
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: chargeToRoom,
+                      icon: const Icon(Icons.hotel_rounded),
+                      label: const Text('Charge to room'),
+                    ),
+                    AppTextField(
+                      controller: serialController,
+                      label: 'Serial / IMEI (if tracked)',
+                      onChanged: (v) {
+                        final cart = ref.read(cartItemsProvider).maybeWhen(
+                              data: (items) => items,
+                              orElse: () => const <CartItem>[],
+                            );
+                        if (cart.isEmpty) return;
+                        ref
+                            .read(paymentCheckoutControllerProvider.notifier)
+                            .setSerialForProduct(cart.first.productId, v);
+                      },
+                    ),
                   ],
+                ),
+                Builder(
+                  builder: (context) {
+                    final s = ref.watch(billingSessionProvider);
+                    final checkout = ref.watch(paymentCheckoutControllerProvider);
+                    if ((s.customerId ?? '').isEmpty &&
+                        checkout.offerLabel.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        [
+                          if ((s.customerId ?? '').isNotEmpty)
+                            'Pts ${s.loyaltyPoints.toStringAsFixed(0)} · Wallet ₹${s.walletBalance.toStringAsFixed(0)} · Credit ₹${s.creditLimit.toStringAsFixed(0)}',
+                          if (checkout.offerLabel.isNotEmpty)
+                            'Offer: ${checkout.offerLabel}',
+                        ].join('\n'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.navy.withValues(alpha: .65),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

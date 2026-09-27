@@ -7,6 +7,7 @@ import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
+import 'package:pos_billingwala_v2/features/enterprise_ops/domain/ops_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
@@ -29,7 +30,9 @@ Future<void> addProductWithPortionPicker(
     if (isOpen) {
       await promptOpenPriceAndAdd(context, ref, product);
     } else {
-      await ref.read(posCartControllerProvider.notifier).addProduct(product);
+      final mods = await pickModifiers(context, ref, product);
+      if (!context.mounted || mods == null) return;
+      await _addWithModifiers(ref, product, mods: mods);
     }
     return;
   }
@@ -244,10 +247,167 @@ Future<void> addProductWithPortionPicker(
       initialQty: qty,
     );
   } else {
-    await ref
-        .read(posCartControllerProvider.notifier)
-        .addProduct(product, portion: chosen.portion, quantity: qty);
+    final mods = await pickModifiers(context, ref, product);
+    if (!context.mounted || mods == null) return;
+    await _addWithModifiers(
+      ref,
+      product,
+      mods: mods,
+      portion: chosen.portion,
+      quantity: qty,
+      basePrice: chosen.price,
+    );
   }
+}
+
+class CartModOption {
+  const CartModOption({required this.name, required this.price});
+  final String name;
+  final double price;
+}
+
+Future<List<CartModOption>?> pickModifiers(
+  BuildContext context,
+  WidgetRef ref,
+  Product product,
+) async {
+  List<Map<String, dynamic>> all = const [];
+  try {
+    all = await ref.read(opsListProvider('offer').future);
+  } catch (_) {}
+  if (!context.mounted) return null;
+  final mods = all.where((o) {
+    final type = (o['type'] ?? '').toString().toLowerCase();
+    if (!type.contains('modifier') && !type.contains('addon')) return false;
+    final status = (o['status'] ?? 'ACTIVE').toString().toUpperCase();
+    if (status != 'ACTIVE' && status.isNotEmpty) return false;
+    final forProduct = (o['productName'] ?? '').toString().trim().toLowerCase();
+    if (forProduct.isEmpty) return true;
+    final pname = product.productName.toLowerCase();
+    return pname.contains(forProduct) || forProduct.contains(pname);
+  }).toList();
+  if (mods.isEmpty) return const [];
+
+  final selected = <int>{};
+  final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+  final ok = await showModalBottomSheet<bool>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setLocal) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Add-ons / modifiers',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+              ),
+            ),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: mods.length,
+                itemBuilder: (context, i) => CheckboxListTile(
+                  value: selected.contains(i),
+                  onChanged: (v) => setLocal(() {
+                    if (v == true) {
+                      selected.add(i);
+                    } else {
+                      selected.remove(i);
+                    }
+                  }),
+                  title: Text(
+                    (mods[i]['name'] ?? mods[i]['title'] ?? 'Add-on').toString(),
+                  ),
+                  subtitle: Text(
+                    currency.format(
+                      double.tryParse('${mods[i]['amount'] ?? 0}') ?? 0,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Skip'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Add'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+  if (ok == null) return null;
+  if (ok != true) return const [];
+  return [
+    for (final i in selected)
+      CartModOption(
+        name: (mods[i]['name'] ?? mods[i]['title'] ?? '').toString(),
+        price: double.tryParse('${mods[i]['amount'] ?? 0}') ?? 0,
+      ),
+  ];
+}
+
+Future<void> _addWithModifiers(
+  WidgetRef ref,
+  Product product, {
+  required List<CartModOption> mods,
+  ProductPortion? portion,
+  double quantity = 1,
+  double? basePrice,
+}) async {
+  final modExtra = mods.fold<double>(0, (s, m) => s + m.price);
+  final modNames = mods.map((m) => m.name).where((n) => n.isNotEmpty).toList();
+  final base = basePrice ??
+      (product.productWithGstPrice > 0
+          ? product.productWithGstPrice
+          : product.productPrice);
+  final named = modNames.isEmpty
+      ? product
+      : Product(
+          productId: product.productId,
+          productName: '${product.productName} (+${modNames.join(', ')})',
+          productPrice: product.productPrice,
+          productMrp: product.productMrp,
+          priceIncludesGst: product.priceIncludesGst,
+          openPrice: product.openPrice,
+          productCgst: product.productCgst,
+          productSgst: product.productSgst,
+          productWithGstPrice: product.productWithGstPrice,
+          productDeletedStatus: product.productDeletedStatus,
+          productStatus: product.productStatus,
+          productSyncStatus: product.productSyncStatus,
+          productCode: product.productCode,
+          productUnit: product.productUnit,
+          categoryId: product.categoryId,
+          categoryName: product.categoryName,
+          subcategoryId: product.subcategoryId,
+          productImage: product.productImage,
+          userId: product.userId,
+          productNetworkStatus: product.productNetworkStatus,
+        );
+  await ref.read(posCartControllerProvider.notifier).addProduct(
+        named,
+        portion: portion,
+        quantity: quantity,
+        unitPriceOverride: base + modExtra,
+      );
 }
 
 class _PortionChoiceChip extends StatelessWidget {

@@ -1,63 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_billingwala_v2/core/business_type/business_type.dart';
+import 'package:pos_billingwala_v2/core/business_type/business_type_providers.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
-/* Master Data hub — section card with pastel icon rows (reference UI). */
+/* Master Data hub — items filtered by active business type profile. */
 class MastersHubPage extends ConsumerWidget {
   const MastersHubPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(ref);
+    final profile = ref.watch(businessProfileProvider);
 
     final items = <MasterItem>[
-      MasterItem(
-        icon: Icons.category_rounded,
-        color: AppColors.primary,
-        title: strings.categories,
-        subtitle: 'Food groups such as Veg, Non Veg',
-        onTap: () => context.push('/masters/categories'),
-      ),
-      MasterItem(
-        icon: Icons.folder_rounded,
-        color: AppColors.purple,
-        title: strings.subcategories,
-        subtitle: 'Starter, Main Course, Beverage',
-        onTap: () => context.push('/masters/subcategories'),
-      ),
-      MasterItem(
-        icon: Icons.layers_rounded,
-        color: AppColors.orange,
-        title: strings.portions,
-        subtitle: 'Half, Full and other sizes',
-        onTap: () => context.push('/masters/portion-masters'),
-      ),
-      MasterItem(
-        icon: Icons.inventory_2_rounded,
-        color: AppColors.green,
-        title: strings.products,
-        subtitle: 'Menu items and prices',
-        onTap: () => context.push('/masters/products'),
-      ),
-      MasterItem(
-        icon: Icons.filter_none_rounded,
-        color: const Color(0xFF5B6CFF),
-        title: strings.combos,
-        subtitle: 'Combo meals and offers',
-        onTap: () => context.push('/masters/combos'),
-      ),
-      MasterItem(
-        icon: Icons.table_restaurant_rounded,
-        color: const Color(0xFFE6A100),
-        title: strings.tableMaster,
-        subtitle: 'Areas, types and tables with seats',
-        onTap: () => context.push('/masters/tables'),
-      ),
+      for (final m in profile.masterItems)
+        if (profile.has(m.feature))
+          MasterItem(
+            icon: m.icon,
+            color: m.color,
+            title: m.title,
+            subtitle: m.subtitle,
+            onTap: () => context.push(m.route),
+          ),
     ];
 
     return Scaffold(
@@ -82,7 +52,7 @@ class MastersHubPage extends ConsumerWidget {
           ),
           children: [
             Text(
-              'MASTER DATA',
+              '${profile.type.shortName.toUpperCase()} · MASTER DATA',
               style: TextStyle(
                 fontFamily: AppFonts.family,
                 fontSize: 11,

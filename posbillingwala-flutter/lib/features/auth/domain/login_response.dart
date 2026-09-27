@@ -39,6 +39,7 @@ class LoginResponse {
     this.maxDevices,
     this.maxPrinters,
     this.permissionVersion,
+    this.businessType,
   });
 
   final String status;
@@ -80,6 +81,7 @@ class LoginResponse {
   final String? maxDevices;
   final String? maxPrinters;
   final String? permissionVersion;
+  final String? businessType;
 
   bool get isSuccess => status == '1';
 
@@ -126,6 +128,7 @@ class LoginResponse {
       maxDevices: s(json['maxDevices']),
       maxPrinters: s(json['maxPrinters']),
       permissionVersion: s(json['permissionVersion']),
+      businessType: s(json['businessType'] ?? json['business_type'] ?? json['shopType']),
     );
   }
 
@@ -169,6 +172,7 @@ class LoginResponse {
     'maxDevices': maxDevices,
     'maxPrinters': maxPrinters,
     'permissionVersion': permissionVersion,
+    'businessType': businessType,
   };
 }
 
