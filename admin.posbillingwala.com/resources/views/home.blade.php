@@ -95,6 +95,20 @@
                     <span class="kpi-trend {{ $trendClass($dashboard['totalCustomersTrend']) }}">{{ $dashboard['totalCustomersTrend'] }}</span>
                 </a>
             </div>
+            <div class="col-md-3 col-6">
+                <a class="kpi-card kpi-green" href="{{ url('customers/all-license') }}">
+                    <span class="kpi-icon green"><i class='bx bx-certification'></i></span>
+                    <span class="kpi-label">Active Licenses</span>
+                    <span class="kpi-value">{{ number_format($dashboard['licenseKpis']['activeLicenses'] ?? 0) }}</span>
+                </a>
+            </div>
+            <div class="col-md-3 col-6">
+                <a class="kpi-card kpi-orange" href="{{ url('reports/licenses') }}">
+                    <span class="kpi-icon orange"><i class='bx bx-calendar'></i></span>
+                    <span class="kpi-label">Expiring (30d)</span>
+                    <span class="kpi-value">{{ number_format($dashboard['licenseKpis']['expiringLicenses'] ?? 0) }}</span>
+                </a>
+            </div>
         </div>
 
         <div class="row g-3 mb-3">
@@ -209,7 +223,9 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="section-title mb-0">Sales Overview</h6>
-                            <span class="pb-chart-filter">{{ $dashboard['chartPeriodLabel'] ?? 'Today' }}</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="pb-chart-filter">{{ $dashboard['chartPeriodLabel'] ?? 'Today' }} (hourly)</span>
+                            </div>
                         </div>
                         <div class="line-wrap"><canvas id="hourlySalesChart"></canvas></div>
                     </div>
@@ -239,9 +255,37 @@
                             @endforeach
                         </div>
                         @endif
-                        @unless($isDealerDashboard)
                         <a href="{{ url('reports') }}" class="pb-view-report-link mt-2">View Full Report</a>
-                        @endunless
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-lg-8">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="section-title mb-0">7-Day Sales Trend</h6>
+                            <span class="pb-chart-filter">Last 7 days</span>
+                        </div>
+                        <div class="line-wrap"><canvas id="weekSalesChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="section-title">Payment Mix</h6>
+                        <div class="donut-wrap">
+                            <canvas id="paymentDonut"></canvas>
+                            @if(($dashboard['paymentSummary']['grandTotal'] ?? 0) > 0)
+                            <div class="donut-center">
+                                <small>Total</small>
+                                <strong>{{ \App\Services\AdminMetrics::rupee($dashboard['paymentSummary']['grandTotal']) }}</strong>
+                            </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -361,7 +405,7 @@
 @push('scripts')
 <script>
 (function () {
-    var hourly = @json($dashboard['hourlySales']);
+    var hourly = @json($dashboard['hourlySales'] ?? []);
     PB.line(
         'hourlySalesChart',
         hourly.map(function (r) { return r.label; }),
@@ -369,11 +413,28 @@
         '#2563eb'
     );
 
+    var week = @json($dashboard['salesTrend'] ?? []);
+    PB.line(
+        'weekSalesChart',
+        week.map(function (r) { return r.label; }),
+        week.map(function (r) { return r.total; }),
+        '#16a34a',
+        'rgba(22, 163, 74, 0.14)'
+    );
+
     var cats = @json($categories);
     var catLabels = cats.length ? cats.map(function (c) { return c.name; }) : ['No data'];
     var catValues = cats.length ? cats.map(function (c) { return c.percent; }) : [1];
     var catColors = @json($categoryColors);
     PB.donut('categoryDonut', catLabels, catValues, cats.length ? catColors.slice(0, catLabels.length) : ['#e5e7eb']);
+
+    var pays = @json($payments);
+    PB.donut(
+        'paymentDonut',
+        pays.length ? pays.map(function (p) { return p.mode; }) : ['No data'],
+        pays.length ? pays.map(function (p) { return p.total; }) : [1],
+        pays.length ? ['#2563eb', '#16a34a', '#ea580c', '#7c3aed', '#94a3b8'] : ['#e5e7eb']
+    );
 })();
 </script>
 @endpush

@@ -2,7 +2,8 @@
 
 if (! function_exists('admin_asset')) {
     /**
-     * Root-relative static asset URL (works on any host/path when /assets/ is web-accessible).
+     * Static asset URL from .env only: ASSET_URL if set, else APP_URL.
+     * Does not depend on the current request host/path.
      */
     function admin_asset(string $path, bool $versioned = true): string
     {
@@ -11,10 +12,33 @@ if (! function_exists('admin_asset')) {
             $path = 'assets/' . $path;
         }
 
-        $url = '/' . $path;
+        $assetRoot = rtrim((string) config('app.asset_url'), '/');
+        if ($assetRoot === '') {
+            $assetRoot = rtrim((string) config('app.url'), '/');
+        }
+
+        /* Avoid mixed content: HTTPS page + HTTP assets = CSS blocked by browser. */
+        if (str_starts_with($assetRoot, 'http://')) {
+            $httpsRoot = 'https://' . substr($assetRoot, strlen('http://'));
+            $appRoot = rtrim((string) config('app.url'), '/');
+            if (str_starts_with($appRoot, 'https://') ||
+                (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+                (isset($_SERVER['SERVER_PORT']) && (string) $_SERVER['SERVER_PORT'] === '443') ||
+                (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+                    strtolower((string) $_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')) {
+                $assetRoot = $httpsRoot;
+            }
+        }
+
+        $url = $assetRoot !== ''
+            ? $assetRoot . '/' . $path
+            : '/' . $path;
 
         if ($versioned) {
             $file = base_path($path);
+            if (! is_file($file)) {
+                $file = public_path($path);
+            }
             if (is_file($file)) {
                 $mtime = @filemtime($file);
                 if ($mtime !== false) {

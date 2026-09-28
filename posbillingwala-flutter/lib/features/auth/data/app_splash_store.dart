@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -152,10 +151,10 @@ class AppSplashStore {
         ),
       );
       final data = response.data;
-      if (data is! Map) return readCachedArt();
+      if (data is! Map) return await readCachedArt();
       final map = Map<String, dynamic>.from(data);
       final status = parseString(map['status'])?.toLowerCase();
-      if (status != 'true' && status != '1') return readCachedArt();
+      if (status != 'true' && status != '1') return await readCachedArt();
 
       final url = normalizeUrl(parseString(map['imageUrl']));
       if (url == null) {
@@ -165,9 +164,9 @@ class AppSplashStore {
 
       await writeCachedUrl(url);
       await downloadToCache(url);
-      return readCachedArt();
+      return await readCachedArt();
     } catch (_) {
-      return readCachedArt();
+      return await readCachedArt();
     }
   }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\License;
+use App\Support\BusinessTypes;
 use App\Support\LicenceDefaults;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,17 +14,58 @@ use Illuminate\Support\Facades\Schema;
 
 class CustomerController extends Controller
 {
+    private function isDealer(): bool
+    {
+        return (int) Auth::user()->role_id === 2;
+    }
+
+    private function assertCustomerAccess(?User $customer): void
+    {
+        if (!$customer || (int) $customer->role_id !== 3) {
+            abort(404, 'Customer Not Found');
+        }
+        if ($this->isDealer() && (int) $customer->dealerId !== (int) Auth::id()) {
+            abort(403, 'You do not have access to this customer.');
+        }
+    }
+
+    private function resolveExpiryDate(int $validityDays, ?string $currentExpiry = null): string
+    {
+        // Always compute from today so renewals/edits set a predictable window.
+        return date('Y-m-d', strtotime(date('Y-m-d') . ' + ' . max(1, $validityDays) . ' days'));
+    }
+
     public function getAllCustomers(Request $request)
     {
     	if($request->ajax())
     	{
+            $hasBusinessType = Schema::hasColumn('licenses', 'businessType');
+            $btSelect = $hasBusinessType ? 'licenses.businessType' : "'' as businessType";
+
     		$data = User::join('licenses','licenses.userId','users.id')->where('licenses.userType','owner')
-            ->where('users.role_id',3);
-            if($request->dealer_id!=null)
-            {
-                $data = $data->where('dealerId',$request->dealer_id);
+            ->where('users.role_id',3)
+            ->select(
+                'users.id as userId',
+                'users.name',
+                'users.contact_number',
+                'users.shopName',
+                'users.dealerId',
+                'users.is_active',
+                'licenses.id as licenseId',
+                'licenses.licenseKey',
+                'licenses.mpin',
+                'licenses.expiryDate',
+                'licenses.licenseStatus',
+                'licenses.licenseType',
+                DB::raw($btSelect)
+            );
+
+            if ($this->isDealer()) {
+                $data = $data->where('users.dealerId', Auth::id());
+            } elseif ($request->dealer_id != null && $request->dealer_id !== '') {
+                $data = $data->where('users.dealerId', $request->dealer_id);
             }
-    		$data = $data->select('users.*','licenses.*');
+
     		return DataTables::of($data)
                 ->filterColumn('licenseKey', function ($query, $keyword) {
                     $query->whereRaw('LOWER(licenses.licenseKey) LIKE ?', ['%' . strtolower($keyword) . '%']);
@@ -58,9 +100,10 @@ class CustomerController extends Controller
     public function getEditPage($id)
     {
     	$data= User::join('licenses','licenses.userId','users.id')->where('users.id',$id)->where('licenses.userType','owner')
-    	->select('users.*','licenses.*','licenses.id as licenseId')->first();
+    	->select('users.*','licenses.*','licenses.id as licenseId','users.id as userId')->first();
     	if($data)
     	{
+            $this->assertCustomerAccess(User::find($id));
             $data->mpin = $data->mpin ?: LicenceDefaults::defaultMpin();
             $data->reportPin = $data->reportPin ?? LicenceDefaults::defaultReportPin();
             try {
@@ -85,6 +128,9 @@ class CustomerController extends Controller
 
     public function addCustomerRecord(Request $request)
     {
+        if ($this->isDealer()) {
+            $request->merge(['dealer_id' => Auth::id()]);
+        }
 
     	$validated = $request->validate([
             'dealer_id' => 'required',
@@ -103,10 +149,10 @@ class CustomerController extends Controller
     		'license_status' => 'required',
     		'payment_status' => 'required',
     		'amount' => 'required|numeric',
-    		'shop_image' => 'required|mimes:jpg,jpeg,png,gif'
+    		'shop_image' => 'required|mimes:jpg,jpeg,png,gif',
+            'business_type' => ['nullable', Rule::in(array_merge([''], BusinessTypes::ids()))],
     	]);
-    	$date = date('Y-m-d');
-    	$expiry_date = date('Y-m-d', strtotime($date. ' + '.$request->license_validity.' days'));
+    	$expiry_date = $this->resolveExpiryDate((int) $request->license_validity);
 
     	$data = new User();
         $data->dealerId = $request->dealer_id;
@@ -143,6 +189,7 @@ class CustomerController extends Controller
         $license->maxDevices = max(1, (int) ($request->max_devices ?? 5));
         $license->maxPrinters = max(0, (int) ($request->max_printers ?? 0));
         $license->mpin = LicenceDefaults::defaultMpin();
+        $this->applyBusinessType($license, $request);
         $license->save();
 
         return redirect('customers/edit/' . $data->id)->with([
@@ -158,6 +205,9 @@ class CustomerController extends Controller
     public function editCustomerRecord(Request $request, $id = null)
     {
         $customerId = $id ?: $request->input('id');
+        if ($this->isDealer()) {
+            $request->merge(['dealer_id' => Auth::id()]);
+        }
 
         $validated = $request->validate([
             'dealer_id' => 'required',
@@ -176,13 +226,12 @@ class CustomerController extends Controller
             'license_status' => 'required',
             'payment_status' => 'required',
             'amount' => 'required|numeric',
-            'shop_image' => 'nullable|mimes:jpg,jpeg,png,gif'
+            'shop_image' => 'nullable|mimes:jpg,jpeg,png,gif',
+            'business_type' => ['nullable', Rule::in(array_merge([''], BusinessTypes::ids()))],
         ]);
 
         $data = User::where('id', $customerId)->first();
-        if (!$data) {
-            return redirect()->back()->with('error', 'Customer not found');
-        }
+        $this->assertCustomerAccess($data);
 
         $data->dealerId = $request->dealer_id;
         $data->name = $request->name;
@@ -196,16 +245,13 @@ class CustomerController extends Controller
         }
         $data->save();
 
-        $date = optional($data->created_at)->format('Y-m-d') ?: date('Y-m-d');
-        $expiry_date = date('Y-m-d', strtotime($date . ' + ' . $request->license_validity . ' days'));
-
-        $license = License::where('id', $request->licenseId)->first();
+        $license = License::where('id', $request->licenseId)->where('userId', $customerId)->first();
         if ($license) {
             $license->licenseValidity = $request->license_validity;
             $license->licenseType = $request->license_type;
             $license->licenseStatus = $request->license_status;
             $license->paymentStatus = $request->payment_status;
-            $license->expiryDate = $expiry_date;
+            $license->expiryDate = $this->resolveExpiryDate((int) $request->license_validity, (string) $license->expiryDate);
             $license->amount = $request->amount;
             $license->fastBilling = $request->fast_billing ?? $license->fastBilling;
             $license->takeAway = $request->take_away ?? $license->takeAway;
@@ -215,6 +261,7 @@ class CustomerController extends Controller
             $license->maxUsers = max(1, (int) ($request->max_users ?? $license->maxUsers ?? 10));
             $license->maxDevices = max(1, (int) ($request->max_devices ?? $license->maxDevices ?? 5));
             $license->maxPrinters = max(0, (int) ($request->max_printers ?? $license->maxPrinters ?? 0));
+            $this->applyBusinessType($license, $request);
             $license->save();
         }
 
@@ -267,20 +314,28 @@ class CustomerController extends Controller
     {
         if ($request->ajax()) {
             $data = License::join('users', 'users.id', '=', 'licenses.userId')
-                ->select('licenses.*', 'users.name as customerName', 'users.shopName');
+                ->where('users.role_id', 3)
+                ->select(
+                    'licenses.*',
+                    'users.name as customerName',
+                    'users.shopName',
+                    'licenses.userName as branchName'
+                );
+
+            if ($this->isDealer()) {
+                $data = $data->where('users.dealerId', Auth::id());
+            }
 
             $customerFilter = $request->userId ?: $request->customer_id;
             if ($customerFilter) {
                 $data = $data->where('licenses.userId', $customerFilter);
-            } elseif (Auth::user()->role_id == 2) {
-                $data = $data->where('users.dealerId', Auth::id());
             }
 
             return DataTables::of($data)->make(true);
         }
 
         $customers = User::where('is_active', 1)->where('role_id', 3);
-        if (Auth::user()->role_id == 2) {
+        if ($this->isDealer()) {
             $customers = $customers->where('dealerId', Auth::id());
         }
         $customers = $customers->orderBy('name')->get();
@@ -291,13 +346,15 @@ class CustomerController extends Controller
     public function addLicensePage($id)
     {
         $data = User::find($id);
-        if($data)
-        {
-            return view('customers.add-license',compact('data'));
-        }
+        $this->assertCustomerAccess($data);
+        return view('customers.add-license', compact('data'));
     }
+
     public function addLicenseData(Request $request)
     {
+        $customer = User::find($request->id);
+        $this->assertCustomerAccess($customer);
+
         $validated = $request->validate([
             'name' => 'required',
             'user_type' => 'required',
@@ -306,10 +363,10 @@ class CustomerController extends Controller
             'license_status' => 'required',
             'payment_status' => 'required',
             'amount' => 'required|numeric',
+            'business_type' => ['nullable', Rule::in(array_merge([''], BusinessTypes::ids()))],
         ]);
 
-        $date = date('Y-m-d');
-        $expiry_date = date('Y-m-d', strtotime($date. ' + '.$request->license_validity.' days'));
+        $expiry_date = $this->resolveExpiryDate((int) $request->license_validity);
 
         $license = new License();
         $license->userId = $request->id;
@@ -331,6 +388,7 @@ class CustomerController extends Controller
         $license->maxDevices = max(1, (int) ($request->max_devices ?? 5));
         $license->maxPrinters = max(0, (int) ($request->max_printers ?? 0));
         $license->mpin = LicenceDefaults::defaultMpin();
+        $this->applyBusinessType($license, $request);
         $license->save();
 
         return redirect('customers/edit/'.$request->id)->with([
@@ -346,12 +404,12 @@ class CustomerController extends Controller
     public function editLicensePage($id)
     {
         $data = License::find($id);
-        if($data)
-        {
-            $storeOps = $this->storeOpsForLicense($data->id);
-            return view('customers.edit-license',compact('data','storeOps'));
+        if (!$data) {
+            return abort(404);
         }
-        return abort(404);
+        $this->assertCustomerAccess(User::find($data->userId));
+        $storeOps = $this->storeOpsForLicense($data->id);
+        return view('customers.edit-license', compact('data', 'storeOps'));
     }
 
     public function editLicenseData(Request $request)
@@ -364,49 +422,59 @@ class CustomerController extends Controller
             'license_status' => 'required',
             'payment_status' => 'required',
             'amount' => 'required|numeric',
+            'business_type' => ['nullable', Rule::in(array_merge([''], BusinessTypes::ids()))],
         ]);
 
         $license = License::find($request->id);
-        if($license)
-        {
-            $date = $license->created_at->format('Y-m-d');
-            $expiry_date = date('Y-m-d', strtotime($date. ' + '.$request->license_validity.' days'));
-
-            $license->licenseValidity = $request->license_validity;
-            $license->licenseType = $request->license_type;
-            $license->licenseStatus = $request->license_status;
-            $license->paymentStatus = $request->payment_status;
-            $license->expiryDate = $expiry_date;
-            $license->amount = $request->amount;
-            $license->userName = $request->name;
-            $license->userType = $request->user_type;
-            $license->fastBilling = $request->fast_billing ?? $license->fastBilling;
-            $license->takeAway = $request->take_away ?? $license->takeAway;
-            $license->dineIn = $request->dine_in ?? $license->dineIn;
-            $license->mess = $request->mess ?? $license->mess;
-            $license->userManagementEnabled = (int) ($request->user_management_enabled ?? $license->userManagementEnabled ?? 0);
-            $license->maxUsers = max(1, (int) ($request->max_users ?? $license->maxUsers ?? 10));
-            $license->maxDevices = max(1, (int) ($request->max_devices ?? $license->maxDevices ?? 5));
-            $license->maxPrinters = max(0, (int) ($request->max_printers ?? $license->maxPrinters ?? 0));
-            $license->save(); 
+        if (!$license) {
+            return redirect('customers/all-license')->with('error', 'License not found');
         }
-        return redirect('customers/edit/'.$license->userId)->with('success','App license key updated successfully');
+        $this->assertCustomerAccess(User::find($license->userId));
 
+        $license->licenseValidity = $request->license_validity;
+        $license->licenseType = $request->license_type;
+        $license->licenseStatus = $request->license_status;
+        $license->paymentStatus = $request->payment_status;
+        $license->expiryDate = $this->resolveExpiryDate((int) $request->license_validity, (string) $license->expiryDate);
+        $license->amount = $request->amount;
+        $license->userName = $request->name;
+        $license->userType = $request->user_type;
+        $license->fastBilling = $request->fast_billing ?? $license->fastBilling;
+        $license->takeAway = $request->take_away ?? $license->takeAway;
+        $license->dineIn = $request->dine_in ?? $license->dineIn;
+        $license->mess = $request->mess ?? $license->mess;
+        $license->userManagementEnabled = (int) ($request->user_management_enabled ?? $license->userManagementEnabled ?? 0);
+        $license->maxUsers = max(1, (int) ($request->max_users ?? $license->maxUsers ?? 10));
+        $license->maxDevices = max(1, (int) ($request->max_devices ?? $license->maxDevices ?? 5));
+        $license->maxPrinters = max(0, (int) ($request->max_printers ?? $license->maxPrinters ?? 0));
+        $this->applyBusinessType($license, $request);
+        $license->save();
+
+        return redirect('customers/edit/'.$license->userId)->with('success','App license key updated successfully');
     }
 
     public function deleteLicenseData($id)
     {
         $data = License::find($id);
-        if($data->licenseStatus=='active')
-        {
-            $data->licenseStatus='expired';
+        if (!$data) {
+            return redirect('customers/all-license')->with('error', 'License not found');
         }
-        else
-        {
-            $data->licenseStatus='active';
+        $this->assertCustomerAccess(User::find($data->userId));
+        if (strtolower((string) $data->licenseStatus) === 'active') {
+            $data->licenseStatus = 'expired';
+        } else {
+            $data->licenseStatus = 'active';
         }
         $data->save();
         return redirect('customers/edit/'.$data->userId)->with('success','App license key status changed successfully');
+    }
+
+    private function applyBusinessType(License $license, Request $request): void
+    {
+        if (!Schema::hasColumn('licenses', 'businessType')) {
+            return;
+        }
+        $license->businessType = BusinessTypes::normalize($request->input('business_type'));
     }
 
     private function storeOpsForLicense($licenseId)
@@ -416,11 +484,22 @@ class CustomerController extends Controller
             'devices' => collect(),
             'printers' => collect(),
             'routes' => collect(),
+            'billPaper' => null,
+            'kotPaper' => null,
         );
         if (empty($licenseId)) {
             return $empty;
         }
         try {
+            $billPaper = null;
+            $kotPaper = null;
+            if (Schema::hasTable('company_printer_setting')) {
+                $row = DB::table('company_printer_setting')->where('licenseId', $licenseId)->first();
+                if ($row) {
+                    $billPaper = $row->paperSize ?? null;
+                    $kotPaper = $row->kotPaperSize ?? $billPaper;
+                }
+            }
             return array(
                 'staff' => DB::table('pos_staff')->where('licenseId', $licenseId)
                     ->orderBy('name')->get(['id', 'name', 'mobileNumber', 'role', 'status', 'lastLoginAt']),
@@ -434,6 +513,8 @@ class CustomerController extends Controller
                     ),
                 'routes' => DB::table('printer_routes')->where('licenseId', $licenseId)
                     ->orderBy('id')->get(['printerId', 'documentType', 'foodTypeCode', 'categoryId']),
+                'billPaper' => $billPaper,
+                'kotPaper' => $kotPaper,
             );
         } catch (\Throwable $e) {
             return $empty;

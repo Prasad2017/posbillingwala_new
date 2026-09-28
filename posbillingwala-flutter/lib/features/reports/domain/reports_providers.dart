@@ -293,8 +293,8 @@ Future<List<Invoice>> loadPeriodInvoicesFromApi({
   if (allRecords) {
     cloud = await api.fetchInvoices(userId, staffScope: staffScoped);
   } else {
-    final rangeStart = start!;
-    final rangeEnd = end!;
+    final rangeStart = start;
+    final rangeEnd = end;
     final fmt = DateFormat('yyyy-MM-dd');
     /* ReportPeriod.range uses exclusive end — convert to inclusive endDate. */
     final inclusiveEnd = rangeEnd.subtract(const Duration(days: 1));
@@ -346,7 +346,7 @@ Future<List<Invoice>> loadPeriodInvoicesFromApi({
     return db.watchAllBillableInvoices(createdByStaffId: createdByStaffId).first;
   }
   return db
-      .watchInvoicesInRange(start!, end!, createdByStaffId: createdByStaffId)
+      .watchInvoicesInRange(start, end, createdByStaffId: createdByStaffId)
       .first;
 }
 

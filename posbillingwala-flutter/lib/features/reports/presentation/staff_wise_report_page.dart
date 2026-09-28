@@ -81,7 +81,7 @@ class StaffWiseReportPage extends ConsumerWidget {
           IconButton(
             tooltip: 'Export Excel',
             onPressed: () {
-              final rows = rowsAsync.valueOrNull;
+              final rows = rowsAsync.asData?.value;
               if (rows == null || rows.isEmpty) return;
               shareStaffSalesExcel(
                 rows: rows

@@ -7,7 +7,7 @@ import 'package:pos_billingwala_v2/features/print/domain/receipt_rasterizer.dart
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/features/print/domain/thermal_ticket.dart';
 
-/* Bill / KOT receipt content aligned with Android BluetoothPrint layouts. */
+/* Bill / KOT receipt — same data; layout fits 58mm / 80mm / A4. */
 class ReceiptBuilder {
   ReceiptBuilder(
     this.settings, {
@@ -19,8 +19,8 @@ class ReceiptBuilder {
   final ShopReceiptProfile shopProfile;
   final ReceiptLabels labels;
   final money = NumberFormat('#0.00');
-
-  /* Android bill date format. */
+  final dateFmt = DateFormat('dd-MM-yyyy');
+  final timeFmt = DateFormat('hh:mm a');
   final receiptBuilderDate = DateFormat('yyyy-MM-dd HH:mm:ss');
   final rasterizer = const ReceiptRasterizer();
 
@@ -29,7 +29,6 @@ class ReceiptBuilder {
   String qtyLabel(num qty, {String? unit}) =>
       ProductUnits.formatQty(qty.toDouble(), unit: unit);
 
-  /* Unicode-safe thermal bytes via ticket layout → bitmap (matches preview). */
   Future<List<int>> billPrintBytes({
     required Invoice invoice,
     required List<InvoiceItem> items,
@@ -37,6 +36,10 @@ class ReceiptBuilder {
     bool duplicate = false,
   }) {
     final logoPath = settings.logoUse ? shopProfile.logoLocalPath : null;
+    /* A4 is preview/share; thermal printers get 80mm layout of same data. */
+    final printSettings = settings.paperSize == PrinterPaperSize.a4
+        ? settings.copyWith(paperSize: PrinterPaperSize.inch3)
+        : settings;
     return rasterizer.encodeTicket(
       ticket(
         invoice: invoice,
@@ -44,7 +47,7 @@ class ReceiptBuilder {
         shopName: shopName,
         duplicate: duplicate,
       ),
-      settings: settings,
+      settings: printSettings,
       logoPath: logoPath,
       useAssetLogoFallback: false,
     );
@@ -90,7 +93,6 @@ class ReceiptBuilder {
     final amount = invoice.totalAmount > 0
         ? invoice.totalAmount
         : (invoice.upiAmount > 0 ? invoice.upiAmount : 0.0);
-    /* Android PaymentUpiQrHelper: QR only when payable amount > 0. */
     if (amount <= 0) return null;
     return buildUpiPayUri(
       upiId: shopProfile.upiId,
@@ -104,7 +106,24 @@ class ReceiptBuilder {
     );
   }
 
-  /* Android ORIGINAL / DUPLICATE bill layout (BluetoothPrint XML). */
+  String orderTypeLabel(Invoice invoice) {
+    final raw = invoice.invoiceType.trim().toLowerCase();
+    if (raw.contains('take')) return 'Takeaway';
+    if (raw.contains('fast')) return 'Fast Bill';
+    if (raw.contains('dine') || invoice.noOfTable.trim().isNotEmpty) {
+      return 'Dine-in';
+    }
+    if (raw.isEmpty) return 'Sale';
+    return invoice.invoiceType.trim();
+  }
+
+  /* Indian-number words for A4 (English); empty when amount is 0. */
+  String amountWords(num value) {
+    final n = value.round();
+    if (n <= 0) return '';
+    return '${_numberToWords(n)} Rupees Only';
+  }
+
   ThermalTicket ticket({
     required Invoice invoice,
     required List<InvoiceItem> items,
@@ -120,26 +139,53 @@ class ReceiptBuilder {
                 : 'Billingwala',
           ];
 
+    final when = invoice.invoiceDate;
+    final billNo = invoice.invoiceNumber.trim();
+    final table = invoice.noOfTable.trim();
+    final waiter = invoice.createdByStaffName.trim();
+    final type = orderTypeLabel(invoice);
+
     final meta = <String>[
-      'Bill No: ${invoice.invoiceNumber}',
-      '${labels.date}: ${receiptBuilderDate.format(invoice.invoiceDate)}',
+      '${labels.billNo}: $billNo',
+      '${labels.date}: ${dateFmt.format(when)}',
+      '${labels.time}: ${timeFmt.format(when)}',
     ];
-    if (invoice.noOfTable.trim().isNotEmpty) {
-      meta.add('Table No: ${invoice.noOfTable}');
+    if (table.isNotEmpty) meta.add('${labels.table}: $table');
+    if (waiter.isNotEmpty) meta.add('${labels.waiter}: $waiter');
+    meta.add('${labels.type}: $type');
+
+    final metaPairs = <(String, String)>[
+      (
+        '${labels.billNo}: $billNo',
+        '${labels.date}: ${dateFmt.format(when)}',
+      ),
+      (
+        '${labels.time}: ${timeFmt.format(when)}',
+        table.isNotEmpty ? '${labels.table}: $table' : '${labels.type}: $type',
+      ),
+    ];
+    if (waiter.isNotEmpty) {
+      metaPairs.add((
+        '${labels.waiter}: $waiter',
+        table.isNotEmpty ? '${labels.type}: $type' : '',
+      ));
+    } else if (table.isNotEmpty) {
+      metaPairs.add(('${labels.type}: $type', ''));
     }
-    final billedBy = invoice.createdByStaffName.trim();
-    if (billedBy.isNotEmpty) {
-      meta.add('Billed by: $billedBy');
-    }
+
+    final custName = invoice.customerName?.trim() ?? '';
+    final custMobile = invoice.customerMobile?.trim() ?? '';
+    final custEmail = invoice.customerEmail?.trim() ?? '';
+    final custAddress = invoice.customerAddress?.trim() ?? '';
     if (settings.customerUse) {
-      final name = invoice.customerName?.trim() ?? '';
-      final mobile = invoice.customerMobile?.trim() ?? '';
-      final email = invoice.customerEmail?.trim() ?? '';
-      final address = invoice.customerAddress?.trim() ?? '';
-      if (name.isNotEmpty) meta.add('${labels.customerName}: $name');
-      if (mobile.isNotEmpty) meta.add('${labels.customerMobile}: $mobile');
-      if (email.isNotEmpty) meta.add('${labels.customerEmail}: $email');
-      if (address.isNotEmpty) meta.add('${labels.customerAddress}: $address');
+      if (custName.isNotEmpty) meta.add('${labels.customerName}: $custName');
+      if (custMobile.isNotEmpty) {
+        meta.add('${labels.customerMobile}: $custMobile');
+      }
+      if (custEmail.isNotEmpty) meta.add('${labels.customerEmail}: $custEmail');
+      if (custAddress.isNotEmpty) {
+        meta.add('${labels.customerAddress}: $custAddress');
+      }
     }
 
     final lines = [
@@ -155,20 +201,27 @@ class ReceiptBuilder {
     final pairs = <(String, String)>[
       (labels.subTotal, rupee(invoice.subTotal)),
     ];
+    if (invoice.discount > 0) {
+      pairs.add(('${labels.discount} (-)', '-${rupee(invoice.discount)}'));
+    }
     final cgstPct = double.tryParse(shopProfile.shopCgst.trim()) ?? 0;
     final sgstPct = double.tryParse(shopProfile.shopSgst.trim()) ?? 0;
     final gstOn = shopProfile.gstEnabled && (cgstPct > 0 || sgstPct > 0);
     if (gstOn) {
+      final taxable = (invoice.subTotal - invoice.discount).clamp(0, double.infinity);
+      if (cgstPct > 0 || sgstPct > 0) {
+        pairs.add(('Taxable', rupee(taxable)));
+      }
       if (cgstPct > 0) {
         pairs.add((
-          'CGST@${money.format(cgstPct)}%',
-          rupee(invoice.subTotal * cgstPct / 100),
+          'CGST (${money.format(cgstPct)}%)',
+          rupee(taxable * cgstPct / 100),
         ));
       }
       if (sgstPct > 0) {
         pairs.add((
-          'SGST@${money.format(sgstPct)}%',
-          rupee(invoice.subTotal * sgstPct / 100),
+          'SGST (${money.format(sgstPct)}%)',
+          rupee(taxable * sgstPct / 100),
         ));
       }
     } else if (invoice.totalGstAmount > 0) {
@@ -176,24 +229,45 @@ class ReceiptBuilder {
       pairs.add(('CGST', rupee(half)));
       pairs.add(('SGST', rupee(half)));
     }
-    if (invoice.discount > 0) {
-      pairs.add((labels.discount, rupee(invoice.discount)));
-    }
     if (invoice.packingCharge > 0) {
       pairs.add((labels.packing, rupee(invoice.packingCharge)));
     }
-    pairs.add((labels.totalAmount, rupee(invoice.totalAmount.ceilToDouble())));
+
+    final grand = invoice.totalAmount.ceilToDouble();
+    final itemCount = items.fold<double>(
+      0,
+      (s, e) => s + e.productQuantity,
+    );
+
+    final upi = shopProfile.hasUpiId && settings.paymentUse
+        ? 'UPI: ${shopProfile.upiId}'
+        : '';
+
+    final footer = <String>[
+      labels.thankYou,
+      if (labels.poweredBy.trim().isNotEmpty) labels.poweredBy,
+      if (labels.website.trim().isNotEmpty) labels.website,
+    ];
 
     return ticketFromLabels(
       labels: labels,
       shopLines: shopLines,
       metaLines: meta,
+      metaPairs: metaPairs,
       duplicate: duplicate,
       items: lines,
       pairs: pairs,
-      footerLines: [labels.poweredBy, labels.website],
+      footerLines: footer,
+      totalItemsLine: '${labels.totalItems}: ${qtyLabel(itemCount)}',
+      grandTotalLabel: labels.grandTotal,
+      grandTotalValue: rupee(grand),
+      upiLine: upi,
       terms: settings.invoiceTerms,
       qrPayload: upiUriFor(invoice),
+      customerName: custName.isEmpty ? 'Walk-in Customer' : custName,
+      customerMobile: custMobile,
+      customerAddress: custAddress,
+      amountInWords: amountWords(grand),
     );
   }
 
@@ -249,5 +323,66 @@ class ReceiptBuilder {
     final space = width - left.runes.length - right.runes.length;
     final gap = space > 1 ? ' ' * space : ' ';
     return '$left$gap$right';
+  }
+
+  static String _numberToWords(int n) {
+    if (n == 0) return 'Zero';
+    const ones = [
+      '',
+      'One',
+      'Two',
+      'Three',
+      'Four',
+      'Five',
+      'Six',
+      'Seven',
+      'Eight',
+      'Nine',
+      'Ten',
+      'Eleven',
+      'Twelve',
+      'Thirteen',
+      'Fourteen',
+      'Fifteen',
+      'Sixteen',
+      'Seventeen',
+      'Eighteen',
+      'Nineteen',
+    ];
+    const tens = [
+      '',
+      '',
+      'Twenty',
+      'Thirty',
+      'Forty',
+      'Fifty',
+      'Sixty',
+      'Seventy',
+      'Eighty',
+      'Ninety',
+    ];
+    String underThousand(int x) {
+      if (x == 0) return '';
+      if (x < 20) return ones[x];
+      if (x < 100) {
+        final t = tens[x ~/ 10];
+        final o = ones[x % 10];
+        return o.isEmpty ? t : '$t $o';
+      }
+      final h = ones[x ~/ 100];
+      final rest = underThousand(x % 100);
+      return rest.isEmpty ? '$h Hundred' : '$h Hundred $rest';
+    }
+
+    final crore = n ~/ 10000000;
+    final lakh = (n % 10000000) ~/ 100000;
+    final thousand = (n % 100000) ~/ 1000;
+    final rem = n % 1000;
+    final parts = <String>[];
+    if (crore > 0) parts.add('${underThousand(crore)} Crore');
+    if (lakh > 0) parts.add('${underThousand(lakh)} Lakh');
+    if (thousand > 0) parts.add('${underThousand(thousand)} Thousand');
+    if (rem > 0) parts.add(underThousand(rem));
+    return parts.join(' ');
   }
 }

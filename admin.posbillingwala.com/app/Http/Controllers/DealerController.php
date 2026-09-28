@@ -11,6 +11,17 @@ use Illuminate\Validation\Rule;
 
 class DealerController extends Controller
 {
+	public function __construct()
+	{
+		$this->middleware('auth');
+		$this->middleware(function ($request, $next) {
+			if ((int) Auth::user()->role_id !== 1) {
+				abort(403);
+			}
+			return $next($request);
+		});
+	}
+
 	public function getEditRecordPage($id)
 	{
 		$data = User::find($id);

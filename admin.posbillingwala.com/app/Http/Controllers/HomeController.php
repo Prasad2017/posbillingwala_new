@@ -83,9 +83,16 @@ class HomeController extends Controller
                     'totalCustomersTrend' => $kpis['totalCustomerTrendLabel'],
                     'itemsSoldTrend' => AdminMetrics::trendLabel(AdminMetrics::pctChange($itemsToday, $itemsYesterday), true) . ' vs previous day',
                     'hourlySales' => AdminMetrics::salesByHour($dateStr, $filters),
+                    'salesTrend' => AdminMetrics::salesTrendDays(7, $filters),
                     'topCategories' => AdminMetrics::topSellingCategories($dateStr, $dateStr, 5, $filters),
                     'paymentSummary' => AdminMetrics::paymentSummary($dateStr, $dateStr, $filters),
                     'recentInvoices' => AdminMetrics::recentInvoices(10, '', $dateStr, $filters),
+                    'licenseKpis' => [
+                        'activeLicenses' => $kpis['activeLicenses'] ?? 0,
+                        'trialLicenses' => $kpis['trialLicenses'] ?? 0,
+                        'expiringLicenses' => $kpis['expiringLicenses'] ?? 0,
+                        'expiredLicenses' => $kpis['expiredLicenses'] ?? 0,
+                    ],
                 ];
             } catch (\Throwable $e) {
                 \Log::error('Admin dashboard failed: ' . $e->getMessage(), [
@@ -127,28 +134,52 @@ class HomeController extends Controller
                 ];
                 $dealerSales = ['dealers' => [], 'totalSales' => 0];
                 $recentCustomers = [];
+                $filters = AdminMetrics::parseDashboardFilters($request->only(['dealer_id', 'customer_id', 'payment']));
+                $dealers = User::where('role_id', 2)->where('is_active', 1)->orderBy('name')->get(['id', 'name']);
+                $customersQuery = User::where('role_id', 3)->where('is_active', 1);
+                if (($filters['dealer_id'] ?? 0) > 0) {
+                    $customersQuery->where('dealerId', $filters['dealer_id']);
+                }
+                $customers = $customersQuery->orderBy('name')->get(['id', 'name', 'shopName']);
                 $dashboard = [
                     'selectedDate' => date('Y-m-d'),
-                    'filters' => AdminMetrics::parseDashboardFilters([]),
+                    'filters' => $filters,
                     'periodLabel' => 'Today, ' . date('d M Y'),
                     'chartPeriodLabel' => 'Today',
-                    'totalDealers' => 0,
+                    'totalDealers' => $kpis['totalDealer'],
                     'totalSales' => 0,
                     'totalBills' => 0,
-                    'totalCustomers' => 0,
+                    'totalCustomers' => $kpis['totalCustomer'],
                     'itemsSold' => 0,
                     'totalSalesTrend' => '↑ 0.0% vs yesterday',
                     'totalBillsTrend' => '↑ 0.0% vs yesterday',
                     'totalCustomersTrend' => '↑ 0.0%',
                     'itemsSoldTrend' => '↑ 0.0% vs yesterday',
                     'hourlySales' => [],
+                    'salesTrend' => AdminMetrics::salesTrendDays(7, $filters),
                     'topCategories' => [],
                     'paymentSummary' => ['items' => [], 'grandTotal' => 0],
                     'recentInvoices' => [],
+                    'licenseKpis' => [
+                        'activeLicenses' => 0,
+                        'trialLicenses' => 0,
+                        'expiringLicenses' => 0,
+                        'expiredLicenses' => 0,
+                    ],
                 ];
             }
-            $dealers = User::where('role_id', 2)->where('is_active', 1)->orderBy('name')->get(['id', 'name']);
-            $customers = User::where('role_id', 3)->where('is_active', 1)->orderBy('name')->get(['id', 'name', 'shopName']);
+            // Keep dealer-filtered customer dropdown (do not overwrite after metrics load)
+            if (!isset($dealers)) {
+                $dealers = User::where('role_id', 2)->where('is_active', 1)->orderBy('name')->get(['id', 'name']);
+            }
+            if (!isset($customers)) {
+                $filters = $dashboard['filters'] ?? AdminMetrics::parseDashboardFilters([]);
+                $customersQuery = User::where('role_id', 3)->where('is_active', 1);
+                if (($filters['dealer_id'] ?? 0) > 0) {
+                    $customersQuery->where('dealerId', $filters['dealer_id']);
+                }
+                $customers = $customersQuery->orderBy('name')->get(['id', 'name', 'shopName']);
+            }
             $filters = $dashboard['filters'] ?? AdminMetrics::parseDashboardFilters([]);
             return view('home', compact('users', 'kpis', 'dealerSales', 'recentCustomers', 'dashboard', 'dealers', 'customers', 'filters'));
         }
@@ -192,6 +223,7 @@ class HomeController extends Controller
             $dealerSales = ['dealers' => [], 'totalSales' => 0];
             $recentCustomers = AdminMetrics::recentCustomers(8, (int) Auth::id());
             $totalCustomers = User::where('role_id', 3)->where('dealerId', Auth::id())->count();
+            $licenseKpis = AdminMetrics::dealerLicenseKpis((int) Auth::id());
 
             $periodLabel = $selectedDate->isToday()
                 ? 'Today, ' . $selectedDate->format('d M Y')
@@ -212,11 +244,13 @@ class HomeController extends Controller
                 'totalCustomersTrend' => 'Your network',
                 'itemsSoldTrend' => AdminMetrics::trendLabel(AdminMetrics::pctChange($itemsToday, $itemsYesterday), true) . ' vs previous day',
                 'hourlySales' => AdminMetrics::salesByHour($dateStr, $filters),
+                'salesTrend' => AdminMetrics::salesTrendDays(7, $filters),
                 'topCategories' => AdminMetrics::topSellingCategories($dateStr, $dateStr, 5, $filters),
                 'paymentSummary' => AdminMetrics::paymentSummary($dateStr, $dateStr, $filters),
                 'recentInvoices' => AdminMetrics::recentInvoices(10, '', $dateStr, $filters),
+                'licenseKpis' => $licenseKpis,
             ];
-            $kpis = [];
+            $kpis = $licenseKpis;
             $users = collect();
             return view('home', compact('users', 'kpis', 'dealerSales', 'recentCustomers', 'dashboard', 'dealers', 'customers', 'filters', 'isDealerDashboard'));
         }

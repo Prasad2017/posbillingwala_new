@@ -9,6 +9,7 @@ import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_image_share.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/a4_invoice_ticket.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/woosim_ticket.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -66,8 +67,9 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
           shopName: shopName,
           duplicate: widget.duplicate,
         );
-        final is3Inch = settings.paperSize == PrinterPaperSize.inch3;
-        final widthMm = is3Inch ? 72.0 : 48.0;
+        final paper = settings.paperSize;
+        final isA4 = paper == PrinterPaperSize.a4;
+        final widthMm = paper == PrinterPaperSize.inch2 ? 48.0 : 72.0;
 
         return Scaffold(
           backgroundColor: Colors.transparent,
@@ -92,9 +94,11 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
                     child: Center(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
-                          maxWidth: AppBreakpoints.contentMaxWidthFor(
-                            AppWidthClass.mobile,
-                          ),
+                          maxWidth: isA4
+                              ? A4InvoiceTicket.pageW + 24
+                              : AppBreakpoints.contentMaxWidthFor(
+                                  AppWidthClass.mobile,
+                                ),
                         ),
                         child: DecoratedBox(
                         decoration: BoxDecoration(
@@ -103,12 +107,18 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
                         ),
                         child: RepaintBoundary(
                           key: ticketKey,
-                          child: WoosimTicket(
-                            ticket: ticket,
-                            widthMm: widthMm,
-                            showLogo: settings.logoUse,
-                            logoPath: shop.logoLocalPath,
-                          ),
+                          child: isA4
+                              ? A4InvoiceTicket(
+                                  ticket: ticket,
+                                  showLogo: settings.logoUse,
+                                  logoPath: shop.logoLocalPath,
+                                )
+                              : WoosimTicket(
+                                  ticket: ticket,
+                                  widthMm: widthMm,
+                                  showLogo: settings.logoUse,
+                                  logoPath: shop.logoLocalPath,
+                                ),
                         ),
                       ),
                       ),

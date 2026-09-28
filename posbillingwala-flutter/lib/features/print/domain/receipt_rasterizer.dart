@@ -19,13 +19,13 @@ import 'package:qr_flutter/qr_flutter.dart';
 class ReceiptRasterizer {
   const ReceiptRasterizer();
 
-  /* Android effective widths: 2″ → 48*8=384, 3″ → 72*8=576. */
+  /* Android effective widths: 2″ → 48*8=384, 3″ → 72*8=576. A4 share uses 3″. */
   static int widthPxFor(PrinterPaperSize size) =>
-      size == PrinterPaperSize.inch3 ? 576 : 384;
+      size == PrinterPaperSize.inch2 ? 384 : 576;
 
   /* Scale WoosimTicket (mm×3.78 preview) metrics onto printer pixel width. */
   static double previewScale(PrinterPaperSize size) {
-    final widthMm = size == PrinterPaperSize.inch3 ? 72.0 : 48.0;
+    final widthMm = size == PrinterPaperSize.inch2 ? 48.0 : 72.0;
     return widthPxFor(size) / (widthMm * 3.78);
   }
 
@@ -146,7 +146,7 @@ class ReceiptRasterizer {
     String? logoPath,
     bool useAssetLogoFallback = false,
   }) async {
-    final is2Inch = paperSize != PrinterPaperSize.inch3;
+    final is2Inch = paperSize == PrinterPaperSize.inch2;
     final hPad = is2Inch ? 6.0 : 8.0;
     /* Match invoice / [renderTicket] absolute pt sizes. */
     final shopSize = is2Inch ? 20.0 : 24.0;
@@ -323,19 +323,24 @@ class ReceiptRasterizer {
     String? logoPath,
     bool useAssetLogoFallback = false,
   }) async {
-    final is2Inch = paperSize != PrinterPaperSize.inch3;
-    final colScale = previewScale(paperSize) * 0.72;
+    final is2Inch = paperSize == PrinterPaperSize.inch2;
+    final colScale = previewScale(
+      paperSize == PrinterPaperSize.a4
+          ? PrinterPaperSize.inch3
+          : paperSize,
+    ) * 0.72;
     final hPad = is2Inch ? 6.0 : 8.0;
-    final rateW = (is2Inch ? 48.0 : 64.0) * colScale;
+    final qtyW = (is2Inch ? 36.0 : 44.0) * colScale;
+    final rateW = (is2Inch ? 48.0 : 60.0) * colScale;
     final amountW = (is2Inch ? 56.0 : 72.0) * colScale;
-    /* Absolute pt — full previewScale (~2.1×) made print look oversized. */
     final shopSize = is2Inch ? 20.0 : 24.0;
-    final bodySize = is2Inch ? 17.0 : 20.0;
+    final bodySize = is2Inch ? 16.0 : 19.0;
     final bannerSize = is2Inch ? 15.0 : 17.0;
     final lineGap = is2Inch ? 2.0 : 2.5;
     final sectionGap = is2Inch ? 3.5 : 4.5;
     final contentW = widthPx - hPad * 2;
-    final itemColW = (contentW - rateW - amountW).clamp(40.0, contentW);
+    final itemColW =
+        (contentW - qtyW - rateW - amountW).clamp(40.0, contentW);
 
     TextStyle style({
       double? size,
@@ -378,22 +383,39 @@ class ReceiptRasterizer {
       );
     }
 
-    for (final line in ticket.metaLines) {
-      y = _paintLeft(
-        ops,
-        line,
-        style(),
-        left: hPad,
-        maxWidth: contentW,
-        y: y,
-        gap: lineGap,
-      );
+    final usePairs = !is2Inch && ticket.metaPairs.isNotEmpty;
+    if (usePairs) {
+      for (final pair in ticket.metaPairs) {
+        if (pair.$1.isEmpty && pair.$2.isEmpty) continue;
+        y = _paintPair(
+          ops,
+          left: pair.$1,
+          right: pair.$2,
+          style: style(),
+          leftPad: hPad,
+          maxWidth: contentW,
+          y: y,
+          gap: lineGap,
+        );
+      }
+    } else {
+      for (final line in ticket.metaLines) {
+        y = _paintLeft(
+          ops,
+          line,
+          style(),
+          left: hPad,
+          maxWidth: contentW,
+          y: y,
+          gap: lineGap,
+        );
+      }
     }
 
     y = _paintCentered(
       ops,
       ticket.copyBanner,
-      style(size: bannerSize, weight: FontWeight.w500),
+      style(size: bannerSize, weight: FontWeight.w600),
       widthPx: widthPx,
       maxWidth: contentW,
       y: y + lineGap,
@@ -409,6 +431,7 @@ class ReceiptRasterizer {
       gap: lineGap,
       cells: [
         _Col(ticket.colItem, itemColW, TextAlign.left, FontWeight.w700),
+        _Col(ticket.colQty, qtyW, TextAlign.center, FontWeight.w700),
         _Col(ticket.colRate, rateW, TextAlign.center, FontWeight.w700),
         _Col(ticket.colAmount, amountW, TextAlign.right, FontWeight.w700),
       ],
@@ -418,22 +441,14 @@ class ReceiptRasterizer {
     y = _paintRule(ops, left: hPad, width: contentW, y: y);
 
     for (final item in ticket.items) {
-      y = _paintLeft(
-        ops,
-        item.name,
-        style(weight: FontWeight.w500),
-        left: hPad,
-        maxWidth: contentW,
-        y: y + lineGap,
-        gap: 0,
-      );
       y = _paintColumns(
         ops,
         left: hPad,
-        y: y,
+        y: y + lineGap,
         gap: sectionGap,
         cells: [
-          _Col('X${item.qty}', itemColW, TextAlign.left, FontWeight.w500),
+          _Col(item.name, itemColW, TextAlign.left, FontWeight.w500),
+          _Col(item.qty, qtyW, TextAlign.center, FontWeight.w500),
           _Col(item.rate, rateW, TextAlign.center, FontWeight.w500),
           _Col(item.amount, amountW, TextAlign.right, FontWeight.w500),
         ],
@@ -442,6 +457,18 @@ class ReceiptRasterizer {
     }
 
     y = _paintRule(ops, left: hPad, width: contentW, y: y);
+
+    if (ticket.totalItemsLine.trim().isNotEmpty) {
+      y = _paintLeft(
+        ops,
+        ticket.totalItemsLine.trim(),
+        style(weight: FontWeight.w600),
+        left: hPad,
+        maxWidth: contentW,
+        y: y,
+        gap: sectionGap,
+      );
+    }
 
     for (final pair in ticket.pairs) {
       y = _paintPair(
@@ -456,7 +483,44 @@ class ReceiptRasterizer {
       );
     }
 
+    if (ticket.grandTotalLabel.trim().isNotEmpty) {
+      final gtStyle = style(size: bodySize + 2, weight: FontWeight.w800);
+      final leftP = TextPainter(
+        text: TextSpan(text: ticket.grandTotalLabel, style: gtStyle),
+        textDirection: TextDirection.ltr,
+        locale: const Locale('hi', 'IN'),
+      )..layout(maxWidth: contentW * 0.6);
+      final rightP = TextPainter(
+        text: TextSpan(text: ticket.grandTotalValue, style: gtStyle),
+        textDirection: TextDirection.ltr,
+        locale: const Locale('hi', 'IN'),
+      )..layout();
+      final barH = (leftP.height > rightP.height ? leftP.height : rightP.height) + 10;
+      ops.add(_PaintOp.fill(hPad, y, contentW, barH, const Color(0xFFE3F2FD)));
+      ops.add(_PaintOp.text(leftP, hPad + 4, y + 5));
+      ops.add(
+        _PaintOp.text(
+          rightP,
+          hPad + contentW - rightP.width - 4,
+          y + 5,
+        ),
+      );
+      y += barH + sectionGap;
+    }
+
     y = _paintRule(ops, left: hPad, width: contentW, y: y);
+
+    if (ticket.upiLine.trim().isNotEmpty) {
+      y = _paintCentered(
+        ops,
+        ticket.upiLine.trim(),
+        style(weight: FontWeight.w600),
+        widthPx: widthPx,
+        maxWidth: contentW,
+        y: y + lineGap,
+        gap: sectionGap,
+      );
+    }
 
     if (ticket.terms.trim().isNotEmpty) {
       y = _paintCentered(
@@ -472,7 +536,7 @@ class ReceiptRasterizer {
 
     final qr = ticket.qrPayload?.trim() ?? '';
     if (qr.isNotEmpty) {
-      final qrSize = (widthPx * 0.42).clamp(100.0, is2Inch ? 160.0 : 200.0);
+      final qrSize = (widthPx * 0.38).clamp(90.0, is2Inch ? 140.0 : 180.0);
       y += sectionGap;
       ops.add(
         _PaintOp.qr(qr, (widthPx - qrSize) / 2, y, qrSize),
@@ -650,7 +714,7 @@ class ReceiptRasterizer {
     String? qrMarker,
     bool useAssetLogoFallback = false,
   }) async {
-    final is2Inch = paperSize != PrinterPaperSize.inch3;
+    final is2Inch = paperSize == PrinterPaperSize.inch2;
     /* Match [renderTicket] / bill print absolute pt sizes. */
     final bodySize = is2Inch ? 17.0 : 20.0;
     final lineHeight = 1.15;
@@ -863,7 +927,7 @@ class _Col {
   final FontWeight weight;
 }
 
-enum _PaintKind { text, rule, image, qr }
+enum _PaintKind { text, rule, image, qr, fill }
 
 class _PaintOp {
   _PaintOp._({
@@ -871,6 +935,7 @@ class _PaintOp {
     this.painter,
     this.image,
     this.qrData,
+    this.fillColor,
     required this.x,
     required this.y,
     this.w = 0,
@@ -883,6 +948,22 @@ class _PaintOp {
   factory _PaintOp.rule(double x, double y, double width) =>
       _PaintOp._(kind: _PaintKind.rule, x: x, y: y, w: width, h: 1);
 
+  factory _PaintOp.fill(
+    double x,
+    double y,
+    double width,
+    double height,
+    Color color,
+  ) =>
+      _PaintOp._(
+        kind: _PaintKind.fill,
+        x: x,
+        y: y,
+        w: width,
+        h: height,
+        fillColor: color,
+      );
+
   factory _PaintOp.image(ui.Image image, double x, double y) =>
       _PaintOp._(kind: _PaintKind.image, image: image, x: x, y: y);
 
@@ -893,6 +974,7 @@ class _PaintOp {
   final TextPainter? painter;
   final ui.Image? image;
   final String? qrData;
+  final Color? fillColor;
   final double x;
   final double y;
   final double w;
@@ -906,6 +988,11 @@ class _PaintOp {
         canvas.drawRect(
           Rect.fromLTWH(x, y, w, h < 1 ? 1 : h),
           Paint()..color = const Color(0xFF000000),
+        );
+      case _PaintKind.fill:
+        canvas.drawRect(
+          Rect.fromLTWH(x, y, w, h),
+          Paint()..color = fillColor ?? const Color(0xFFE0E0E0),
         );
       case _PaintKind.image:
         if (image != null) {

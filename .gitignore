@@ -49,6 +49,17 @@ Thumbs.db
 **/GoogleService-Info.plist
 *.keystore
 *.jks
+*.zip
+*.tar.gz
+*.tar
+*.tar.bz2
+*.tar.xz
+*.tar.lzma
+*.tar.lz
+*.tar.lzo
+*.tar.lrz
+*.tar.lzo
+*.tar.lzos
 !PosBillingwala.jks
 API/license_signing_private.pem
 # google-services.json is tracked for Firebase builds (Dealer/Owner/WithTable)

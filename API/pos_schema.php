@@ -24,9 +24,15 @@ if (!function_exists('pos_schema_add_column')) {
 }
 
 if (!function_exists('pos_normalize_paper_size')) {
-    function pos_normalize_paper_size($raw)
+    /**
+     * @param bool $allowA4 Bill layout may be A4 (preview/share). KOT / thermal store printers stay 2/3-Inch.
+     */
+    function pos_normalize_paper_size($raw, $allowA4 = false)
     {
         $n = strtolower(preg_replace('/\s+/', '', (string) $raw));
+        if ($n !== '' && (strpos($n, 'a4') !== false || $n === '4')) {
+            return $allowA4 ? 'A4' : '3-Inch';
+        }
         if ($n !== '' && strpos($n, '3') !== false) {
             return '3-Inch';
         }

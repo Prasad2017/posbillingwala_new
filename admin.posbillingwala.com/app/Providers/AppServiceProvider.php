@@ -42,36 +42,16 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureRequestUrls(): void
     {
-        if ($this->app->runningInConsole()) {
-            if ($root = config('app.url')) {
-                URL::forceRootUrl(rtrim($root, '/'));
-            }
-
-            return;
+        /* Always follow .env APP_URL (and ASSET_URL via config) — never request host. */
+        $root = rtrim((string) config('app.url'), '/');
+        if ($root !== '') {
+            URL::forceRootUrl($root);
         }
 
-        $request = request();
-        if (! $request || ! $request->getHttpHost()) {
-            return;
-        }
-
-        $configured = rtrim((string) config('app.url'), '/');
-        $configuredHost = $configured ? (parse_url($configured, PHP_URL_HOST) ?: '') : '';
-        $requestHost = $request->getHost();
-        $requestRoot = $request->getSchemeAndHttpHost();
-
-        $assetUrl = (string) env('ASSET_URL', '');
-        $assetHost = $assetUrl ? (parse_url($assetUrl, PHP_URL_HOST) ?: '') : '';
-
-        // Wrong ASSET_URL in .env (old /adminpanel path or different domain) breaks CSS on subdomains.
-        if ($assetHost !== '' && strcasecmp($assetHost, $requestHost) !== 0) {
-            config(['app.asset_url' => null]);
-        }
-
-        if ($configuredHost === '' || strcasecmp($configuredHost, $requestHost) !== 0) {
-            URL::forceRootUrl($requestRoot);
-        } elseif ($configured !== '') {
-            URL::forceRootUrl($configured);
+        /* If APP_URL is https://..., never emit http://asset links (mixed content blocks CSS). */
+        $scheme = parse_url($root, PHP_URL_SCHEME);
+        if (is_string($scheme) && strtolower($scheme) === 'https') {
+            URL::forceScheme('https');
         }
     }
 }

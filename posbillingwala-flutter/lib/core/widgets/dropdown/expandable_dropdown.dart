@@ -179,10 +179,13 @@ class ExpandableDropdownFieldState<T>
       onTapOutside: (_) => closeDropdown(),
       child: Container(
         decoration: BoxDecoration(
-          color: context.cardColor,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: widget.hasError ? AppColors.danger : context.borderColor,
+            color: widget.hasError
+                ? AppColors.danger
+                : AppColors.border.withValues(alpha: .9),
+            width: widget.hasError ? 1.4 : 1.2,
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -221,7 +224,7 @@ class ExpandableDropdownFieldState<T>
               ),
             ),
             if (expanded) ...[
-              Divider(height: 1, color: context.borderColor),
+              Divider(height: 1, color: AppColors.border.withValues(alpha: .9)),
               if (widget.enableSearch && !widget.fitContent)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),

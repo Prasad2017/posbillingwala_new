@@ -1,4 +1,6 @@
 @php
+    use App\Support\BusinessTypes;
+
     $lv = old('license_validity', isset($license) ? $license->licenseValidity : null);
     $lt = old('license_type', isset($license) ? strtolower((string) $license->licenseType) : 'regular');
     $ls = old('license_status', isset($license) ? $license->licenseStatus : 'active');
@@ -8,10 +10,12 @@
     $di = old('dine_in', isset($license) ? $license->dineIn : 0);
     $ta = old('take_away', isset($license) ? $license->takeAway : 1);
     $ms = old('mess', isset($license) ? ($license->mess ?? 0) : 0);
+    $bt = old('business_type', isset($license) ? ($license->businessType ?? '') : '');
     $um = old('user_management_enabled', isset($license) ? ($license->userManagementEnabled ?? 0) : 0);
     $maxUsers = old('max_users', isset($license) ? ($license->maxUsers ?? 10) : 10);
     $maxDevices = old('max_devices', isset($license) ? ($license->maxDevices ?? 5) : 5);
     $maxPrinters = old('max_printers', isset($license) ? ($license->maxPrinters ?? 0) : 0);
+    $businessOptions = BusinessTypes::options();
 
     $regularTiers = ['183', '365', '1095', '1825', '10958'];
     $lvStr = (string) $lv;
@@ -77,6 +81,20 @@
         <span class="input-group-text bg-transparent"><i class='bx bx-rupee'></i></span>
         <input type="text" name="amount" id="license_amount" placeholder="Amount" class="form-control border-start-0" value="{{ $amt }}">
     </div>
+</div>
+
+<div class="col-lg-4">
+    <label class="form-label" for="business_type">Business Type (POS)</label>
+    <div class="input-group pb-input-group">
+        <span class="input-group-text bg-transparent"><i class='bx bx-store-alt'></i></span>
+        <select class="form-select pb-select-search" id="business_type" name="business_type" data-placeholder="Select business type">
+            <option value="">Not set (customer chooses in POS)</option>
+            @foreach($businessOptions as $id => $label)
+                <option value="{{ $id }}" @if((string)$bt === (string)$id) selected @endif>{{ $label }}</option>
+            @endforeach
+        </select>
+    </div>
+    <small class="text-secondary">Same 17 types as Flutter POS — drives menus &amp; modules.</small>
 </div>
 
 <div class="col-lg-4">

@@ -80,11 +80,14 @@ try {
     }
 
     $existing = is_array($check) ? $check : array();
-    $paperSize = pos_normalize_paper_size($post('paperSize', isset($existing['paperSize']) ? $existing['paperSize'] : '2-Inch'));
+    $paperSize = pos_normalize_paper_size(
+        $post('paperSize', isset($existing['paperSize']) ? $existing['paperSize'] : '2-Inch'),
+        true
+    );
     $kotPaperFallback = isset($existing['kotPaperSize']) && $existing['kotPaperSize'] !== ''
         ? $existing['kotPaperSize']
         : (isset($existing['paperSize']) ? $existing['paperSize'] : '2-Inch');
-    $kotPaperSize = pos_normalize_paper_size($post('kotPaperSize', $kotPaperFallback));
+    $kotPaperSize = pos_normalize_paper_size($post('kotPaperSize', $kotPaperFallback), false);
     $billConnectionType = pos_normalize_connection_type(
         $post('billConnectionType', isset($existing['billConnectionType']) ? $existing['billConnectionType'] : 'BLUETOOTH'),
         isset($existing['billConnectionType']) ? $existing['billConnectionType'] : 'BLUETOOTH'

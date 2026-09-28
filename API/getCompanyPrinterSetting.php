@@ -54,10 +54,10 @@ $i=0;
         $getdata["kotAutoPrint"]=isset($row['kotAutoPrint']) && $row['kotAutoPrint']!=='' ? $row['kotAutoPrint'] : "off";
         $getdata["kotPreview"]=isset($row['kotPreview']) && $row['kotPreview']!=='' ? $row['kotPreview'] : "on";
         $getdata["printFastBill"]=isset($row['printFastBill']) && $row['printFastBill']!=='' ? $row['printFastBill'] : "off";
-        $getdata["paperSize"]=isset($row['paperSize']) ? pos_normalize_paper_size($row['paperSize']) : "2-Inch";
+        $getdata["paperSize"]=isset($row['paperSize']) ? pos_normalize_paper_size($row['paperSize'], true) : "2-Inch";
         $getdata["kotPaperSize"]=isset($row['kotPaperSize']) && $row['kotPaperSize']!==''
-            ? pos_normalize_paper_size($row['kotPaperSize'])
-            : $getdata["paperSize"];
+            ? pos_normalize_paper_size($row['kotPaperSize'], false)
+            : pos_normalize_paper_size($getdata["paperSize"], false);
         $getdata["billConnectionType"]=isset($row['billConnectionType']) ? pos_normalize_connection_type($row['billConnectionType']) : "BLUETOOTH";
         $getdata["kotConnectionType"]=isset($row['kotConnectionType']) ? pos_normalize_connection_type($row['kotConnectionType']) : "BLUETOOTH";
         $getdata["billUsbIdentifier"]=isset($row['billUsbIdentifier']) && $row['billUsbIdentifier']!=null ? $row['billUsbIdentifier'] : "";

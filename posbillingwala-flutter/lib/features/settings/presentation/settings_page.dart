@@ -360,7 +360,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           paperSize: PrinterPaperSizeX.fromDb(p.paperSize),
           kotPaperSize: PrinterPaperSizeX.fromDb(
             p.kotPaperSize.isEmpty ? p.paperSize : p.kotPaperSize,
-          ),
+          ).thermalEquivalent,
           billTransport: PosPrinterTransportX.fromLocalStorage(
             p.billConnectionType,
           ),
@@ -665,6 +665,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   Widget typeAndSizeBlock({
     required String stringsPaper2,
     required String stringsPaper3,
+    String stringsPaperA4 = 'A4',
     required PosPrinterTransport transport,
     required PrinterPaperSize paperSize,
     required String statusLine,
@@ -673,6 +674,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     required ValueChanged<PrinterPaperSize> onPaper,
     required VoidCallback onConnect,
     required VoidCallback onDisconnect,
+    bool allowA4 = false,
   }) {
     final type = localTransport(transport);
     return Column(
@@ -712,8 +714,17 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
               value: PrinterPaperSize.inch3,
               label: Text(stringsPaper3),
             ),
+            if (allowA4)
+              ButtonSegment(
+                value: PrinterPaperSize.a4,
+                label: Text(stringsPaperA4),
+              ),
           ],
-          selected: {paperSize},
+          selected: {
+            allowA4
+                ? paperSize
+                : paperSize.thermalEquivalent,
+          },
           onSelectionChanged: (v) => onPaper(v.first),
         ),
         const SizedBox(height: 8),
@@ -791,6 +802,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                         typeAndSizeBlock(
                           stringsPaper2: strings.paper2Inch,
                           stringsPaper3: strings.paper3Inch,
+                          stringsPaperA4: 'A4',
+                          allowA4: true,
                           transport: settings.billTransport,
                           paperSize: settings.paperSize,
                           statusLine: billPicked,

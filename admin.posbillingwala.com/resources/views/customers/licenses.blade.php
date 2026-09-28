@@ -32,6 +32,7 @@
                                 <th>Customer</th>
                                 <th>Shop</th>
                                 <th>License Key</th>
+                                <th>Business Type</th>
                                 <th>User Type</th>
                                 <th>Branch</th>
                                 <th>Expiry</th>
@@ -71,6 +72,11 @@ function myTable() {
             { mData: "customerName", bSortable: false },
             { mData: "shopName", bSortable: false },
             { mData: "licenseKey", bSortable: false },
+            { mData: "businessType", bSortable: false, mRender: function(data) {
+                var map = @json(\App\Support\BusinessTypes::options());
+                if (!data) return '<span class="text-secondary">—</span>';
+                return map[data] || data;
+            }},
             { mData: "userType", bSortable: false },
             { mData: "branchName", bSortable: false, mRender: function(data){ return data || '-'; } },
             { mData: "expiryDate", bSortable: false },

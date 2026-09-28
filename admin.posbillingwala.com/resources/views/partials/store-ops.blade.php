@@ -1,10 +1,24 @@
 @php
-    $storeOps = $storeOps ?? ['staff' => collect(), 'devices' => collect(), 'printers' => collect(), 'routes' => collect()];
+    $storeOps = $storeOps ?? [
+        'staff' => collect(),
+        'devices' => collect(),
+        'printers' => collect(),
+        'routes' => collect(),
+        'billPaper' => null,
+        'kotPaper' => null,
+    ];
 @endphp
 <div class="col-12">
     <div class="card border mt-2">
         <div class="card-body">
             <h6 class="text-primary mb-3"><i class="bx bx-group"></i> Store operations (users, devices, printers)</h6>
+            @if(!empty($storeOps['billPaper']) || !empty($storeOps['kotPaper']))
+            <p class="small text-secondary mb-3">
+                Bill paper: <strong>{{ $storeOps['billPaper'] ?? '—' }}</strong>
+                · KOT paper: <strong>{{ $storeOps['kotPaper'] ?? '—' }}</strong>
+                <span class="text-muted">(2-Inch / 3-Inch / A4 — set in POS Printer Details)</span>
+            </p>
+            @endif
             <div class="row">
                 <div class="col-lg-6 mb-3">
                     <strong>Users</strong>

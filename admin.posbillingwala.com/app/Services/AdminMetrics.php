@@ -529,24 +529,49 @@ class AdminMetrics
         }
     }
 
-    public static function salesByDay(string $from, string $to): array
+    public static function salesByDay(string $from, string $to, array $filters = []): array
     {
         try {
+            $filter = self::invoiceFilterSql($filters);
             return DB::select(
                 "SELECT DATE(i.invoiceDate) AS d, COALESCE(SUM(i.totalAmount),0) AS total
                  FROM invoice i
                  INNER JOIN licenses l ON l.id = i.licenseId
                  INNER JOIN users u ON u.id = l.userId AND u.role_id='3'
-                 WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?
+                 WHERE DATE(i.invoiceDate) >= ? AND DATE(i.invoiceDate) <= ?" . $filter['sql'] . "
                  GROUP BY DATE(i.invoiceDate)
                  ORDER BY d ASC",
-                [$from, $to]
+                array_merge([$from, $to], $filter['params'])
             );
         } catch (\Throwable $e) {
             \Log::warning('AdminMetrics salesByDay failed: ' . $e->getMessage());
 
             return [];
         }
+    }
+
+    /** Last N days sales trend for dashboard charts (includes zero days). */
+    public static function salesTrendDays(int $days = 7, array $filters = []): array
+    {
+        $days = max(2, min(31, $days));
+        $to = self::today();
+        $from = $to->copy()->subDays($days - 1);
+        $map = [];
+        foreach (self::salesByDay($from->toDateString(), $to->toDateString(), $filters) as $row) {
+            $map[(string) $row->d] = round((float) $row->total, 2);
+        }
+        $trend = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $d = self::today()->copy()->subDays($i);
+            $key = $d->toDateString();
+            $trend[] = [
+                'date' => $key,
+                'label' => $d->format('d M'),
+                'total' => $map[$key] ?? 0.0,
+            ];
+        }
+
+        return $trend;
     }
 
     public static function salesByHour(string $date, array $filters = []): array
@@ -1018,7 +1043,19 @@ class AdminMetrics
         }
     }
 
-    public static function customerReport(): array
+    private static function dealerScopeSql(int $dealerId, string $userAlias = 'u'): array
+    {
+        if ($dealerId <= 0) {
+            return ['sql' => '', 'params' => []];
+        }
+
+        return [
+            'sql' => " AND {$userAlias}.dealerId = ?",
+            'params' => [$dealerId],
+        ];
+    }
+
+    public static function customerReport(int $dealerId = 0): array
     {
         $empty = [
             'totalCustomer' => 0,
@@ -1029,26 +1066,32 @@ class AdminMetrics
             'trialPercent' => 0,
             'expiredPercent' => 0,
             'growthBars' => [],
+            'businessTypes' => [],
         ];
 
         try {
             $today = self::today()->toDateString();
-            $total = (int) DB::table('users')->where('role_id', 3)->count();
+            $scope = self::dealerScopeSql($dealerId);
+            $totalQ = DB::table('users')->where('role_id', 3);
+            if ($dealerId > 0) {
+                $totalQ->where('dealerId', $dealerId);
+            }
+            $total = (int) $totalQ->count();
             $active = self::countOne(
                 "SELECT COUNT(DISTINCT u.id) AS c FROM users u
                  INNER JOIN licenses l ON l.userId=u.id
                  WHERE u.role_id='3'
                    AND " . self::licenseActiveSql('l') . "
-                   AND NOT " . self::trialSql('l'),
-                [$today]
+                   AND NOT " . self::trialSql('l') . $scope['sql'],
+                array_merge([$today], $scope['params'])
             );
             $trial = self::countOne(
                 "SELECT COUNT(DISTINCT u.id) AS c FROM users u
                  INNER JOIN licenses l ON l.userId=u.id
                  WHERE u.role_id='3'
                    AND " . self::trialSql('l') . "
-                   AND " . self::licenseActiveSql('l'),
-                [$today]
+                   AND " . self::licenseActiveSql('l') . $scope['sql'],
+                array_merge([$today], $scope['params'])
             );
             $expired = max(0, $total - $active - $trial);
             $pct = function ($n) use ($total) {
@@ -1057,9 +1100,14 @@ class AdminMetrics
             $growth = [];
             for ($i = 6; $i >= 0; $i--) {
                 $d = Carbon::now('Asia/Kolkata')->subDays($i)->toDateString();
-                $c = Schema::hasColumn('users', 'created_at')
-                    ? (int) DB::table('users')->where('role_id', 3)->whereDate('created_at', $d)->count()
-                    : 0;
+                $c = 0;
+                if (Schema::hasColumn('users', 'created_at')) {
+                    $gq = DB::table('users')->where('role_id', 3)->whereDate('created_at', $d);
+                    if ($dealerId > 0) {
+                        $gq->where('dealerId', $dealerId);
+                    }
+                    $c = (int) $gq->count();
+                }
                 $growth[] = ['label' => Carbon::parse($d)->format('d M'), 'count' => $c];
             }
 
@@ -1072,6 +1120,7 @@ class AdminMetrics
                 'trialPercent' => $pct($trial),
                 'expiredPercent' => $pct($expired),
                 'growthBars' => $growth,
+                'businessTypes' => self::businessTypeBreakdown($dealerId),
             ];
         } catch (\Throwable $e) {
             \Log::warning('AdminMetrics customerReport failed: ' . $e->getMessage());
@@ -1080,7 +1129,12 @@ class AdminMetrics
         }
     }
 
-    public static function licenseReport(): array
+    /**
+     * Mutually exclusive license buckets for charts:
+     * expired | trial (active) | active-expiring (≤30d) | active-stable.
+     * `expiringLicenses` is also returned as a KPI (subset of active+trial).
+     */
+    public static function licenseReport(int $dealerId = 0): array
     {
         $empty = [
             'activeLicenses' => 0,
@@ -1093,43 +1147,66 @@ class AdminMetrics
             'expiringPercent' => 0,
             'expiredPercent' => 0,
             'expiryWindows' => [],
+            'businessTypes' => [],
+            'mixLabels' => ['Active', 'Trial', 'Expired'],
+            'mixValues' => [0, 0, 0],
         ];
 
         try {
             $today = self::today()->toDateString();
             $in30 = self::today()->copy()->addDays(30)->toDateString();
-            $active = self::countOne(
-                "SELECT COUNT(*) AS c FROM licenses l
-                 WHERE " . self::licenseActiveSql('l') . " AND NOT " . self::trialSql('l'),
-                [$today]
+            $join = $dealerId > 0
+                ? " INNER JOIN users u ON u.id = l.userId AND u.role_id='3' AND u.dealerId = ?"
+                : '';
+            $joinParams = $dealerId > 0 ? [$dealerId] : [];
+
+            $activeStable = self::countOne(
+                "SELECT COUNT(*) AS c FROM licenses l{$join}
+                 WHERE " . self::licenseActiveSql('l') . "
+                   AND NOT " . self::trialSql('l') . "
+                   AND NOT (" . self::validExpirySql('l') . " AND l.expiryDate <= ?)",
+                array_merge($joinParams, [$today, $in30])
+            );
+            $activeExpiring = self::countOne(
+                "SELECT COUNT(*) AS c FROM licenses l{$join}
+                 WHERE " . self::licenseActiveSql('l') . "
+                   AND NOT " . self::trialSql('l') . "
+                   AND " . self::validExpirySql('l') . "
+                   AND l.expiryDate >= ? AND l.expiryDate <= ?",
+                array_merge($joinParams, [$today, $today, $in30])
             );
             $trial = self::countOne(
-                "SELECT COUNT(*) AS c FROM licenses l
+                "SELECT COUNT(*) AS c FROM licenses l{$join}
                  WHERE " . self::trialSql('l') . " AND " . self::licenseActiveSql('l'),
-                [$today]
+                array_merge($joinParams, [$today])
+            );
+            $expired = self::countOne(
+                "SELECT COUNT(*) AS c FROM licenses l{$join}
+                 WHERE " . self::licenseExpiredSql('l'),
+                array_merge($joinParams, [$today])
             );
             $expiring = self::countOne(
-                "SELECT COUNT(*) AS c FROM licenses l
+                "SELECT COUNT(*) AS c FROM licenses l{$join}
                  WHERE LOWER(IFNULL(l.licenseStatus,'')) NOT IN ('expire','expired','suspended','revoked')
                    AND " . self::validExpirySql('l') . "
                    AND l.expiryDate>=? AND l.expiryDate<=?",
-                [$today, $in30]
+                array_merge($joinParams, [$today, $in30])
             );
-            $expired = self::countOne(
-                "SELECT COUNT(*) AS c FROM licenses l WHERE " . self::licenseExpiredSql('l'),
-                [$today]
-            );
-            $total = max(1, $active + $trial + $expiring + $expired);
+
+            $active = $activeStable + $activeExpiring;
+            $total = $active + $trial + $expired;
+            $t = max(1, $total);
+
             $windows = [];
             foreach ([[0, 7, 'Next 7 days'], [8, 15, '8 - 15 days'], [16, 30, '16 - 30 days']] as $b) {
                 $from = self::today()->copy()->addDays($b[0])->toDateString();
                 $to = self::today()->copy()->addDays($b[1])->toDateString();
                 $c = self::countOne(
-                    "SELECT COUNT(*) AS c FROM licenses
+                    "SELECT COUNT(*) AS c FROM licenses l{$join}
                      WHERE expiryDate IS NOT NULL AND expiryDate <> '' AND expiryDate <> '0000-00-00'
                        AND expiryDate>=? AND expiryDate<=?
                        AND LOWER(IFNULL(licenseStatus,'')) NOT IN ('expire','expired','suspended','revoked')",
-                    [$from, $to]
+                    array_merge($joinParams, [$from, $to])
                 );
                 $windows[] = [
                     'label' => $b[2] . ' (' . Carbon::parse($from)->format('d M') . ' - ' . Carbon::parse($to)->format('d M Y') . ')',
@@ -1142,18 +1219,103 @@ class AdminMetrics
                 'trialLicenses' => $trial,
                 'expiringLicenses' => $expiring,
                 'expiredLicenses' => $expired,
-                'totalLicenses' => $active + $trial + $expiring + $expired,
-                'activePercent' => round(($active / $total) * 100, 1),
-                'trialPercent' => round(($trial / $total) * 100, 1),
-                'expiringPercent' => round(($expiring / $total) * 100, 1),
-                'expiredPercent' => round(($expired / $total) * 100, 1),
+                'totalLicenses' => $total,
+                'activePercent' => round(($active / $t) * 100, 1),
+                'trialPercent' => round(($trial / $t) * 100, 1),
+                'expiringPercent' => round(($expiring / $t) * 100, 1),
+                'expiredPercent' => round(($expired / $t) * 100, 1),
                 'expiryWindows' => $windows,
+                'businessTypes' => self::businessTypeBreakdown($dealerId),
+                // Non-overlapping mix for the donut (expiring is a KPI, not a mix slice)
+                'mixLabels' => ['Active', 'Trial', 'Expired'],
+                'mixValues' => [$active, $trial, $expired],
             ];
         } catch (\Throwable $e) {
             \Log::warning('AdminMetrics licenseReport failed: ' . $e->getMessage());
 
             return $empty;
         }
+    }
+
+    public static function businessTypeBreakdown(int $dealerId = 0, int $limit = 8): array
+    {
+        if (!Schema::hasColumn('licenses', 'businessType')) {
+            return [];
+        }
+
+        try {
+            $join = $dealerId > 0
+                ? " INNER JOIN users u ON u.id = l.userId AND u.role_id='3' AND u.dealerId = ?"
+                : '';
+            $params = $dealerId > 0 ? [$dealerId] : [];
+            $limit = max(1, min(20, $limit));
+            $rows = DB::select(
+                "SELECT COALESCE(NULLIF(TRIM(l.businessType), ''), 'not_set') AS bt, COUNT(*) AS c
+                 FROM licenses l{$join}
+                 GROUP BY bt
+                 ORDER BY c DESC
+                 LIMIT {$limit}",
+                $params
+            );
+            $labels = \App\Support\BusinessTypes::options();
+            $labels['not_set'] = 'Not set';
+            $list = [];
+            $grand = 0;
+            foreach ($rows as $row) {
+                $grand += (int) $row->c;
+            }
+            foreach ($rows as $row) {
+                $id = (string) $row->bt;
+                $count = (int) $row->c;
+                $list[] = [
+                    'id' => $id,
+                    'label' => $labels[$id] ?? $id,
+                    'count' => $count,
+                    'percent' => $grand > 0 ? round(($count / $grand) * 100, 1) : 0,
+                ];
+            }
+
+            return $list;
+        } catch (\Throwable $e) {
+            \Log::warning('AdminMetrics businessTypeBreakdown failed: ' . $e->getMessage());
+
+            return [];
+        }
+    }
+
+    /** License KPIs for a single dealer network (dashboard cards). */
+    public static function dealerLicenseKpis(int $dealerId): array
+    {
+        $today = self::today()->toDateString();
+        $in30 = self::today()->copy()->addDays(30)->toDateString();
+        $join = " INNER JOIN users u ON u.id = l.userId AND u.role_id='3' AND u.dealerId = ?";
+
+        return [
+            'activeLicenses' => self::countOne(
+                "SELECT COUNT(*) AS c FROM licenses l{$join} WHERE " . self::licenseActiveSql('l'),
+                [$dealerId, $today]
+            ),
+            'trialLicenses' => self::countOne(
+                "SELECT COUNT(*) AS c FROM licenses l{$join}
+                 WHERE " . self::trialSql('l') . " AND " . self::licenseActiveSql('l'),
+                [$dealerId, $today]
+            ),
+            'expiringLicenses' => self::countOne(
+                "SELECT COUNT(*) AS c FROM licenses l{$join}
+                 WHERE LOWER(IFNULL(l.licenseStatus,'')) NOT IN ('expire','expired','suspended','revoked')
+                   AND " . self::validExpirySql('l') . "
+                   AND l.expiryDate >= ? AND l.expiryDate <= ?",
+                [$dealerId, $today, $in30]
+            ),
+            'expiredLicenses' => self::countOne(
+                "SELECT COUNT(*) AS c FROM licenses l{$join} WHERE " . self::licenseExpiredSql('l'),
+                [$dealerId, $today]
+            ),
+            'totalLicenses' => self::countOne(
+                "SELECT COUNT(*) AS c FROM licenses l{$join}",
+                [$dealerId]
+            ),
+        ];
     }
 
     public static function branchReport(): array

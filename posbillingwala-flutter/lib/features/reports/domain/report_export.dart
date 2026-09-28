@@ -327,7 +327,7 @@ Future<void> shareMessPaymentsExcel({
       p.paymentDate,
       p.memberName,
       p.paymentPaidAmount.toStringAsFixed(2),
-      '${p.messTotalDays}',
+      p.messTotalDays,
     ]);
   }
   rows.add(['', '', 'TOTAL', total.toStringAsFixed(2), '']);

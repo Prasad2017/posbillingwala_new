@@ -1,12 +1,16 @@
 @extends('layouts.app')
 @section('page_title', 'Reports')
 @section('content')
+@php $isDealer = $isDealer ?? false; @endphp
 <div class="page-wrapper">
     <div class="page-content">
         @include('layouts.page-header', [
-            'title' => 'Reports',
-            'subtitle' => 'Analytics and insights across customers, licenses, dealers, and devices.',
+            'title' => $isDealer ? 'My Reports' : 'Reports',
+            'subtitle' => $isDealer
+                ? 'Analytics for your customers and licenses.'
+                : 'Analytics and insights across customers, licenses, dealers, and devices.',
         ])
+        @unless($isDealer)
         <a class="hub-row" href="{{ url('sales/overview') }}">
             <span class="hub-icon blue"><i class='bx bx-line-chart'></i></span>
             <span class="flex-grow-1">
@@ -15,6 +19,7 @@
             </span>
             <i class='bx bx-chevron-right'></i>
         </a>
+        @endunless
         <a class="hub-row" href="{{ url('reports/customers') }}">
             <span class="hub-icon purple"><i class='bx bx-group'></i></span>
             <span class="flex-grow-1">
@@ -31,6 +36,7 @@
             </span>
             <i class='bx bx-chevron-right'></i>
         </a>
+        @unless($isDealer)
         <a class="hub-row" href="{{ url('reports/dealers') }}">
             <span class="hub-icon orange"><i class='bx bx-store'></i></span>
             <span class="flex-grow-1">
@@ -55,6 +61,7 @@
             </span>
             <i class='bx bx-chevron-right'></i>
         </a>
+        @endunless
     </div>
 </div>
 @endsection

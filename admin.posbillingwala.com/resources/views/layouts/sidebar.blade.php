@@ -292,6 +292,26 @@
                 <li class="{{ $navCurrent('customers/add') ? 'pb-nav-current' : '' }}">
                     <a href="{{ url('customers/add') }}"><i class="sub-icon bx bx-user-plus"></i><span>Add Customer</span></a>
                 </li>
+                <li class="{{ $navCurrent('customers/all-license') ? 'pb-nav-current' : '' }}">
+                    <a href="{{ url('customers/all-license') }}"><i class="sub-icon bx bx-key"></i><span>Licenses</span></a>
+                </li>
+            </ul>
+        </li>
+        <li class="{{ ($path === 'reports' || $is(['reports/customers', 'reports/licenses'])) ? 'mm-active' : '' }}">
+            <a href="javascript:;" class="has-arrow">
+                <div class="parent-icon"><i class='bx bx-bar-chart-alt-2'></i></div>
+                <div class="menu-title">Reports</div>
+            </a>
+            <ul class="{{ ($path === 'reports' || $is(['reports/customers', 'reports/licenses'])) ? 'mm-show mm-collapse' : 'mm-collapse' }}">
+                <li class="{{ $path === 'reports' ? 'pb-nav-current' : '' }}">
+                    <a href="{{ url('reports') }}"><i class="sub-icon bx bx-grid-alt"></i><span>Reports Hub</span></a>
+                </li>
+                <li class="{{ $navCurrent('reports/customers') ? 'pb-nav-current' : '' }}">
+                    <a href="{{ url('reports/customers') }}"><i class="sub-icon bx bx-user-check"></i><span>Customer Reports</span></a>
+                </li>
+                <li class="{{ $navCurrent('reports/licenses') ? 'pb-nav-current' : '' }}">
+                    <a href="{{ url('reports/licenses') }}"><i class="sub-icon bx bx-key"></i><span>License Reports</span></a>
+                </li>
             </ul>
         </li>
         <li class="{{ $is('product-import') || $is('product-export') || $is('import-export') ? 'pb-nav-current' : '' }}">

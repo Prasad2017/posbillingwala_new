@@ -140,8 +140,13 @@ class PrinterSettings {
 
   int get kotCharsPerLine => charsPerLineFor(isKot: true);
 
-  int charsPerLineFor({required bool isKot}) =>
-      paperSizeFor(isKot: isKot) == PrinterPaperSize.inch3 ? 48 : 32;
+  int charsPerLineFor({required bool isKot}) {
+    final size = paperSizeFor(isKot: isKot);
+    if (size == PrinterPaperSize.inch3 || size == PrinterPaperSize.a4) {
+      return 48;
+    }
+    return 32;
+  }
 
   PrinterPaperSize paperSizeFor({required bool isKot}) =>
       isKot ? kotPaperSize : paperSize;
@@ -228,13 +233,22 @@ class PrinterSettings {
   }
 }
 
-enum PrinterPaperSize { inch2, inch3 }
+enum PrinterPaperSize { inch2, inch3, a4 }
 
 extension PrinterPaperSizeX on PrinterPaperSize {
-  String get dbValue => this == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch';
+  String get dbValue => switch (this) {
+        PrinterPaperSize.a4 => 'A4',
+        PrinterPaperSize.inch3 => '3-Inch',
+        PrinterPaperSize.inch2 => '2-Inch',
+      };
+
+  /* Thermal ESC/POS path — A4 shares as image; print uses 80mm. */
+  PrinterPaperSize get thermalEquivalent =>
+      this == PrinterPaperSize.a4 ? PrinterPaperSize.inch3 : this;
 
   static PrinterPaperSize fromDb(String? raw) {
     final n = (raw ?? '').toLowerCase().replaceAll(' ', '');
+    if (n.contains('a4') || n == '4') return PrinterPaperSize.a4;
     if (n.contains('3')) return PrinterPaperSize.inch3;
     return PrinterPaperSize.inch2;
   }
@@ -287,15 +301,13 @@ class PrinterSettingsStore {
 
   Future<PrinterSettings> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final paper = prefs.getString(paperKey) == '3-Inch'
-        ? PrinterPaperSize.inch3
-        : PrinterPaperSize.inch2;
+    final paper = PrinterPaperSizeX.fromDb(prefs.getString(paperKey));
     final kotPaperRaw = prefs.getString(kotPaperKey);
     final kotPaper = kotPaperRaw == null
-        ? paper
-        : (kotPaperRaw == '3-Inch'
-              ? PrinterPaperSize.inch3
-              : PrinterPaperSize.inch2);
+        ? (paper == PrinterPaperSize.a4
+            ? PrinterPaperSize.inch3
+            : paper)
+        : PrinterPaperSizeX.fromDb(kotPaperRaw).thermalEquivalent;
     var loaded = PrinterSettings(
       paperSize: paper,
       kotPaperSize: kotPaper,
@@ -340,13 +352,10 @@ class PrinterSettingsStore {
 
   Future<void> save(PrinterSettings settings) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      paperKey,
-      settings.paperSize == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch',
-    );
+    await prefs.setString(paperKey, settings.paperSize.dbValue);
     await prefs.setString(
       kotPaperKey,
-      settings.kotPaperSize == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch',
+      settings.kotPaperSize.thermalEquivalent.dbValue,
     );
     await prefs.setString(
       billTransportKey,

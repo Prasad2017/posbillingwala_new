@@ -19,24 +19,45 @@ class ReportController extends Controller
         }
     }
 
+    /** Admin or dealer may view scoped customer/license reports. */
+    private function staffOrDealer()
+    {
+        $role = (int) Auth::user()->role_id;
+        if (!in_array($role, [1, 2], true)) {
+            abort(403);
+        }
+    }
+
+    private function dealerScopeId(): int
+    {
+        if ((int) Auth::user()->role_id === 2) {
+            return (int) Auth::id();
+        }
+
+        return 0;
+    }
+
     public function hub()
     {
-        $this->adminOnly();
-        return view('reports.hub');
+        $this->staffOrDealer();
+        $isDealer = (int) Auth::user()->role_id === 2;
+        return view('reports.hub', compact('isDealer'));
     }
 
     public function customers()
     {
-        $this->adminOnly();
-        $data = AdminMetrics::customerReport();
-        return view('reports.customers', compact('data'));
+        $this->staffOrDealer();
+        $data = AdminMetrics::customerReport($this->dealerScopeId());
+        $isDealer = (int) Auth::user()->role_id === 2;
+        return view('reports.customers', compact('data', 'isDealer'));
     }
 
     public function licenses()
     {
-        $this->adminOnly();
-        $data = AdminMetrics::licenseReport();
-        return view('reports.licenses', compact('data'));
+        $this->staffOrDealer();
+        $data = AdminMetrics::licenseReport($this->dealerScopeId());
+        $isDealer = (int) Auth::user()->role_id === 2;
+        return view('reports.licenses', compact('data', 'isDealer'));
     }
 
     public function dealers()

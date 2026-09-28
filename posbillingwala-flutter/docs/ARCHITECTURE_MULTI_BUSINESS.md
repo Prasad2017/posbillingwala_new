@@ -1,4 +1,4 @@
-﻿# POS Billingwala — One Software, All Business Types
+# POS Billingwala — One Software, All Business Types
 
 ## Deep wiring (complete)
 
@@ -14,6 +14,12 @@
 
 Create kitchen departments with `type=kitchen`. Match product **category name** to dept **name**, or product **code** to dept **code**.
 
-## Warehouse stock
+## Invoice paper layouts
 
-Transfers with `fromWarehouse` / `toWarehouse` / `productId` / `qty` → on **RECEIVED** move ledger qty and post branch stock-in. View balances under **Warehouses → Stock**.
+| Size | Layout |
+|------|--------|
+| 2″ (58mm) | Compact thermal: stacked meta, Item/Qty/Rate/Amount |
+| 3″ (80mm) | Wider thermal: two-column meta, same columns |
+| A4 | Tax invoice preview/share; thermal print uses 80mm of same data |
+
+Shop name, GSTIN, items, totals, UPI QR come from live shop/bill data — not sample mockups.

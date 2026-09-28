@@ -20,6 +20,7 @@
                                 <th>Customer Name</th>
                                 <th>Mobile Number</th>
                                 <th>Shop Name</th>
+                                <th>Business Type</th>
                                 <th>App License Key</th>
                                 <th>PB-PIN</th>
                                 <th>Expiry Date</th>
@@ -80,7 +81,15 @@ function myTable()
                 "mData": "shopName",
                 "bSortable": false,
             },
-            
+            {
+                "mData": "businessType",
+                "bSortable": false,
+                "mRender": function(data) {
+                    var map = @json(\App\Support\BusinessTypes::options());
+                    if (!data) return '<span class="text-secondary">—</span>';
+                    return map[data] || data;
+                }
+            },
             {
                 "mData": "licenseKey",
                 "bSortable": false,
