@@ -127,7 +127,7 @@ if (!function_exists('licence_mark_trial_consumed')) {
         }
         db_stmt_execute(
             $con,
-            'UPDATE `licenses` SET `trialConsumed`=1, `licenseStatus`=\'expire\', `licenseValidity`=\'0\' WHERE `id`=? AND (`licenseType`=\'Demo\' OR `licenseType`=\'Trial\')',
+            'UPDATE `licenses` SET `trialConsumed`=1, `licenseStatus`=\'expired\', `licenseValidity`=\'0\' WHERE `id`=? AND (`licenseType`=\'Demo\' OR `licenseType`=\'Trial\')',
             's',
             (string) $licenceId
         );
@@ -155,7 +155,7 @@ if (!function_exists('licence_sync_trial_consumed_state')) {
             licence_mark_trial_consumed($con, $licenceId);
             $licenseRow['trialConsumed'] = 1;
             if ($expired) {
-                $licenseRow['licenseStatus'] = 'expire';
+                $licenseRow['licenseStatus'] = 'expired';
             }
         }
         return $licenseRow;
@@ -512,7 +512,7 @@ if (!function_exists('licence_mark_expired')) {
         }
         db_stmt_execute(
             $con,
-            "UPDATE `licenses` SET `licenseValidity`='0', `licenseStatus`='expire' WHERE `id` = ?",
+            "UPDATE `licenses` SET `licenseValidity`='0', `licenseStatus`='expired' WHERE `id` = ?",
             's',
             (string) $licenceId
         );
@@ -543,7 +543,7 @@ if (!function_exists('licence_enforce_expiry')) {
 
 if (!function_exists('licence_cron_sync_expiry')) {
     /**
-     * Batch sync for cron: mark past-due licences as expire and refresh
+     * Batch sync for cron: mark past-due licences as expired and refresh
      * remaining days for still-valid non-suspended rows.
      * Does not change suspended / revoked licences.
      *
@@ -557,7 +557,7 @@ if (!function_exists('licence_cron_sync_expiry')) {
         $refreshedCount = 0;
 
         $expireSql = "UPDATE `licenses`
-            SET `licenseValidity`='0', `licenseStatus`='expire'
+            SET `licenseValidity`='0', `licenseStatus`='expired'
             WHERE (
                 `expiryDate` IS NULL
                 OR `expiryDate` = ''
@@ -700,7 +700,7 @@ if (!function_exists('licence_same_key_upgrade')) {
             return $response;
         }
 
-        $licenseStatus = licence_is_date_valid($expiryDate) ? 'active' : 'expire';
+        $licenseStatus = licence_is_date_valid($expiryDate) ? 'active' : 'expired';
         $paymentStatus = (strcasecmp(trim((string) $licenseType), 'Demo') === 0
             || strcasecmp(trim((string) $licenseType), 'Trial') === 0)
             ? ''

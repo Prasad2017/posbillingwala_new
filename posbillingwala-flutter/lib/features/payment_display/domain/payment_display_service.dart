@@ -146,17 +146,18 @@ final paymentDisplayServiceProvider = Provider<PaymentDisplayService>((ref) {
   return PaymentDisplayService(ref);
 });
 
-/* Fire-and-forget auto display after a successful new bill. Never throws. */
+/* Fire-and-forget auto display after a successful new bill. Never throws.
+ * Pass ProviderContainer (not WidgetRef) — callers navigate away immediately. */
 Future<void> tryAutoShowPaymentDisplayAfterBill(
-  WidgetRef ref,
+  ProviderContainer container,
   SavedInvoiceResult result,
 ) async {
   try {
-    final manager = ref.read(displayConnectionManagerProvider.notifier);
+    final manager = container.read(displayConnectionManagerProvider.notifier);
     if (!manager.autoDisplayEnabled) return;
-    final ui = ref.read(displayConnectionManagerProvider);
+    final ui = container.read(displayConnectionManagerProvider);
     if (!ui.serverRunning || ui.connectedClients < 1) return;
-    await ref
+    await container
         .read(paymentDisplayServiceProvider)
         .showSavedInvoiceResult(result);
   } catch (e, st) {

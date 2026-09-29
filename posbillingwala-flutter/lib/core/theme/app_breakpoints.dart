@@ -313,14 +313,15 @@ abstract final class AppBreakpoints {
     AppWidthClass w, {
     AppHeightClass height = AppHeightClass.regular,
   }) {
-    if (height == AppHeightClass.short) return 82;
+    /* 70×70 image + name + price + Add (incl. textScaler / short landscape). */
+    if (height == AppHeightClass.short) return 170;
     return switch (w) {
-      AppWidthClass.smallMobile || AppWidthClass.mobile => 92,
-      AppWidthClass.tablet => 94,
+      AppWidthClass.smallMobile || AppWidthClass.mobile => 178,
+      AppWidthClass.tablet => 182,
       AppWidthClass.largeTablet ||
       AppWidthClass.desktop ||
       AppWidthClass.largeDesktop =>
-        96,
+        186,
     };
   }
 

@@ -1,7 +1,8 @@
-/* Payment modes aligned with Android `PaymentSettlementHelper`. */
+/* Payment modes aligned with Android `PaymentSettlementHelper` + Card. */
 enum PaymentMode {
   cash('Cash'),
   upi('UPI'),
+  card('Card'),
   cashPlusUpi('Cash+UPI');
 
   const PaymentMode(this.label);
@@ -16,6 +17,7 @@ enum PaymentMode {
         v.contains('+')) {
       return PaymentMode.cashPlusUpi;
     }
+    if (v.contains('card')) return PaymentMode.card;
     if (v.contains('upi') || v == 'online') return PaymentMode.upi;
     return PaymentMode.cash;
   }
@@ -45,6 +47,8 @@ class PaymentTender {
         return PaymentTender(mode: mode, cashAmount: total, upiAmount: 0);
       case PaymentMode.upi:
         return PaymentTender(mode: mode, cashAmount: 0, upiAmount: total);
+      case PaymentMode.card:
+        return PaymentTender(mode: mode, cashAmount: 0, upiAmount: 0);
       case PaymentMode.cashPlusUpi:
         final cash = double.parse((cashAmount ?? 0).toStringAsFixed(2));
         final upi = double.parse((upiAmount ?? 0).toStringAsFixed(2));
@@ -53,7 +57,7 @@ class PaymentTender {
   }
 
   bool isValidFor(double totalAmount) {
-    /* Cash / UPI always settle the full bill — no amount entry to verify. */
+    /* Cash / UPI / Card settle the full bill — no split math to verify. */
     if (mode != PaymentMode.cashPlusUpi) return true;
     final total = double.parse(totalAmount.toStringAsFixed(2));
     final sum = double.parse((cashAmount + upiAmount).toStringAsFixed(2));

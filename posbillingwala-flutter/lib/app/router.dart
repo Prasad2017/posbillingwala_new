@@ -36,6 +36,7 @@ import 'package:pos_billingwala_v2/features/mess/presentation/mess_payments_page
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_qr_management_page.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_token_scan_page.dart';
 import 'package:pos_billingwala_v2/features/notifications/presentation/notifications_page.dart';
+import 'package:pos_billingwala_v2/features/pos/presentation/cart_page.dart';
 import 'package:pos_billingwala_v2/features/pos/presentation/payment_page.dart';
 import 'package:pos_billingwala_v2/features/pos/presentation/pos_page.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
@@ -189,9 +190,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                 const PosPage(resetSessionOnOpen: true),
           ),
           GoRoute(
+            path: '/pos/cart',
+            name: 'pos-cart',
+            builder: (context, state) => const CartPage(),
+          ),
+          GoRoute(
             path: '/pos/payment',
             name: 'payment',
-            builder: (context, state) => const PaymentPage(),
+            builder: (context, state) => PaymentPage(
+              initialAction: state.uri.queryParameters['action'],
+            ),
           ),
           GoRoute(
             path: '/tables',
@@ -204,9 +212,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const PosPage(),
           ),
           GoRoute(
+            path: '/tables/cart',
+            name: 'tables-cart',
+            builder: (context, state) => const CartPage(),
+          ),
+          GoRoute(
             path: '/tables/payment',
             name: 'tables-payment',
-            builder: (context, state) => const PaymentPage(),
+            builder: (context, state) => PaymentPage(
+              initialAction: state.uri.queryParameters['action'],
+            ),
           ),
           GoRoute(
             path: '/tables/split-bill',
@@ -232,9 +247,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: '/takeaway/cart',
+            name: 'takeaway-cart',
+            builder: (context, state) => const CartPage(),
+          ),
+          GoRoute(
             path: '/takeaway/payment',
             name: 'takeaway-payment',
-            builder: (context, state) => const PaymentPage(),
+            builder: (context, state) => PaymentPage(
+              initialAction: state.uri.queryParameters['action'],
+            ),
           ),
           GoRoute(
             path: '/mess',

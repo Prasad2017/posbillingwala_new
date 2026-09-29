@@ -7,6 +7,7 @@ class BillingSession {
     required this.title,
     required this.billingRoute,
     required this.paymentRoute,
+    required this.cartRoute,
     this.customerName,
     this.customerPhone,
     this.customerEmail,
@@ -21,6 +22,7 @@ class BillingSession {
   final String title;
   final String billingRoute;
   final String paymentRoute;
+  final String cartRoute;
   final String? customerName;
   final String? customerPhone;
   final String? customerEmail;
@@ -35,6 +37,7 @@ class BillingSession {
     title: 'Fast Billing',
     billingRoute: '/pos',
     paymentRoute: '/pos/payment',
+    cartRoute: '/pos/cart',
   );
 
   BillingSession copyWith({
@@ -42,6 +45,7 @@ class BillingSession {
     String? title,
     String? billingRoute,
     String? paymentRoute,
+    String? cartRoute,
     String? customerName,
     String? customerPhone,
     String? customerEmail,
@@ -58,6 +62,7 @@ class BillingSession {
       title: title ?? this.title,
       billingRoute: billingRoute ?? this.billingRoute,
       paymentRoute: paymentRoute ?? this.paymentRoute,
+      cartRoute: cartRoute ?? this.cartRoute,
       customerName: clearCustomer ? null : (customerName ?? this.customerName),
       customerPhone: clearCustomer
           ? null
@@ -95,6 +100,7 @@ class BillingSessionController extends Notifier<BillingSession> {
       title: parcel == null ? 'Takeaway Billing' : 'Parcel $parcel',
       billingRoute: '/takeaway/billing',
       paymentRoute: '/takeaway/payment',
+      cartRoute: '/takeaway/cart',
       customerName: trimOrNull(customerName),
       customerPhone: trimOrNull(customerPhone),
       cartScope: parcel ?? '',
@@ -112,6 +118,7 @@ class BillingSessionController extends Notifier<BillingSession> {
       title: 'Table $tableName',
       billingRoute: '/tables/billing',
       paymentRoute: '/tables/payment',
+      cartRoute: '/tables/cart',
       cartScope: tableNumber,
       tableNumber: tableNumber,
       diningSessionId: diningSessionId,
@@ -129,6 +136,7 @@ class BillingSessionController extends Notifier<BillingSession> {
       title: state.title,
       billingRoute: state.billingRoute,
       paymentRoute: state.paymentRoute,
+      cartRoute: state.cartRoute,
       customerName: name != null ? trimOrNull(name) : state.customerName,
       customerPhone: phone != null ? trimOrNull(phone) : state.customerPhone,
       customerEmail: email != null ? trimOrNull(email) : state.customerEmail,

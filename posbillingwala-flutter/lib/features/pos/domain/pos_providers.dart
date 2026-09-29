@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
-import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
@@ -179,20 +178,19 @@ class PosCartController extends Notifier<void> {
   }
 
   Future<void> increment(CartItem item) async {
-    final step = ProductUnits.stepFor(item.productUnit);
+    /* Cart −/+ always steps by 1 (unit-based steps only for edit dialog / weighable). */
     await db.changeCartQuantity(
       item.productId,
-      item.quantity + step,
+      item.quantity + 1,
       cartScope: session.cartScope,
       portionId: item.portionId,
     );
   }
 
   Future<void> decrement(CartItem item) async {
-    final step = ProductUnits.stepFor(item.productUnit);
     await db.changeCartQuantity(
       item.productId,
-      item.quantity - step,
+      item.quantity - 1,
       cartScope: session.cartScope,
       portionId: item.portionId,
     );

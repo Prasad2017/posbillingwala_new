@@ -8,7 +8,6 @@ import 'package:pos_billingwala_v2/features/mess/presentation/mess_slip_preview.
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
-import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/printer_device_picker_page.dart';

@@ -68,7 +68,7 @@ class MessMemberReportPageState extends ConsumerState<MessMemberReportPage> {
           IconButton(
             tooltip: 'Export Excel',
             onPressed: () {
-              final members = ref.read(messMembersProvider).valueOrNull;
+              final members = ref.read(messMembersProvider).asData?.value;
               if (members == null || members.isEmpty) return;
               shareMessMembersExcel(
                 members: messMemberReportPageFiltered(members),

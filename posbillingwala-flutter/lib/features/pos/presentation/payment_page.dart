@@ -18,8 +18,9 @@ import 'package:pos_billingwala_v2/features/pos/domain/payment_mode.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
 import 'package:pos_billingwala_v2/features/pos/presentation/bill_summary_card.dart';
-import 'package:pos_billingwala_v2/features/pos/presentation/payment_mode_sheet.dart';
+import 'package:pos_billingwala_v2/features/pos/presentation/payment_tender_panel.dart';
 import 'package:pos_billingwala_v2/features/pos/presentation/portion_picker.dart';
+import 'package:pos_billingwala_v2/features/pos/presentation/pos_checkout_flow.dart';
 import 'package:pos_billingwala_v2/features/payment_display/domain/payment_display_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
@@ -32,7 +33,10 @@ import 'package:pos_billingwala_v2/features/sync/domain/sync_providers.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class PaymentPage extends ConsumerStatefulWidget {
-  const PaymentPage({super.key});
+  const PaymentPage({super.key, this.initialAction});
+
+  /* Optional deep-link from POS footer: save | share | print */
+  final String? initialAction;
 
   @override
   ConsumerState<PaymentPage> createState() => PaymentPageState();
@@ -41,6 +45,7 @@ class PaymentPage extends ConsumerStatefulWidget {
 class PaymentPageState extends ConsumerState<PaymentPage> {
   final cashController = TextEditingController();
   final upiController = TextEditingController();
+  final receivedController = TextEditingController();
   final paymentPageDiscountController = TextEditingController();
   final paymentPagePackingController = TextEditingController();
   final customerNameController = TextEditingController();
@@ -48,7 +53,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
   final customerEmailController = TextEditingController();
   final customerAddressController = TextEditingController();
   late final NumberFormat paymentPageCurrency;
-  bool billSummaryExpanded = true;
+  bool initialActionHandled = false;
 
   @override
   void initState() {
@@ -56,10 +61,6 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     paymentPageCurrency = NumberFormat.currency(locale: 'en_IN', symbol: '₹ ');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      /* Landscape / short viewports: start collapsed so Print bar fits. */
-      if (context.isShortHeight) {
-        setState(() => billSummaryExpanded = false);
-      }
       final session = ref.read(billingSessionProvider);
       customerNameController.text = session.customerName ?? '';
       customerPhoneController.text = session.customerPhone ?? '';
@@ -76,6 +77,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
           .read(paymentCheckoutControllerProvider.notifier)
           .selectMode(PaymentMode.cash, total);
       syncControllers();
+      maybeRunInitialAction();
     });
   }
 
@@ -83,6 +85,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
   void dispose() {
     cashController.dispose();
     upiController.dispose();
+    receivedController.dispose();
     paymentPageDiscountController.dispose();
     paymentPagePackingController.dispose();
     customerNameController.dispose();
@@ -90,6 +93,24 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     customerEmailController.dispose();
     customerAddressController.dispose();
     super.dispose();
+  }
+
+  void maybeRunInitialAction() {
+    if (initialActionHandled) return;
+    final action = widget.initialAction?.trim().toLowerCase();
+    if (action == null || action.isEmpty) return;
+    initialActionHandled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      switch (action) {
+        case 'save':
+          await openSaveInvoiceFlow();
+        case 'share':
+          await openShareInvoiceFlow();
+        case 'print':
+          await openPrintBillFlow();
+      }
+    });
   }
 
   void persistCustomer() {
@@ -126,6 +147,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     final state = ref.read(paymentCheckoutControllerProvider);
     cashController.text = amountInputText(state.cashAmount);
     upiController.text = amountInputText(state.upiAmount);
+    receivedController.text = amountInputText(state.receivedAmount);
   }
 
   double paymentPagePayable(
@@ -133,37 +155,8 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     PaymentCheckoutState checkout,
   ) => checkoutPayable(summary, checkout);
 
-  Future<bool> confirmPaymentMode() async {
-    final summary = ref.read(cartSummaryProvider);
-    final checkout = ref.read(paymentCheckoutControllerProvider);
-    final total = paymentPagePayable(summary, checkout);
-    if (summary.isEmpty) return false;
-
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return PaymentModeSheet(
-          totalAmount: total,
-          currency: paymentPageCurrency,
-          initialMode: checkout.mode,
-          initialCash: checkout.cashAmount,
-          initialUpi: checkout.upiAmount,
-          onContinue: (mode, cash, upi) {
-            final n = ref.read(paymentCheckoutControllerProvider.notifier);
-            if (mode == PaymentMode.cashPlusUpi) {
-              n.setSplitAmounts(cash: cash, upi: upi);
-            } else {
-              n.selectMode(mode, total);
-            }
-            Navigator.pop(sheetContext, true);
-          },
-        );
-      },
-    );
-    return confirmed == true && mounted;
-  }
+  /* Validate tender via payment mode sheet (Cash / UPI / Split). */
+  Future<bool> confirmPaymentMode() => promptPaymentMode(context, ref);
 
   Future<bool> ensureBillPrinterReady() async {
     if (AppPlatform.isWeb) return true;
@@ -364,7 +357,12 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
           ),
         );
         if (!mounted) return;
-        unawaited(_uploadBillInBackground(result.invoiceId));
+        unawaited(
+          _uploadBillInBackground(
+            ProviderScope.containerOf(context),
+            result.invoiceId,
+          ),
+        );
         context.go(session.billingRoute);
         return;
       }
@@ -385,8 +383,11 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
       );
     }
 
+    /* Snapshot container while still mounted — navigate away right after. */
+    final container = ProviderScope.containerOf(context);
+
     /* Payment display must never block save/print. */
-    unawaited(tryAutoShowPaymentDisplayAfterBill(ref, result));
+    unawaited(tryAutoShowPaymentDisplayAfterBill(container, result));
 
     /* Web still awaits cloud confirm; mobile returns to billing immediately. */
     if (AppPlatform.requiresNetwork) {
@@ -419,7 +420,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
         return;
       }
     } else {
-      unawaited(_uploadBillInBackground(result.invoiceId));
+      unawaited(_uploadBillInBackground(container, result.invoiceId));
     }
 
     if (!mounted) return;
@@ -428,12 +429,16 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     context.go(session.billingRoute);
   }
 
-  Future<void> _uploadBillInBackground(int invoiceId) async {
+  /* ProviderContainer outlives this State after context.go. */
+  Future<void> _uploadBillInBackground(
+    ProviderContainer container,
+    int invoiceId,
+  ) async {
     final online = await isDeviceOnline();
     var retryAutoSync = !online;
     if (online) {
       try {
-        final sync = await ref
+        final sync = await container
             .read(invoiceSyncControllerProvider.notifier)
             .uploadPending(onlyInvoiceId: invoiceId);
         if (sync.failed > 0 || sync.uploaded < 1) retryAutoSync = true;
@@ -443,7 +448,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     }
     if (AppPlatform.supportsOfflineSync) {
       unawaited(
-        ref
+        container
             .read(connectivitySyncListenerProvider)
             .syncNow(force: retryAutoSync, reason: 'after-bill'),
       );
@@ -871,141 +876,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     );
   }
 
-  Widget buildBillSummaryCard({
-    required CartSummary summary,
-    required PaymentCheckoutState checkout,
-    required double payable,
-  }) {
-    return BillSummaryCard(
-      summary: summary,
-      checkout: checkout,
-      currency: paymentPageCurrency,
-      discountController: paymentPageDiscountController,
-      packingController: paymentPagePackingController,
-      payable: payable,
-      expanded: billSummaryExpanded,
-      onToggleExpanded: () {
-        setState(() => billSummaryExpanded = !billSummaryExpanded);
-      },
-      onDiscountChanged: (value) {
-        final d = double.tryParse(value) ?? 0;
-        final n = ref.read(paymentCheckoutControllerProvider.notifier);
-        n.setDiscount(
-          d,
-          type: checkout.discountType,
-          subtotal: summary.subtotal,
-        );
-        final clamped = ref.read(paymentCheckoutControllerProvider).discount;
-        if ((clamped - d).abs() > 0.001) {
-          final text = clamped == clamped.roundToDouble()
-              ? clamped.toStringAsFixed(0)
-              : clamped.toStringAsFixed(2);
-          paymentPageDiscountController.value = TextEditingValue(
-            text: text,
-            selection: TextSelection.collapsed(offset: text.length),
-          );
-        }
-        n.selectMode(
-          checkout.mode,
-          paymentPagePayable(
-            summary,
-            ref.read(paymentCheckoutControllerProvider),
-          ),
-        );
-        syncControllers();
-      },
-      onDiscountTypeChanged: (type) {
-        final d = double.tryParse(paymentPageDiscountController.text) ?? 0;
-        final n = ref.read(paymentCheckoutControllerProvider.notifier);
-        n.setDiscount(d, type: type, subtotal: summary.subtotal);
-        final clamped = ref.read(paymentCheckoutControllerProvider).discount;
-        if ((clamped - d).abs() > 0.001 &&
-            paymentPageDiscountController.text.isNotEmpty) {
-          final text = clamped == clamped.roundToDouble()
-              ? clamped.toStringAsFixed(0)
-              : clamped.toStringAsFixed(2);
-          paymentPageDiscountController.value = TextEditingValue(
-            text: text,
-            selection: TextSelection.collapsed(offset: text.length),
-          );
-        }
-        n.selectMode(
-          checkout.mode,
-          paymentPagePayable(
-            summary,
-            ref.read(paymentCheckoutControllerProvider),
-          ),
-        );
-        syncControllers();
-        setState(() {});
-      },
-      onPackingChanged: (value) {
-        final p = double.tryParse(value) ?? 0;
-        final n = ref.read(paymentCheckoutControllerProvider.notifier);
-        n.setPacking(p, type: 'Amount');
-        n.selectMode(
-          checkout.mode,
-          paymentPagePayable(
-            summary,
-            ref.read(paymentCheckoutControllerProvider),
-          ),
-        );
-        syncControllers();
-      },
-    );
-  }
-
-  Widget buildPrintBillBar({
-    required CartSummary summary,
-    required PaymentCheckoutState checkout,
-    bool includeSafeArea = true,
-  }) {
-    final bar = Padding(
-      padding: EdgeInsets.fromLTRB(
-        14,
-        context.isShortHeight ? 8 : 12,
-        14,
-        context.isShortHeight ? 8 : 12,
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        height: context.isShortHeight ? 48 : 54,
-        child: FilledButton.icon(
-          onPressed: summary.isEmpty || checkout.busy ? null : openPrintBillFlow,
-          style: FilledButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: AppColors.primary,
-            disabledBackgroundColor: Colors.white.withValues(alpha: 0.7),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          icon: checkout.busy
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2.5),
-                )
-              : const Icon(Icons.print_rounded, size: 24),
-          label: Text(
-            checkout.busy ? 'Printing…' : 'Print Bill',
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    return Material(
-      color: AppColors.primaryBright,
-      elevation: 12,
-      child: includeSafeArea ? SafeArea(top: false, child: bar) : bar,
-    );
-  }
-
-  /* Tablet / web: summary + Print like POS cart pane (fills column). */
+  /* Tablet / web: tender UI + Done & Print. */
   Widget buildCheckoutPanel({
     required CartSummary summary,
     required PaymentCheckoutState checkout,
@@ -1027,24 +898,112 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              child: buildBillSummaryCard(
-                summary: summary,
-                checkout: checkout,
-                payable: payable,
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+              child: Column(
+                children: [
+                  PaymentTenderPanel(
+                    summary: summary,
+                    checkout: checkout,
+                    payable: payable,
+                    currency: paymentPageCurrency,
+                    discountController: paymentPageDiscountController,
+                    packingController: paymentPagePackingController,
+                    receivedController: receivedController,
+                    cashController: cashController,
+                    upiController: upiController,
+                    sideBySide: sidePanel && !context.isShortHeight,
+                    onDiscountChanged: (value) {
+                      final d = double.tryParse(value) ?? 0;
+                      final n =
+                          ref.read(paymentCheckoutControllerProvider.notifier);
+                      n.setDiscount(
+                        d,
+                        type: checkout.discountType,
+                        subtotal: summary.subtotal,
+                      );
+                      final clamped =
+                          ref.read(paymentCheckoutControllerProvider).discount;
+                      if ((clamped - d).abs() > 0.001) {
+                        final text = clamped == clamped.roundToDouble()
+                            ? clamped.toStringAsFixed(0)
+                            : clamped.toStringAsFixed(2);
+                        paymentPageDiscountController.value = TextEditingValue(
+                          text: text,
+                          selection: TextSelection.collapsed(offset: text.length),
+                        );
+                      }
+                      n.selectMode(
+                        checkout.mode,
+                        paymentPagePayable(
+                          summary,
+                          ref.read(paymentCheckoutControllerProvider),
+                        ),
+                      );
+                      syncControllers();
+                    },
+                    onDiscountTypeChanged: (type) {
+                      final d =
+                          double.tryParse(paymentPageDiscountController.text) ??
+                              0;
+                      final n =
+                          ref.read(paymentCheckoutControllerProvider.notifier);
+                      n.setDiscount(d, type: type, subtotal: summary.subtotal);
+                      n.selectMode(
+                        checkout.mode,
+                        paymentPagePayable(
+                          summary,
+                          ref.read(paymentCheckoutControllerProvider),
+                        ),
+                      );
+                      syncControllers();
+                      setState(() {});
+                    },
+                    onPackingChanged: (value) {
+                      final p = double.tryParse(value) ?? 0;
+                      final n =
+                          ref.read(paymentCheckoutControllerProvider.notifier);
+                      n.setPacking(p, type: 'Amount');
+                      n.selectMode(
+                        checkout.mode,
+                        paymentPagePayable(
+                          summary,
+                          ref.read(paymentCheckoutControllerProvider),
+                        ),
+                      );
+                      syncControllers();
+                    },
+                    onSyncControllers: syncControllers,
+                  ),
+                  const SizedBox(height: 12),
+                  PaymentBalanceBar(
+                    checkout: checkout,
+                    payable: payable,
+                    currency: paymentPageCurrency,
+                  ),
+                ],
               ),
             ),
           ),
-          buildPrintBillBar(
-            summary: summary,
-            checkout: checkout,
-            includeSafeArea: true,
+          PaymentDoneBar(
+            busy: checkout.busy,
+            enabled: !summary.isEmpty,
+            onCancel: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(ref.read(billingSessionProvider).billingRoute);
+              }
+            },
+            onDonePrint: openPrintBillFlow,
+            onSave: openSaveInvoiceFlow,
+            onShare: openShareInvoiceFlow,
           ),
         ],
       ),
     );
   }
 
-  /* Phone portrait: sticky footer like POS CartFooter. */
+  /* Phone portrait: tender + sticky Done & Print. */
   Widget buildPhoneCheckoutBar({
     required CartSummary summary,
     required PaymentCheckoutState checkout,
@@ -1056,17 +1015,104 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
         ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.sizeOf(context).height *
-                (context.isShortHeight ? 0.42 : 0.5),
+                (context.isShortHeight ? 0.48 : 0.58),
           ),
           child: SingleChildScrollView(
-            child: buildBillSummaryCard(
-              summary: summary,
-              checkout: checkout,
-              payable: payable,
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+            child: Column(
+              children: [
+                PaymentTenderPanel(
+                  summary: summary,
+                  checkout: checkout,
+                  payable: payable,
+                  currency: paymentPageCurrency,
+                  discountController: paymentPageDiscountController,
+                  packingController: paymentPagePackingController,
+                  receivedController: receivedController,
+                  cashController: cashController,
+                  upiController: upiController,
+                  onDiscountChanged: (value) {
+                    final d = double.tryParse(value) ?? 0;
+                    final n =
+                        ref.read(paymentCheckoutControllerProvider.notifier);
+                    n.setDiscount(
+                      d,
+                      type: checkout.discountType,
+                      subtotal: summary.subtotal,
+                    );
+                    n.selectMode(
+                      checkout.mode,
+                      paymentPagePayable(
+                        summary,
+                        ref.read(paymentCheckoutControllerProvider),
+                      ),
+                    );
+                    syncControllers();
+                  },
+                  onDiscountTypeChanged: (type) {
+                    final d =
+                        double.tryParse(paymentPageDiscountController.text) ??
+                            0;
+                    final n =
+                        ref.read(paymentCheckoutControllerProvider.notifier);
+                    n.setDiscount(d, type: type, subtotal: summary.subtotal);
+                    n.selectMode(
+                      checkout.mode,
+                      paymentPagePayable(
+                        summary,
+                        ref.read(paymentCheckoutControllerProvider),
+                      ),
+                    );
+                    syncControllers();
+                    setState(() {});
+                  },
+                  onPackingChanged: (value) {
+                    final p = double.tryParse(value) ?? 0;
+                    final n =
+                        ref.read(paymentCheckoutControllerProvider.notifier);
+                    n.setPacking(p, type: 'Amount');
+                    n.selectMode(
+                      checkout.mode,
+                      paymentPagePayable(
+                        summary,
+                        ref.read(paymentCheckoutControllerProvider),
+                      ),
+                    );
+                    syncControllers();
+                  },
+                  onSyncControllers: syncControllers,
+                ),
+                const SizedBox(height: 10),
+                PaymentBalanceBar(
+                  checkout: checkout,
+                  payable: payable,
+                  currency: paymentPageCurrency,
+                ),
+              ],
             ),
           ),
         ),
-        buildPrintBillBar(summary: summary, checkout: checkout),
+        Material(
+          color: Colors.white,
+          elevation: 10,
+          child: SafeArea(
+            top: false,
+            child: PaymentDoneBar(
+              busy: checkout.busy,
+              enabled: !summary.isEmpty,
+              onCancel: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go(ref.read(billingSessionProvider).billingRoute);
+                }
+              },
+              onDonePrint: openPrintBillFlow,
+              onSave: openSaveInvoiceFlow,
+              onShare: openShareInvoiceFlow,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -1086,57 +1132,39 @@ class InvoiceLineRow extends ConsumerWidget {
   final NumberFormat currency;
   final bool showUnitPrice;
 
+  String get qtyLabel {
+    if (item.quantity == item.quantity.roundToDouble()) {
+      return '${item.quantity.round()}';
+    }
+    return item.quantity.toStringAsFixed(2);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cart = ref.read(posCartControllerProvider.notifier);
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 10, 2, 10),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 24,
-            child: Text(
-              '$index',
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-                color: AppColors.navy,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Text(
-              item.productName,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13.5,
-                color: AppColors.navy,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: showUnitPrice ? 4 : 3,
+      padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 340;
+          final qtyControls = SizedBox(
+            width: compact ? 96 : 108,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircleQtyButton(
                   icon: Icons.remove,
-                  filled: false,
-                  onTap: () => ref
-                      .read(posCartControllerProvider.notifier)
-                      .decrement(item),
+                  onTap: () => cart.decrement(item),
                 ),
-                InkWell(
-                  onTap: () => editCartLineDialog(context, ref, item),
-                  child: SizedBox(
-                    width: 34,
+                Expanded(
+                  child: InkWell(
+                    onTap: () => editCartLineDialog(context, ref, item),
                     child: Text(
-                      item.quantity.toStringAsFixed(
-                        item.quantity == item.quantity.roundToDouble() ? 1 : 2,
-                      ),
+                      qtyLabel,
                       textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 14,
@@ -1147,42 +1175,87 @@ class InvoiceLineRow extends ConsumerWidget {
                 ),
                 CircleQtyButton(
                   icon: Icons.add,
-                  filled: true,
-                  onTap: () => ref
-                      .read(posCartControllerProvider.notifier)
-                      .increment(item),
+                  onTap: () => cart.increment(item),
                 ),
               ],
             ),
-          ),
-          if (showUnitPrice)
-            Expanded(
-              flex: 3,
-              child: InkWell(
-                onTap: () => editCartLineDialog(context, ref, item),
+          );
+
+          return Row(
+            children: [
+              SizedBox(
+                width: compact ? 18 : 24,
                 child: Text(
-                  currency.format(item.unitPrice),
-                  textAlign: TextAlign.end,
-                  style: const TextStyle(
-                    fontSize: 12.5,
+                  '$index',
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
+                    fontSize: compact ? 12 : 13,
                     color: AppColors.navy,
                   ),
                 ),
               ),
-            ),
-          IconButton(
-            tooltip: 'Remove item',
-            visualDensity: VisualDensity.compact,
-            onPressed: () =>
-                ref.read(posCartControllerProvider.notifier).remove(item),
-            icon: const Icon(
-              Icons.delete_outline_rounded,
-              color: AppColors.danger,
-              size: 22,
-            ),
-          ),
-        ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.productName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: compact ? 12.5 : 13.5,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                    if (!showUnitPrice) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        currency.format(item.unitPrice),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              qtyControls,
+              if (showUnitPrice)
+                SizedBox(
+                  width: 72,
+                  child: InkWell(
+                    onTap: () => editCartLineDialog(context, ref, item),
+                    child: Text(
+                      currency.format(item.unitPrice),
+                      textAlign: TextAlign.end,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                  ),
+                ),
+              IconButton(
+                tooltip: 'Remove item',
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                onPressed: () => cart.remove(item),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: AppColors.danger,
+                  size: 22,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1198,23 +1271,24 @@ class CircleQtyButton extends StatelessWidget {
 
   final IconData icon;
   final VoidCallback onTap;
+  /* Kept for call-site compatibility; − and + use the same style. */
   final bool filled;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: filled ? AppColors.primary : AppColors.primarySoft,
+      color: const Color(0xFF9BBDE8),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
         child: SizedBox(
-          width: 28,
-          height: 28,
+          width: 30,
+          height: 30,
           child: Icon(
             icon,
-            size: 16,
-            color: filled ? Colors.white : AppColors.primary,
+            size: 18,
+            color: AppColors.primaryDark,
           ),
         ),
       ),

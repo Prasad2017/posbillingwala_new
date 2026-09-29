@@ -3373,8 +3373,7 @@ WHERE $where
 
   Stream<List<CartItem>> watchAllCartItems() {
     return (select(cartItems)..orderBy([
-          (t) => OrderingTerm.desc(t.updatedAt),
-          (t) => OrderingTerm.asc(t.productName),
+          (t) => OrderingTerm.asc(t.cartId),
         ]))
         .watch();
   }
@@ -3383,8 +3382,7 @@ WHERE $where
     return (select(cartItems)
           ..where((t) => t.cartScope.equals(cartScope))
           ..orderBy([
-            (t) => OrderingTerm.desc(t.updatedAt),
-            (t) => OrderingTerm.asc(t.productName),
+            (t) => OrderingTerm.asc(t.cartId),
           ]))
         .watch();
   }
@@ -3393,8 +3391,7 @@ WHERE $where
     return (select(cartItems)
           ..where((t) => t.cartScope.equals(cartScope))
           ..orderBy([
-            (t) => OrderingTerm.desc(t.updatedAt),
-            (t) => OrderingTerm.asc(t.productName),
+            (t) => OrderingTerm.asc(t.cartId),
           ]))
         .get();
   }

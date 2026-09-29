@@ -17,6 +17,7 @@ class PaymentCheckoutState {
     this.mode = PaymentMode.cash,
     this.cashAmount = 0,
     this.upiAmount = 0,
+    this.receivedAmount = 0,
     this.discount = 0,
     this.discountType = 'Amount',
     this.packingCharge = 0,
@@ -29,6 +30,8 @@ class PaymentCheckoutState {
   final PaymentMode mode;
   final double cashAmount;
   final double upiAmount;
+  /* Cash tendered by customer — UI change-due only; bill still settles payable. */
+  final double receivedAmount;
   final double discount;
   final String discountType;
   final double packingCharge;
@@ -36,6 +39,12 @@ class PaymentCheckoutState {
   final bool busy;
   final String? errorMessage;
   final SavedInvoiceResult? result;
+
+  double balanceToReturn(double payable) {
+    if (mode != PaymentMode.cash) return 0;
+    final change = receivedAmount - payable;
+    return change > 0 ? double.parse(change.toStringAsFixed(2)) : 0;
+  }
 
   double discountValue(double subtotal) {
     if (discount <= 0 || subtotal <= 0) return 0;
@@ -71,6 +80,7 @@ class PaymentCheckoutState {
     PaymentMode? mode,
     double? cashAmount,
     double? upiAmount,
+    double? receivedAmount,
     double? discount,
     String? discountType,
     double? packingCharge,
@@ -85,6 +95,7 @@ class PaymentCheckoutState {
       mode: mode ?? this.mode,
       cashAmount: cashAmount ?? this.cashAmount,
       upiAmount: upiAmount ?? this.upiAmount,
+      receivedAmount: receivedAmount ?? this.receivedAmount,
       discount: discount ?? this.discount,
       discountType: discountType ?? this.discountType,
       packingCharge: packingCharge ?? this.packingCharge,
@@ -107,6 +118,9 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
           mode: mode,
           cashAmount: totalAmount,
           upiAmount: 0,
+          receivedAmount: state.receivedAmount > 0
+              ? state.receivedAmount
+              : totalAmount,
           clearError: true,
         );
       case PaymentMode.upi:
@@ -114,6 +128,15 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
           mode: mode,
           cashAmount: 0,
           upiAmount: totalAmount,
+          receivedAmount: totalAmount,
+          clearError: true,
+        );
+      case PaymentMode.card:
+        state = state.copyWith(
+          mode: mode,
+          cashAmount: 0,
+          upiAmount: 0,
+          receivedAmount: totalAmount,
           clearError: true,
         );
       case PaymentMode.cashPlusUpi:
@@ -121,9 +144,19 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
           mode: mode,
           cashAmount: 0,
           upiAmount: 0,
+          receivedAmount: totalAmount,
           clearError: true,
         );
     }
+  }
+
+  void setReceivedAmount(double value) {
+    final next = value < 0 ? 0.0 : double.parse(value.toStringAsFixed(2));
+    state = state.copyWith(receivedAmount: next, clearError: true);
+  }
+
+  void addReceivedDenomination(double amount) {
+    setReceivedAmount(state.receivedAmount + amount);
   }
 
   void setCashAmount(double value, double totalAmount) {
@@ -200,6 +233,15 @@ class PaymentCheckoutController extends Notifier<PaymentCheckoutState> {
         state = state.copyWith(
           busy: false,
           errorMessage: kOnlineRequiredMessage,
+        );
+        return null;
+      }
+
+      if (state.mode == PaymentMode.cash &&
+          state.receivedAmount + 0.05 < totalAmount) {
+        state = state.copyWith(
+          busy: false,
+          errorMessage: 'Received amount is less than bill total',
         );
         return null;
       }

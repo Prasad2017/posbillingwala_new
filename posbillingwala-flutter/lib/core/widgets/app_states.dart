@@ -25,41 +25,52 @@ class AppEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (iconAsset != null) ...[
-              AppSvg(
-                iconAsset!,
-                width: 72,
-                height: 72,
-                color: AppColors.primary.withValues(alpha: .55),
-              ),
-              const SizedBox(height: AppDimensions.lg),
-            ],
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: AppTypography.sectionTitle(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxHeight < 220;
+        final iconSize = compact ? 44.0 : 72.0;
+        final pad = compact ? 12.0 : AppDimensions.xl;
+        return Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(pad),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (iconAsset != null) ...[
+                  AppSvg(
+                    iconAsset!,
+                    width: iconSize,
+                    height: iconSize,
+                    color: AppColors.primary.withValues(alpha: .55),
+                  ),
+                  SizedBox(height: compact ? AppDimensions.md : AppDimensions.lg),
+                ],
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.sectionTitle(),
+                ),
+                if (message != null && message != title) ...[
+                  const SizedBox(height: AppDimensions.sm),
+                  Text(
+                    message!,
+                    textAlign: TextAlign.center,
+                    maxLines: compact ? 2 : 4,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.body(),
+                  ),
+                ],
+                if (actionLabel != null && onAction != null) ...[
+                  SizedBox(height: compact ? AppDimensions.md : AppDimensions.lg),
+                  AppButton(label: actionLabel!, onPressed: onAction),
+                ],
+              ],
             ),
-            if (message != null) ...[
-              const SizedBox(height: AppDimensions.sm),
-              Text(
-                message!,
-                textAlign: TextAlign.center,
-                style: AppTypography.body(),
-              ),
-            ],
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: AppDimensions.lg),
-              AppButton(label: actionLabel!, onPressed: onAction),
-            ],
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

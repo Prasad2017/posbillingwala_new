@@ -54,11 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $response['licenseStatus'] = 'suspended';
         }
     } else {
-        // Reactivate: restore active/expire based on expiry date (never rotate key)
+        // Reactivate: restore active/expired based on expiry date (never rotate key)
         $expiryDate = isset($row['expiryDate']) ? $row['expiryDate'] : '';
         $newStatus = 'active';
         if (function_exists('licence_is_date_valid') && $expiryDate !== '' && !licence_is_date_valid($expiryDate)) {
-            $newStatus = 'expire';
+            $newStatus = 'expired';
         }
         $ok = db_stmt_execute(
             $con,

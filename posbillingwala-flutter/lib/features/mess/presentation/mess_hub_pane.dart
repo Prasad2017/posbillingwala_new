@@ -13,6 +13,7 @@ import 'package:pos_billingwala_v2/features/mess/data/mess_api.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_slip_builder.dart';
 import 'package:pos_billingwala_v2/features/mess/presentation/mess_token_qr_page.dart';
+import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';

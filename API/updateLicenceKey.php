@@ -39,7 +39,7 @@ $i=0;
    
 	                   // P4-1: expire only after expiryDate (valid while days remaining >= 0)
 	                   if (($diff->format("%R%a")) < 0) {
-				               $sql_update="UPDATE `licenses` SET `licenseValidity`='0', `licenseStatus`='expire' WHERE `id` ='$licence_id'";	
+				               $sql_update="UPDATE `licenses` SET `licenseValidity`='0', `licenseStatus`='expired' WHERE `id` ='$licence_id'";	
 						} else {
 						    
 						    $datediff  = $diff->format("%a");

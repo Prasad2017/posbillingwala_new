@@ -111,43 +111,65 @@ class _PosBillingwalaAppState extends ConsumerState<PosBillingwalaApp>
             value: AppTheme.lightSystemUi,
             /* Aurora under system bars; screens stay inside status + nav insets. */
             child: AuroraBackground(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  /* Status bar fill (primary). */
-                  if (topInset > 0)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: topInset,
-                      child: const ColoredBox(color: AppColors.primary),
+              child: Listener(
+                behavior: HitTestBehavior.translucent,
+                onPointerDown: dismissKeyboardIfOutsideFocusedField,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    /* Status bar fill (primary). */
+                    if (topInset > 0)
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: topInset,
+                        child: const ColoredBox(color: AppColors.primary),
+                      ),
+                    /* Navigation bar fill so content never shows through. */
+                    if (bottomInset > 0)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        height: bottomInset,
+                        child: const ColoredBox(color: Colors.white),
+                      ),
+                    /* Keep all routes between status bar and system nav bar. */
+                    SafeArea(
+                      top: true,
+                      bottom: true,
+                      left: true,
+                      right: true,
+                      child: InAppUpdateHost(
+                        child: child ?? const SizedBox.shrink(),
+                      ),
                     ),
-                  /* Navigation bar fill so content never shows through. */
-                  if (bottomInset > 0)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      height: bottomInset,
-                      child: const ColoredBox(color: Colors.white),
-                    ),
-                  /* Keep all routes between status bar and system nav bar. */
-                  SafeArea(
-                    top: true,
-                    bottom: true,
-                    left: true,
-                    right: true,
-                    child: InAppUpdateHost(
-                      child: child ?? const SizedBox.shrink(),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         );
       },
     );
+  }
+}
+
+/* Hide keyboard when user taps anywhere except the focused input. */
+void dismissKeyboardIfOutsideFocusedField(PointerDownEvent event) {
+  final focus = FocusManager.instance.primaryFocus;
+  if (focus == null || focus.context == null) return;
+
+  final renderObject = focus.context!.findRenderObject();
+  if (renderObject is! RenderBox || !renderObject.hasSize) {
+    focus.unfocus();
+    return;
+  }
+
+  final fieldRect =
+      renderObject.localToGlobal(Offset.zero) & renderObject.size;
+  if (!fieldRect.contains(event.position)) {
+    focus.unfocus();
   }
 }

@@ -26,6 +26,8 @@ class BillSummaryCard extends StatelessWidget {
     required this.onDiscountChanged,
     required this.onPackingChanged,
     required this.onDiscountTypeChanged,
+    this.showCollapsedAmount = true,
+    this.expandable = true,
   });
 
   final CartSummary summary;
@@ -39,6 +41,10 @@ class BillSummaryCard extends StatelessWidget {
   final ValueChanged<String> onDiscountChanged;
   final ValueChanged<String> onPackingChanged;
   final ValueChanged<String> onDiscountTypeChanged;
+  /* When false, collapsed header hides total (e.g. cart — amount shown in footer). */
+  final bool showCollapsedAmount;
+  /* When false, breakdown stays open and chevron/toggle are hidden. */
+  final bool expandable;
 
   bool get isPercentDiscount =>
       checkout.discountType.toLowerCase().startsWith('p');
@@ -72,49 +78,55 @@ class BillSummaryCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          InkWell(
-            onTap: onToggleExpanded,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-            child: Padding(
-              padding: headerPad,
-              child: Row(
-                children: [
-                  SummaryIcon(
-                    icon: Icons.description_outlined,
-                    color: AppColors.primary,
-                    dense: short,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Bill Summary',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: short ? 15 : 16,
-                      ),
-                    ),
-                  ),
-                  if (!expanded)
-                    Text(
-                      currency.format(payable),
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w900,
-                        fontSize: short ? 14 : 15,
-                      ),
-                    ),
-                  const SizedBox(width: 4),
-                  AnimatedRotation(
-                    turns: expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      Icons.keyboard_arrow_up_rounded,
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: expandable ? onToggleExpanded : null,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(18)),
+              child: Padding(
+                padding: headerPad,
+                child: Row(
+                  children: [
+                    SummaryIcon(
+                      icon: Icons.description_outlined,
                       color: AppColors.primary,
-                      size: short ? 22 : 26,
+                      dense: short,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Bill Summary',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: short ? 15 : 16,
+                        ),
+                      ),
+                    ),
+                    if (expandable && !expanded && showCollapsedAmount)
+                      Text(
+                        currency.format(payable),
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w900,
+                          fontSize: short ? 14 : 15,
+                        ),
+                      ),
+                    if (expandable) ...[
+                      const SizedBox(width: 4),
+                      AnimatedRotation(
+                        turns: expanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          Icons.keyboard_arrow_up_rounded,
+                          color: AppColors.primary,
+                          size: short ? 22 : 26,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -283,7 +295,7 @@ class BillSummaryCard extends StatelessWidget {
                 ],
               ),
             ),
-            crossFadeState: expanded
+            crossFadeState: (!expandable || expanded)
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 220),

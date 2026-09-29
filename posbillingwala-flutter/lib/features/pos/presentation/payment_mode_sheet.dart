@@ -23,9 +23,10 @@ class PaymentModeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = switch (mode) {
-      PaymentMode.cash => 'CASH',
+      PaymentMode.cash => 'Cash',
       PaymentMode.upi => 'UPI',
-      PaymentMode.cashPlusUpi => 'SPLIT',
+      PaymentMode.card => 'Card',
+      PaymentMode.cashPlusUpi => 'Split',
     };
 
     return Material(
@@ -81,6 +82,11 @@ class PaymentModeSheet extends ConsumerStatefulWidget {
     required this.initialCash,
     required this.initialUpi,
     required this.onContinue,
+    this.modes = const [
+      PaymentMode.cash,
+      PaymentMode.upi,
+      PaymentMode.cashPlusUpi,
+    ],
   });
 
   final double totalAmount;
@@ -89,6 +95,8 @@ class PaymentModeSheet extends ConsumerStatefulWidget {
   final double initialCash;
   final double initialUpi;
   final void Function(PaymentMode mode, double cash, double upi) onContinue;
+  /* Default: Cash / UPI / Split (Cash + UPI) — Card omitted for POS footer flow. */
+  final List<PaymentMode> modes;
 
   @override
   ConsumerState<PaymentModeSheet> createState() => PaymentModeSheetState();
@@ -102,7 +110,9 @@ class PaymentModeSheetState extends ConsumerState<PaymentModeSheet> {
   @override
   void initState() {
     super.initState();
-    paymentPageMode = widget.initialMode;
+    paymentPageMode = widget.modes.contains(widget.initialMode)
+        ? widget.initialMode
+        : widget.modes.first;
     cashController = TextEditingController(
       text: amountInputText(widget.initialCash),
     );
@@ -169,19 +179,31 @@ class PaymentModeSheetState extends ConsumerState<PaymentModeSheet> {
             const SizedBox(height: 16),
             Row(
               children: [
-                for (final mode in PaymentMode.values) ...[
+                for (var i = 0; i < widget.modes.length; i++) ...[
                   Expanded(
                     child: PaymentModeChip(
-                      mode: mode,
-                      selected: paymentPageMode == mode,
-                      onTap: () => paymentPageSelectMode(mode),
+                      mode: widget.modes[i],
+                      selected: paymentPageMode == widget.modes[i],
+                      onTap: () => paymentPageSelectMode(widget.modes[i]),
                     ),
                   ),
-                  if (mode != PaymentMode.values.last) const SizedBox(width: 8),
+                  if (i < widget.modes.length - 1) const SizedBox(width: 8),
                 ],
               ],
             ),
             if (paymentPageMode == PaymentMode.cashPlusUpi) ...[
+              const SizedBox(height: 8),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Split (Cash + UPI)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
               const SizedBox(height: 18),
               Row(
                 children: [
