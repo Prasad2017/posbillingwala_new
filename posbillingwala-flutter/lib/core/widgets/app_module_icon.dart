@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
 
 class AppModuleIcon extends StatelessWidget {
@@ -54,39 +53,6 @@ class AppModuleIcon extends StatelessWidget {
                 ),
               )
             : Icon(icon, color: color, size: size * 0.48),
-      ),
-    );
-  }
-}
-
-/* Tiny helper for inline asset images with Poppins-safe fallbacks. */
-class AppAssetImage extends StatelessWidget {
-  const AppAssetImage(
-    this.path, {
-    super.key,
-    this.width,
-    this.height,
-    this.fit = BoxFit.contain,
-  });
-
-  final String path;
-  final double? width;
-  final double? height;
-  final BoxFit fit;
-
-  @override
-  Widget build(BuildContext context) {
-    return Image.asset(
-      path,
-      width: width,
-      height: height,
-      fit: fit,
-      errorBuilder: (context, error, stackTrace) => SizedBox(
-        width: width,
-        height: height,
-        child: const Center(
-          child: Text('•', style: TextStyle(fontFamily: AppFonts.family)),
-        ),
       ),
     );
   }

@@ -898,7 +898,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                           keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 4),
-                        SettingSwitchTile(
+                        AppSwitchTile(
                           title: 'Auto cut after print',
                           subtitle:
                               'Uses printer capability + profile. Safe if cutter is unknown or missing.',
@@ -948,7 +948,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SettingSwitchTile(
+                        AppSwitchTile(
                           title: 'Enable KOT',
                           value: settings.kotEnable,
                           showDivider: false,
@@ -1001,7 +1001,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                           keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 4),
-                        SettingSwitchTile(
+                        AppSwitchTile(
                           title: 'Auto Print KOT',
                           value: settings.kotAutoPrint,
                           showDivider: true,
@@ -1011,7 +1011,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                                 .update(settings.copyWith(kotAutoPrint: value));
                           },
                         ),
-                        SettingSwitchTile(
+                        AppSwitchTile(
                           title: 'KOT Preview',
                           value: settings.kotPreview,
                           showDivider: false,
@@ -1031,7 +1031,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                     title: 'BILL OPTIONS',
                     child: Column(
                       children: [
-                        SettingSwitchTile(
+                        AppSwitchTile(
                           title: 'Print Fast Bill',
                           value: settings.printFastBill,
                           subtitle:
@@ -1044,7 +1044,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                                 );
                           },
                         ),
-                        SettingSwitchTile(
+                        AppSwitchTile(
                           title: 'Use Logo on Bill',
                           value: settings.logoUse,
                           onChanged: (value) {
@@ -1053,7 +1053,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                                 .update(settings.copyWith(logoUse: value));
                           },
                         ),
-                        SettingSwitchTile(
+                        AppSwitchTile(
                           title: 'Use Payment QR on Bill',
                           value: settings.paymentUse,
                           onChanged: (value) {
@@ -1062,7 +1062,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                                 .update(settings.copyWith(paymentUse: value));
                           },
                         ),
-                        SettingSwitchTile(
+                        AppSwitchTile(
                           title: 'Use Customer Details on Bill',
                           value: settings.customerUse,
                           onChanged: (value) {
@@ -1071,7 +1071,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                                 .update(settings.copyWith(customerUse: value));
                           },
                         ),
-                        SettingSwitchTile(
+                        AppSwitchTile(
                           title: 'Product Quantity Update',
                           value: settings.productQuantityUpdate,
                           onChanged: (value) {
@@ -1084,7 +1084,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                                 );
                           },
                         ),
-                        SettingSwitchTile(
+                        AppSwitchTile(
                           title: 'Duplicate Bill Copy (Invoice List)',
                           value: settings.duplicateBillUse,
                           subtitle:
@@ -1099,7 +1099,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                           },
                         ),
                         const Divider(height: 1, color: AppColors.border),
-                        SettingSwitchTile(
+                        AppSwitchTile(
                           title: 'Share / print prompt after save',
                           value: settings.autoShareOnSave,
                           showDivider: false,
@@ -1324,7 +1324,4 @@ class PreviewActionButton extends StatelessWidget {
     );
   }
 }
-
-/* Kept for call-site compatibility — same as [AppSwitchTile]. */
-typedef SettingSwitchTile = AppSwitchTile;
 

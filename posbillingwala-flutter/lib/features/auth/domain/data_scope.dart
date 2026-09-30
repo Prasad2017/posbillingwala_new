@@ -49,8 +49,3 @@ final dataScopeProvider = FutureProvider<DataScope>((ref) async {
     staff: staff,
   );
 });
-
-/* Sync-friendly staff id for Drift / API filters (null = owner scope). */
-final invoiceStaffFilterProvider = Provider<AsyncValue<int?>>((ref) {
-  return ref.watch(dataScopeProvider).whenData((scope) => scope.staffId);
-});

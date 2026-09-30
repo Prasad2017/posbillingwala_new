@@ -58,37 +58,6 @@ enum PrintErrorCode {
 }
 
 extension PrintErrorCodeX on PrintErrorCode {
-  String get code {
-    switch (this) {
-      case PrintErrorCode.none:
-        return 'NONE';
-      case PrintErrorCode.printerNotFound:
-        return 'PRINTER_NOT_FOUND';
-      case PrintErrorCode.connectionTimeout:
-        return 'CONNECTION_TIMEOUT';
-      case PrintErrorCode.connectionRefused:
-        return 'CONNECTION_REFUSED';
-      case PrintErrorCode.invalidConfiguration:
-        return 'INVALID_CONFIGURATION';
-      case PrintErrorCode.writeFailed:
-        return 'WRITE_FAILED';
-      case PrintErrorCode.printerOffline:
-        return 'PRINTER_OFFLINE';
-      case PrintErrorCode.unsupportedOperation:
-        return 'UNSUPPORTED_OPERATION';
-      case PrintErrorCode.bluetoothUnavailable:
-        return 'BLUETOOTH_UNAVAILABLE';
-      case PrintErrorCode.usbUnavailable:
-        return 'USB_UNAVAILABLE';
-      case PrintErrorCode.networkUnavailable:
-        return 'NETWORK_UNAVAILABLE';
-      case PrintErrorCode.unknownResult:
-        return 'UNKNOWN_RESULT';
-      case PrintErrorCode.unknownError:
-        return 'UNKNOWN_ERROR';
-    }
-  }
-
   String get userMessage {
     switch (this) {
       case PrintErrorCode.none:

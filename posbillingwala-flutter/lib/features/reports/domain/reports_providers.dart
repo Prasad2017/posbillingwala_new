@@ -464,9 +464,6 @@ final periodSalesSummaryProvider = Provider<SalesSummary>((ref) {
   return SalesSummary.fromInvoices(invoices);
 });
 
-/* Back-compat aliases used by older call sites. */
-typedef TodaySalesSummary = SalesSummary;
-
 final todayInvoicesProvider = StreamProvider<List<Invoice>>((ref) {
   final staffId = resolvedStaffFilter(ref);
   return ref

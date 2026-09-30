@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
-import 'package:pos_billingwala_v2/core/theme/app_dimensions.dart';
 import 'package:pos_billingwala_v2/core/theme/billingwala_theme.dart';
 
 /* Frosted glass card — default surface for content panels. */
@@ -87,36 +86,5 @@ class AppCard extends StatelessWidget {
     }
 
     return card;
-  }
-}
-
-/* Compact glass card for dense master / list rows (no blur for scroll perf). */
-class GlassTile extends StatelessWidget {
-  const GlassTile({
-    super.key,
-    required this.child,
-    this.padding = const EdgeInsets.all(AppDimensions.cardPadding),
-    this.margin,
-    this.onTap,
-    this.radius = AppDimensions.radiusMd,
-  });
-
-  final Widget child;
-  final EdgeInsetsGeometry padding;
-  final EdgeInsetsGeometry? margin;
-  final VoidCallback? onTap;
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      padding: padding,
-      margin: margin,
-      onTap: onTap,
-      radius: radius,
-      enableBlur: false,
-      color: AppColors.glassSolid,
-      child: child,
-    );
   }
 }

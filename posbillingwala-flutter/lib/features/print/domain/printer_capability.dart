@@ -8,19 +8,6 @@ enum CutterCapability {
   unknown,
 }
 
-extension CutterCapabilityX on CutterCapability {
-  String get label {
-    switch (this) {
-      case CutterCapability.supported:
-        return 'Supported';
-      case CutterCapability.notSupported:
-        return 'Not supported';
-      case CutterCapability.unknown:
-        return 'Unknown';
-    }
-  }
-}
-
 class PrinterCapabilitySnapshot {
   const PrinterCapabilitySnapshot({
     this.cutter = CutterCapability.unknown,
