@@ -56,6 +56,8 @@ class ReceiptBuilder {
       settings: settings,
       feedLinesOverride: settings.kotFeedLines,
       useAssetLogoFallback: false,
+      /* Kitchen tickets read larger than invoice body text. */
+      fontSizeScale: 1.28,
     );
   }
 
@@ -113,7 +115,7 @@ class ReceiptBuilder {
     String? shopName,
     bool duplicate = false,
   }) {
-    final header = shopProfile.headerLines();
+    final header = shopProfile.headerLines(maxChars: settings.charsPerLine);
     final shopLines = header.isNotEmpty
         ? header
         : [
@@ -242,8 +244,8 @@ class ReceiptBuilder {
   String kotText(KotTicket ticket) {
     final width = settings.charsPerLine;
     final buf = StringBuffer()
+      /* Title only — KOT number stays in the body as "KOT: …". */
       ..writeln(receiptBuilderCenter(labels.kot, width))
-      ..writeln(receiptBuilderCenter(ticket.kot.kotNumber, width))
       ..writeln('-' * width)
       ..writeln('KOT: ${ticket.kot.kotNumber}')
       ..writeln(
@@ -254,13 +256,8 @@ class ReceiptBuilder {
       ..writeln(ticket.kot.kitchenName)
       ..writeln('-' * width);
     for (final item in ticket.items) {
-      buf.writeln(
-        pair(
-          item.productName,
-          'X${qtyLabel(item.productQuantity, unit: item.productUnit)}',
-          width,
-        ),
-      );
+      final qty = 'X${qtyLabel(item.productQuantity, unit: item.productUnit)}';
+      buf.writeln(kotItemLine(item.productName, qty, width));
     }
     buf.writeln('-' * width);
     return buf.toString();
@@ -273,9 +270,19 @@ class ReceiptBuilder {
     return (' ' * left) + value;
   }
 
+  /* Name left, qty right — truncate name so qty always sits on the right edge. */
+  String kotItemLine(String name, String qty, int width) {
+    final qtyLen = qty.runes.length;
+    final maxName = (width - qtyLen - 1).clamp(1, width);
+    var left = name.trim();
+    if (left.runes.length > maxName) {
+      left = String.fromCharCodes(left.runes.take(maxName));
+    }
+    final gap = width - left.runes.length - qtyLen;
+    return '$left${' ' * gap.clamp(1, width)}$qty';
+  }
+
   String pair(String left, String right, int width) {
-    final space = width - left.runes.length - right.runes.length;
-    final gap = space > 1 ? ' ' * space : ' ';
-    return '$left$gap$right';
+    return kotItemLine(left, right, width);
   }
 }

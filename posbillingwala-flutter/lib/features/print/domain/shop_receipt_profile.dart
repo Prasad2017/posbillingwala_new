@@ -68,7 +68,8 @@ class ShopReceiptProfile {
   String get upiId => hasUpiId ? paymentLogo.trim() : '';
 
   /* Android ShopHeaderBuilder layout for thermal bills. */
-  List<String> headerLines() {
+  /* [maxChars] wraps phone line for narrow paper (58/60mm). */
+  List<String> headerLines({int maxChars = 48}) {
     final lines = <String>[];
     void add(String? v) {
       final t = v?.trim() ?? '';
@@ -87,13 +88,7 @@ class ShopReceiptProfile {
     if (addressLine1.isEmpty && addressLine2.isEmpty && addressLine3.isEmpty) {
       add(companyAddress);
     }
-    add(phoneNo1);
-    add(phoneNo2);
-    if (phoneNo1.trim().isEmpty &&
-        phoneNo2.trim().isEmpty &&
-        companyMobile.trim().isEmpty == false) {
-      add(companyMobile);
-    }
+    lines.addAll(phoneHeaderLines(maxChars: maxChars));
     if (gstEnabled && gstNumber.trim().isNotEmpty) {
       lines.add('GSTIN: ${gstNumber.trim()}');
     }
@@ -101,6 +96,65 @@ class ShopReceiptProfile {
       lines.add('FSSAI No: ${companyFssis.trim()}');
     }
     return lines;
+  }
+
+  /* Single row when it fits: "Ph. 8605351801 / 9325987443". */
+  List<String> phoneHeaderLines({int maxChars = 48}) {
+    final phones = <String>[];
+    void addPhone(String? value) {
+      final t = value?.trim() ?? '';
+      if (t.isNotEmpty && !phones.contains(t)) phones.add(t);
+    }
+
+    addPhone(phoneNo1);
+    addPhone(phoneNo2);
+    if (phones.isEmpty) addPhone(companyMobile);
+    if (phones.isEmpty) return const [];
+
+    if (phones.length == 1) {
+      final line = 'Ph. ${phones.first}';
+      return line.runes.length <= maxChars
+          ? [line]
+          : _wrapPrefixedPhone(phones.first, maxChars: maxChars);
+    }
+
+    final combined = 'Ph. ${phones.join(' / ')}';
+    if (combined.runes.length <= maxChars) return [combined];
+
+    /* Narrow paper: keep Ph. + first number, continue with / on next line. */
+    final first = 'Ph. ${phones.first} /';
+    if (first.runes.length <= maxChars) {
+      final rest = phones.skip(1).join(' / ');
+      if (rest.runes.length <= maxChars) return [first, rest];
+      return [first, ..._chunk(rest, maxChars)];
+    }
+
+    return [
+      ..._wrapPrefixedPhone(phones.first, maxChars: maxChars),
+      for (final p in phones.skip(1))
+        ..._wrapPrefixedPhone(p, maxChars: maxChars, prefix: '/ '),
+    ];
+  }
+
+  static List<String> _wrapPrefixedPhone(
+    String number, {
+    int maxChars = 48,
+    String prefix = 'Ph. ',
+  }) {
+    final line = '$prefix$number'.trim();
+    if (line.runes.length <= maxChars) return [line];
+    return _chunk(line, maxChars);
+  }
+
+  static List<String> _chunk(String value, int maxChars) {
+    if (maxChars < 8) return [value];
+    final out = <String>[];
+    final runes = value.runes.toList();
+    for (var i = 0; i < runes.length; i += maxChars) {
+      final end = (i + maxChars).clamp(0, runes.length);
+      out.add(String.fromCharCodes(runes.sublist(i, end)));
+    }
+    return out;
   }
 
   factory ShopReceiptProfile.fromCompany(CompanyDto c) {

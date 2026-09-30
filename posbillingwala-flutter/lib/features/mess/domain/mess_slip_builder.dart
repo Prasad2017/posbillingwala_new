@@ -63,8 +63,9 @@ abstract final class MessSlipBuilder {
   static List<String> shopHeaderLines(
     ShopReceiptProfile profile, {
     String fallbackTitle = 'Billingwala',
+    int maxChars = 48,
   }) {
-    final lines = profile.headerLines();
+    final lines = profile.headerLines(maxChars: maxChars);
     if (lines.isEmpty) return [fallbackTitle];
     return lines;
   }
@@ -75,7 +76,11 @@ abstract final class MessSlipBuilder {
     required int width,
     String fallbackTitle = 'Billingwala',
   }) {
-    for (final line in shopHeaderLines(profile, fallbackTitle: fallbackTitle)) {
+    for (final line in shopHeaderLines(
+      profile,
+      fallbackTitle: fallbackTitle,
+      maxChars: width,
+    )) {
       buf.writeln(center(line, width));
     }
   }

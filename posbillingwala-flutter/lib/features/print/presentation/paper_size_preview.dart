@@ -10,15 +10,25 @@ class PaperSizePreviewCard extends StatelessWidget {
     required this.title,
     required this.text,
     required this.paperSize,
+    this.largeType = false,
   });
 
   final String title;
   final String text;
   final PrinterPaperSize paperSize;
+  /* KOT / kitchen tickets — larger type + monospace for column alignment. */
+  final bool largeType;
 
   @override
   Widget build(BuildContext context) {
     final profile = paperSize.profile;
+    final fontSize = largeType
+        ? (profile.isNarrowLayout ? 15.0 : 16.0)
+        : (profile.isNarrowLayout ? 12.0 : 11.0);
+    final previewWidth = largeType
+        ? profile.charsPerLine * 9.2
+        : profile.onScreenPreviewWidth;
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
@@ -43,7 +53,7 @@ class PaperSizePreviewCard extends StatelessWidget {
           const SizedBox(height: 8),
           Center(
             child: Container(
-              width: profile.onScreenPreviewWidth,
+              width: previewWidth,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -59,9 +69,20 @@ class PaperSizePreviewCard extends StatelessWidget {
               child: SelectableText(
                 text,
                 style: AppFonts.printBody(
-                  fontSize: profile.isNarrowLayout ? 12 : 11,
-                  height: 1.28,
-                  weight: FontWeight.w500,
+                  fontSize: fontSize,
+                  height: largeType ? 1.35 : 1.28,
+                  weight: FontWeight.w600,
+                ).copyWith(
+                  /* Monospace keeps qty flush-right with space padding. */
+                  fontFamily: largeType ? 'Courier New' : null,
+                  fontFamilyFallback: largeType
+                      ? const [
+                          'Courier New',
+                          'Consolas',
+                          'monospace',
+                          ...AppFonts.indicFallbacks,
+                        ]
+                      : AppFonts.printFallbacks,
                 ),
               ),
             ),

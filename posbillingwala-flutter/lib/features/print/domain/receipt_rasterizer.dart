@@ -64,6 +64,7 @@ class ReceiptRasterizer {
     String? qrMarker,
     int? feedLinesOverride,
     bool useAssetLogoFallback = false,
+    double fontSizeScale = 1,
   }) async {
     final profile = settings.billProfile;
     profile.validateOrThrow();
@@ -76,6 +77,7 @@ class ReceiptRasterizer {
       logoPath: logoPath,
       qrMarker: qrMarker,
       useAssetLogoFallback: useAssetLogoFallback,
+      fontSizeScale: fontSizeScale,
     );
     final doCut = printerCapabilityManager.shouldCutForSettings(settings);
     return await _escPosRaster(
@@ -490,7 +492,8 @@ class ReceiptRasterizer {
       y = _paintCentered(
         ops,
         ticket.terms.trim(),
-        style(size: bodySize * 0.92),
+        /* Same family as Powered by, slightly larger. */
+        style(size: bodySize * 0.95, weight: FontWeight.w400),
         widthPx: widthPx,
         maxWidth: contentW,
         y: y + lineGap,
@@ -513,7 +516,8 @@ class ReceiptRasterizer {
       y = _paintCentered(
         ops,
         line,
-        style(),
+        /* Powered by / website — normal weight, slightly smaller. */
+        style(size: bodySize * 0.82, weight: FontWeight.w400),
         widthPx: widthPx,
         maxWidth: contentW,
         y: y,
@@ -678,9 +682,10 @@ class ReceiptRasterizer {
     String? logoPath,
     String? qrMarker,
     bool useAssetLogoFallback = false,
+    double fontSizeScale = 1,
   }) async {
     final profile = profileFor(paperSize);
-    final bodySize = profile.bodyFontSize;
+    final bodySize = profile.bodyFontSize * fontSizeScale.clamp(0.8, 1.6);
     final lineHeight = 1.15;
 
     final logoImage = await loadLogo(
@@ -724,8 +729,33 @@ class ReceiptRasterizer {
       height: lineHeight,
     );
 
+    /* KOT (scaled) — first line is title, paint truly centered + larger. */
+    final emphasizeTitle = fontSizeScale > 1.05;
+    var titleLine = '';
+    var bodyText = topText;
+    if (emphasizeTitle) {
+      final lines = topText.split('\n');
+      if (lines.isNotEmpty) {
+        titleLine = lines.first.trim();
+        bodyText = lines.skip(1).join('\n');
+      }
+    }
+
+    final titleStyle = AppFonts.printBold(
+      fontSize: bodySize * 1.18,
+      height: lineHeight,
+    );
+    final titlePainter = titleLine.isEmpty
+        ? null
+        : (TextPainter(
+            text: TextSpan(text: titleLine, style: titleStyle),
+            textAlign: TextAlign.center,
+            textDirection: TextDirection.ltr,
+            locale: const Locale('hi', 'IN'),
+          )..layout(maxWidth: widthPx - 16.0));
+
     final topPainter = TextPainter(
-      text: TextSpan(text: topText, style: style),
+      text: TextSpan(text: bodyText, style: style),
       textAlign: TextAlign.left,
       textDirection: TextDirection.ltr,
       locale: const Locale('hi', 'IN'),
@@ -747,9 +777,11 @@ class ReceiptRasterizer {
     final drawQr = qrData.isNotEmpty && (hasInlineQr || marker.isEmpty);
     final qrGap = drawQr ? qrSize + 24 : 0.0;
     final bottomH = bottomPainter?.height ?? 0.0;
-    final height = (logoDrawH + topPainter.height + qrGap + bottomH + 24)
-        .ceil()
-        .clamp(24, 12000);
+    final titleH = titlePainter == null ? 0.0 : titlePainter.height + 6;
+    final height =
+        (logoDrawH + titleH + topPainter.height + qrGap + bottomH + 24)
+            .ceil()
+            .clamp(24, 12000);
 
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
@@ -766,6 +798,12 @@ class ReceiptRasterizer {
       canvas.drawImage(logoImage, Offset(left, y), Paint());
       y += lh + 8;
       logoImage.dispose();
+    }
+
+    if (titlePainter != null) {
+      final titleLeft = (widthPx - titlePainter.width) / 2;
+      titlePainter.paint(canvas, Offset(titleLeft, y));
+      y += titlePainter.height + 6;
     }
 
     topPainter.paint(canvas, Offset(8, y));

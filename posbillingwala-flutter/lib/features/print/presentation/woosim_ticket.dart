@@ -185,7 +185,8 @@ class WoosimTicket extends StatelessWidget {
                 child: Text(
                   ticket.terms.trim(),
                   textAlign: TextAlign.center,
-                  style: pop(size: 13),
+                  /* Same family as Powered by, slightly larger. */
+                  style: pop(size: bodySize * 0.95, weight: FontWeight.w400),
                 ),
               ),
             if (qr.isNotEmpty) ...[
@@ -217,8 +218,8 @@ class WoosimTicket extends StatelessWidget {
                 child: Text(
                   line,
                   textAlign: TextAlign.center,
-                  /* Powered by / website — same size as Bill No. */
-                  style: pop(size: bodySize, weight: FontWeight.w500),
+                  /* Powered by / website — normal weight, slightly smaller. */
+                  style: pop(size: bodySize * 0.82, weight: FontWeight.w400),
                 ),
               ),
           ],

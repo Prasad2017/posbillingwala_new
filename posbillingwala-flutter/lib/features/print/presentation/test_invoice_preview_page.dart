@@ -314,6 +314,7 @@ class TestInvoicePreviewPageState
                 title: activePaper.shortLabel,
                 text: service.kotPreviewText(paperSize: activePaper),
                 paperSize: activePaper,
+                largeType: true,
               )
             else
               PreviewCard(
