@@ -27,9 +27,12 @@ dependencies:
   qr_flutter: ^4.1.0
   qr: ^3.0.2
   share_plus: ^13.3.0
-  # Local fork: Android writeBytes uses 512-byte paced chunks (stock 16KB dump
-  # returns ok but cheap BT printers drop GS v 0 raster and print nothing).
-  print_bluetooth_thermal: ^1.2.5
+  # Local fork of print_bluetooth_thermal 1.2.5:
+  # - connectionstatus no longer writes a space (was blank-feeding paper)
+  # - writeBytes no longer prepends LF (was extra feed before every job)
+  # - Android writes 512-byte paced chunks (stock 16KB dump drops raster)
+  print_bluetooth_thermal:
+    path: packages/print_bluetooth_thermal
   permission_handler: ^13.0.2
   firebase_core: ^4.15.0
   firebase_messaging: ^16.7.0

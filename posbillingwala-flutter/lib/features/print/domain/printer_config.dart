@@ -15,7 +15,7 @@ class PrinterConfig {
     this.paperSize = PrinterPaperSize.mm58,
     this.autoCutEnabled = true,
     this.cutType = PrinterCutType.defaultCut,
-    this.feedLines = 1,
+    this.feedLines = 0,
     this.timeoutMs = 5000,
     this.manufacturer = '',
     this.model = '',
@@ -129,7 +129,7 @@ class PrinterConfig {
       paperSize: printer.paperSizeEnum,
       autoCutEnabled: true,
       cutType: PrinterCutType.defaultCut,
-      feedLines: 1,
+      feedLines: 0,
     );
   }
 

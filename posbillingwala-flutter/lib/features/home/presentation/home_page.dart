@@ -23,6 +23,7 @@ import 'package:pos_billingwala_v2/features/notifications/domain/notification_pr
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
+import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_host_service.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
@@ -45,7 +46,8 @@ class HomePage extends ConsumerStatefulWidget {
   ConsumerState<HomePage> createState() => HomePageState();
 }
 
-class HomePageState extends ConsumerState<HomePage> {
+class HomePageState extends ConsumerState<HomePage>
+    with WidgetsBindingObserver {
   static bool permissionsPrompted = false;
   bool homePageHidePrimarySales = false;
   bool homePageHideTodaySales = false;
@@ -56,9 +58,10 @@ class HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
-    if (!permissionsPrompted) {
-      permissionsPrompted = true;
-      Future.microtask(() async {
+    WidgetsBinding.instance.addObserver(this);
+    Future.microtask(() async {
+      if (!permissionsPrompted) {
+        permissionsPrompted = true;
         /* Catalog recover in parallel — do not block printer / permissions. */
         unawaited(
           ref
@@ -69,11 +72,7 @@ class HomePageState extends ConsumerState<HomePage> {
         if (!await service.arePrintPermissionsGranted) {
           await service.requestAll();
         }
-        final settings = ref.read(printerSettingsProvider);
-        unawaited(PrinterAutoConnect.ensureSavedPrinters(settings));
         if (!mounted) return;
-        await refreshPrinterChip();
-        await refreshHoursLabels();
         await ref.read(permissionControllerProvider.notifier).hydrate();
         ref.read(printHostControllerProvider).start();
         ref.read(messMealTokenPrintWorkerProvider).start();
@@ -84,13 +83,41 @@ class HomePageState extends ConsumerState<HomePage> {
         if (const bool.fromEnvironment('AUTO_TEST_PRINT')) {
           context.go('/settings/test-print?mode=invoice');
         }
-      });
-    } else {
-      Future.microtask(() async {
-        await refreshPrinterChip();
-        await refreshHoursLabels();
-      });
+      }
+      if (!mounted) return;
+      await ensureHomePrinterLink();
+      await refreshHoursLabels();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      unawaited(ensureHomePrinterLink(force: true));
     }
+  }
+
+  Future<void> ensureHomePrinterLink({bool force = false}) async {
+    final settings = ref.read(printerSettingsProvider);
+    final hasEndpoint =
+        settings.billBluetoothAddress.trim().isNotEmpty ||
+        settings.billUsbIdentifier.trim().isNotEmpty ||
+        settings.networkHost.trim().isNotEmpty;
+    if (!hasEndpoint) {
+      await refreshPrinterChip();
+      return;
+    }
+
+    if (mounted) setState(() => printerChip = 'Connecting…');
+    await PrinterAutoConnect.ensureSavedPrinters(settings, force: force);
+    if (!mounted) return;
+    await refreshPrinterChip();
   }
 
   Future<void> refreshHoursLabels() async {
@@ -116,26 +143,36 @@ class HomePageState extends ConsumerState<HomePage> {
   Future<void> refreshPrinterChip() async {
     final settings = ref.read(printerSettingsProvider);
     final hub = BluetoothPrinterHub.instance;
-    final mac = settings.billBluetoothAddress.trim();
+    final usb = EscPosTransportHub.instance;
+    final transport = settings.billTransport;
     String label;
-    if (mac.isEmpty &&
-        settings.billUsbIdentifier.isEmpty &&
-        settings.networkHost.trim().isEmpty) {
-      label = 'Not set';
-    } else if (hub.isConnecting) {
-      label = 'Connecting…';
-    } else if (await hub.connectionStatus() &&
-        hub.connectedAddress.isNotEmpty) {
-      label = 'Connected';
-    } else if (settings.billTransport == PosPrinterTransport.usb &&
-        EscPosUsbHint.isLinked(settings)) {
-      label = 'USB ready';
-    } else if (settings.billTransport == PosPrinterTransport.network &&
-        settings.networkHost.trim().isNotEmpty) {
-      label = 'Network';
-    } else {
-      label = 'Offline';
+
+    switch (transport) {
+      case PosPrinterTransport.bluetooth:
+        final mac = settings.billBluetoothAddress.trim();
+        if (mac.isEmpty) {
+          label = 'Not set';
+        } else if (hub.isConnecting) {
+          label = 'Connecting…';
+        } else if (await hub.connectionStatus() &&
+            hub.connectedAddress.toLowerCase() == mac.toLowerCase()) {
+          label = 'Connected';
+        } else {
+          label = 'Offline';
+        }
+      case PosPrinterTransport.usb:
+        final id = settings.billUsbIdentifier.trim();
+        if (id.isEmpty) {
+          label = 'Not set';
+        } else if (usb.linkedTo(id)) {
+          label = 'Connected';
+        } else {
+          label = 'Offline';
+        }
+      case PosPrinterTransport.network:
+        label = settings.networkHost.trim().isEmpty ? 'Not set' : 'Network';
     }
+
     if (!mounted) return;
     setState(() => printerChip = label);
   }
@@ -195,9 +232,7 @@ class HomePageState extends ConsumerState<HomePage> {
 
     final shopName = session?.shopName?.trim() ?? '';
     final printerOnline =
-        printerChip == 'Connected' ||
-        printerChip == 'USB ready' ||
-        printerChip == 'Network';
+        printerChip == 'Connected' || printerChip == 'Network';
 
     final dashboard = HomeDashboardBody(
       showTotalSales: showTotalSales,
@@ -289,7 +324,7 @@ class HomePageState extends ConsumerState<HomePage> {
           ref.invalidate(homeSalesOverviewProvider);
           ref.invalidate(homeBannersProvider);
           ref.invalidate(shopOpenNowProvider);
-          await refreshPrinterChip();
+          await ensureHomePrinterLink(force: true);
           await refreshHoursLabels();
         },
         child: CustomScrollView(
@@ -694,11 +729,6 @@ class HomeDashboardBody extends ConsumerWidget {
       ],
     );
   }
-}
-
-class EscPosUsbHint {
-  static bool isLinked(PrinterSettings settings) =>
-      settings.billUsbIdentifier.trim().isNotEmpty;
 }
 
 class HomeLiveClock extends StatefulWidget {

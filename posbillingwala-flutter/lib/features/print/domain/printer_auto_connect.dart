@@ -9,30 +9,45 @@ import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 /* App-wide reconnect for printers the user already saved / connected. */
 /* */
 /* Call after settings load, on Home, and when the app resumes. Safe to call */
-/* often — no-ops when already linked or nothing is configured. */
+/* often — concurrent callers share one in-flight attempt. */
 abstract final class PrinterAutoConnect {
   PrinterAutoConnect._();
 
-  static bool _running = false;
+  static Completer<void>? _inFlight;
   static DateTime? _lastAttemptAt;
 
   /* Soft debounce so Home + settings reload + resume don't thrash BT/USB. */
   static const _minGap = Duration(seconds: 2);
 
-  static Future<void> ensureSavedPrinters(PrinterSettings settings) async {
+  static Future<void> ensureSavedPrinters(
+    PrinterSettings settings, {
+    bool force = false,
+  }) async {
     if (kIsWeb) return;
-    if (_running) return;
+
+    final existing = _inFlight;
+    if (existing != null) {
+      await existing.future;
+      if (!force) return;
+    }
+
     final now = DateTime.now();
     final last = _lastAttemptAt;
-    if (last != null && now.difference(last) < _minGap) return;
+    if (!force && last != null && now.difference(last) < _minGap) {
+      return;
+    }
+
+    final completer = Completer<void>();
+    _inFlight = completer;
     _lastAttemptAt = now;
-    _running = true;
     try {
       await _ensureSavedPrinters(settings);
+      if (!completer.isCompleted) completer.complete();
     } catch (error) {
       AppLogger.warning('Printer auto-connect failed', error);
+      if (!completer.isCompleted) completer.complete();
     } finally {
-      _running = false;
+      if (_inFlight == completer) _inFlight = null;
     }
   }
 
@@ -116,6 +131,25 @@ abstract final class PrinterAutoConnect {
       case PosPrinterTransport.network:
         /* Network is connected per print job — nothing to keep open. */
         break;
+    }
+  }
+
+  /* True when the bill printer endpoint is currently linked. */
+  static Future<bool> isBillPrinterOnline(PrinterSettings settings) async {
+    switch (settings.billTransport) {
+      case PosPrinterTransport.bluetooth:
+        final mac = settings.billBluetoothAddress.trim();
+        if (mac.isEmpty) return false;
+        final hub = BluetoothPrinterHub.instance;
+        if (hub.isConnecting) return false;
+        if (!await hub.connectionStatus()) return false;
+        return hub.connectedAddress.toLowerCase() == mac.toLowerCase();
+      case PosPrinterTransport.usb:
+        final id = settings.billUsbIdentifier.trim();
+        if (id.isEmpty) return false;
+        return EscPosTransportHub.instance.linkedTo(id);
+      case PosPrinterTransport.network:
+        return settings.networkHost.trim().isNotEmpty;
     }
   }
 }
