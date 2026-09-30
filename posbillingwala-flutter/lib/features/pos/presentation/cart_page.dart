@@ -9,6 +9,7 @@ import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
+import 'package:pos_billingwala_v2/features/pos/domain/billing_date.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/kot_providers.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_checkout_controller.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
@@ -55,12 +56,14 @@ class CartPage extends ConsumerWidget {
     required bool isTable,
     required bool kotEnabled,
     required double unprintedCount,
+    required double payable,
     bool showCartBar = true,
     bool showActions = true,
   }) {
     return PosActionFooter(
       summary: summary,
       currency: currency,
+      displayTotal: payable,
       showCartBar: showCartBar,
       showActions: showActions,
       onCartTap: () {},
@@ -90,6 +93,7 @@ class CartPage extends ConsumerWidget {
         }
         return ListView(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: [
             _CartItemsTable(items: items, currency: currency),
           ],
@@ -100,11 +104,77 @@ class CartPage extends ConsumerWidget {
     );
   }
 
+  /* Portrait: items + bill scroll together so the keyboard cannot overflow the footer. */
+  Widget buildPortraitBody({
+    required AsyncValue<List<CartItem>> cartAsync,
+    required NumberFormat currency,
+    required CartSummary summary,
+    required WidgetRef ref,
+    required BuildContext context,
+    required bool isTable,
+    required bool kotEnabled,
+    required double unprintedCount,
+    required double payable,
+  }) {
+    return Column(
+      children: [
+        Expanded(
+          child: cartAsync.when(
+            data: (items) {
+              if (items.isEmpty) {
+                return const EmptyCart();
+              }
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                            child: _CartItemsTable(
+                              items: items,
+                              currency: currency,
+                            ),
+                          ),
+                          const _CartBillBreakdown(expandable: true),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('$e')),
+          ),
+        ),
+        buildFooter(
+          context: context,
+          ref: ref,
+          summary: summary,
+          currency: currency,
+          isTable: isTable,
+          kotEnabled: kotEnabled,
+          unprintedCount: unprintedCount,
+          payable: payable,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(billingSessionProvider);
     final cartAsync = ref.watch(cartItemsProvider);
     final summary = ref.watch(cartSummaryProvider);
+    final checkout = ref.watch(paymentCheckoutControllerProvider);
     final currency = MoneyFormat.inr;
     final strings = AppStrings.of(ref);
     final isTable = session.invoiceType == 'table_wise';
@@ -112,15 +182,26 @@ class CartPage extends ConsumerWidget {
     final unprintedCount = ref.watch(unprintedCartCountProvider);
     final qtyLabel = ProductUnits.formatQty(summary.totalQuantity);
     final landscape = context.isLandscapeLayout;
+    final payable = checkoutPayable(summary, checkout);
+    final printFastBill = ref.watch(
+      printerSettingsProvider.select((s) => s.printFastBill),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        title: Text(
-          'Cart ($qtyLabel ${summary.totalQuantity == 1 ? 'Item' : 'Items'})',
-          style: const TextStyle(fontWeight: FontWeight.w800),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Cart ($qtyLabel ${summary.totalQuantity == 1 ? 'Item' : 'Items'})',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            if (printFastBill) const BillingDateBar(inAppBar: true),
+          ],
         ),
         actions: [
           if (!summary.isEmpty)
@@ -165,6 +246,7 @@ class CartPage extends ConsumerWidget {
                             isTable: isTable,
                             kotEnabled: kotEnabled,
                             unprintedCount: unprintedCount,
+                            payable: payable,
                             showCartBar: true,
                             showActions: false,
                           ),
@@ -182,6 +264,8 @@ class CartPage extends ConsumerWidget {
                           const Expanded(
                             child: SingleChildScrollView(
                               padding: EdgeInsets.only(top: 8),
+                              keyboardDismissBehavior:
+                                  ScrollViewKeyboardDismissBehavior.onDrag,
                               child: _CartBillBreakdown(
                                 expandable: false,
                               ),
@@ -195,6 +279,7 @@ class CartPage extends ConsumerWidget {
                             isTable: isTable,
                             kotEnabled: kotEnabled,
                             unprintedCount: unprintedCount,
+                            payable: payable,
                             showCartBar: false,
                             showActions: true,
                           ),
@@ -203,25 +288,16 @@ class CartPage extends ConsumerWidget {
                     ),
                   ],
                 )
-              : Column(
-                  children: [
-                    Expanded(
-                      child: buildItemsPane(
-                        cartAsync: cartAsync,
-                        currency: currency,
-                      ),
-                    ),
-                    const _CartBillBreakdown(expandable: true),
-                    buildFooter(
-                      context: context,
-                      ref: ref,
-                      summary: summary,
-                      currency: currency,
-                      isTable: isTable,
-                      kotEnabled: kotEnabled,
-                      unprintedCount: unprintedCount,
-                    ),
-                  ],
+              : buildPortraitBody(
+                  cartAsync: cartAsync,
+                  currency: currency,
+                  summary: summary,
+                  ref: ref,
+                  context: context,
+                  isTable: isTable,
+                  kotEnabled: kotEnabled,
+                  unprintedCount: unprintedCount,
+                  payable: payable,
                 ),
     );
   }
@@ -342,9 +418,28 @@ class _CartBillBreakdown extends ConsumerStatefulWidget {
 }
 
 class _CartBillBreakdownState extends ConsumerState<_CartBillBreakdown> {
-  final discountController = TextEditingController();
-  final packingController = TextEditingController();
+  late final TextEditingController discountController;
+  late final TextEditingController packingController;
   bool billExpanded = false;
+
+  static String formatFieldValue(double value) {
+    if (value <= 0) return '';
+    if (value == value.roundToDouble()) return value.round().toString();
+    return value.toString();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    /* Restore from Riverpod so values survive orientation rebuilds. */
+    final checkout = ref.read(paymentCheckoutControllerProvider);
+    discountController = TextEditingController(
+      text: formatFieldValue(checkout.discount),
+    );
+    packingController = TextEditingController(
+      text: formatFieldValue(checkout.packingCharge),
+    );
+  }
 
   @override
   void dispose() {

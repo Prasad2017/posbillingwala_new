@@ -85,11 +85,13 @@ class ReceiptBuilder {
     );
   }
 
-  String? upiUriFor(Invoice invoice) {
+  String? upiUriFor(Invoice invoice, {double? payableOverride}) {
     if (!settings.paymentUse || !shopProfile.hasUpiId) return null;
-    final amount = invoice.totalAmount > 0
-        ? invoice.totalAmount
-        : (invoice.upiAmount > 0 ? invoice.upiAmount : 0.0);
+    final amount = payableOverride != null && payableOverride > 0
+        ? payableOverride
+        : (invoice.totalAmount > 0
+              ? invoice.totalAmount
+              : (invoice.upiAmount > 0 ? invoice.upiAmount : 0.0));
     /* Android PaymentUpiQrHelper: QR only when payable amount > 0. */
     if (amount <= 0) return null;
     return buildUpiPayUri(
@@ -158,31 +160,52 @@ class ReceiptBuilder {
     final cgstPct = double.tryParse(shopProfile.shopCgst.trim()) ?? 0;
     final sgstPct = double.tryParse(shopProfile.shopSgst.trim()) ?? 0;
     final gstOn = shopProfile.gstEnabled && (cgstPct > 0 || sgstPct > 0);
+    var taxTotal = 0.0;
     if (gstOn) {
+      final cgstAmt = invoice.subTotal * cgstPct / 100;
+      final sgstAmt = invoice.subTotal * sgstPct / 100;
+      taxTotal = cgstAmt + sgstAmt;
       if (cgstPct > 0) {
         pairs.add((
           'CGST@${money.format(cgstPct)}%',
-          rupee(invoice.subTotal * cgstPct / 100),
+          rupee(cgstAmt),
         ));
       }
       if (sgstPct > 0) {
         pairs.add((
           'SGST@${money.format(sgstPct)}%',
-          rupee(invoice.subTotal * sgstPct / 100),
+          rupee(sgstAmt),
         ));
       }
     } else if (invoice.totalGstAmount > 0) {
+      taxTotal = invoice.totalGstAmount;
       final half = invoice.totalGstAmount / 2;
       pairs.add(('CGST', rupee(half)));
       pairs.add(('SGST', rupee(half)));
     }
-    if (invoice.discount > 0) {
-      pairs.add((labels.discount, rupee(invoice.discount)));
+    final discountValue = _moneyComponent(
+      invoice.discount,
+      invoice.discountType,
+      invoice.subTotal,
+    );
+    final packingValue = _moneyComponent(
+      invoice.packingCharge,
+      invoice.packingChargeType,
+      invoice.subTotal,
+    );
+    if (discountValue > 0) {
+      pairs.add((labels.discount, rupee(discountValue)));
     }
-    if (invoice.packingCharge > 0) {
-      pairs.add((labels.packing, rupee(invoice.packingCharge)));
+    if (packingValue > 0) {
+      pairs.add((labels.packing, rupee(packingValue)));
     }
-    pairs.add((labels.totalAmount, rupee(invoice.totalAmount.ceilToDouble())));
+    /* TOTAL must match shown GST lines (sub + tax − discount + packing). */
+    final payable = gstOn || invoice.totalGstAmount > 0
+        ? (invoice.subTotal + taxTotal + packingValue - discountValue)
+              .clamp(0, double.infinity)
+              .ceilToDouble()
+        : invoice.totalAmount.ceilToDouble();
+    pairs.add((labels.totalAmount, rupee(payable)));
 
     return ticketFromLabels(
       labels: labels,
@@ -193,8 +216,13 @@ class ReceiptBuilder {
       pairs: pairs,
       footerLines: [labels.poweredBy, labels.website],
       terms: settings.invoiceTerms,
-      qrPayload: upiUriFor(invoice),
+      qrPayload: upiUriFor(invoice, payableOverride: payable),
     );
+  }
+
+  double _moneyComponent(double value, String type, double base) {
+    if (value <= 0) return 0;
+    return type.toLowerCase().startsWith('p') ? base * value / 100 : value;
   }
 
   String billText({

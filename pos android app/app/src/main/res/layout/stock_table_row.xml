@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/stockRow"
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp">
+
+    <TextView
+        android:id="@+id/colNo"
+        android:layout_width="28dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppinsregular"
+        android:gravity="center"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/colName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppinsmedium"
+        android:maxLines="1"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/colCode"
+        android:layout_width="52dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppinsregular"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/colStock"
+        android:layout_width="44dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppinsmedium"
+        android:gravity="center"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/colPrice"
+        android:layout_width="56dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppinsregular"
+        android:gravity="end"
+        android:maxLines="1"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/colStatus"
+        android:layout_width="64dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppinsmedium"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textSize="11sp" />
+
+</LinearLayout>

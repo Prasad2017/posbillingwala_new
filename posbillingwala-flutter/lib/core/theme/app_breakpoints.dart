@@ -312,17 +312,19 @@ abstract final class AppBreakpoints {
   static double productCardExtentFor(
     AppWidthClass w, {
     AppHeightClass height = AppHeightClass.regular,
+    bool includeImage = true,
   }) {
-    /* 70×70 image + name + price + Add (incl. textScaler / short landscape). */
-    if (height == AppHeightClass.short) return 170;
-    return switch (w) {
-      AppWidthClass.smallMobile || AppWidthClass.mobile => 178,
-      AppWidthClass.tablet => 182,
+    /* Name + price + Add — optional 70×70 image above. */
+    final textBlock = height == AppHeightClass.short ? 96.0 : switch (w) {
+      AppWidthClass.smallMobile || AppWidthClass.mobile => 102.0,
+      AppWidthClass.tablet => 104.0,
       AppWidthClass.largeTablet ||
       AppWidthClass.desktop ||
       AppWidthClass.largeDesktop =>
-        186,
+        106.0,
     };
+    if (!includeImage) return textBlock;
+    return textBlock + (height == AppHeightClass.short ? 74 : 76);
   }
 
   static int moduleColumnsFor(AppWidthClass w) => switch (w) {

@@ -20,6 +20,7 @@ class PosActionFooter extends StatelessWidget {
     this.compact = false,
     this.showCartBar = true,
     this.showActions = true,
+    this.displayTotal,
   });
 
   final CartSummary summary;
@@ -34,12 +35,15 @@ class PosActionFooter extends StatelessWidget {
   final bool compact;
   final bool showCartBar;
   final bool showActions;
+  /* When set (e.g. cart payable with discount/packing), overrides summary.grandTotal. */
+  final double? displayTotal;
 
   @override
   Widget build(BuildContext context) {
     final qtyLabel = ProductUnits.formatQty(summary.totalQuantity);
     final itemsLabel =
         '$qtyLabel ${summary.totalQuantity == 1 ? 'Item' : 'Items'}';
+    final total = displayTotal ?? summary.grandTotal;
 
     return Material(
       color: Colors.white,
@@ -110,7 +114,7 @@ class PosActionFooter extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            currency.format(summary.grandTotal),
+                            currency.format(total),
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w900,

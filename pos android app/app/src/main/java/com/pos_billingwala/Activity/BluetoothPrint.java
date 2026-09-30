@@ -1,5 +1,8 @@
 package com.pos_billingwala.Activity;
 
+import com.pos_billingwala.Extra.InvoiceReceiptHelper;
+import com.pos_billingwala.Extra.PaperSizeHelper;
+import com.pos_billingwala.Extra.PrinterPaperProfile;
 import com.pos_billingwala.Extra.PopupUi;
 import static com.pos_billingwala.Utils.RequestCodes.directory_path;
 
@@ -164,7 +167,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     com.google.android.material.bottomsheet.BottomSheetDialog mypopupWindow;
     ActivityBluetoothPrintBinding binding;
     private final ExecutorService invoiceSaveExecutor = Executors.newSingleThreadExecutor();
-    /** Resize + dither + BT write â€” keep off UI to avoid ANR on large bills. */
+    /** Resize + dither + BT write Ã¢â‚¬â€� keep off UI to avoid ANR on large bills. */
     private final ExecutorService printBitmapExecutor = Executors.newSingleThreadExecutor();
     private volatile boolean invoiceSaveInProgress = false;
     /** Prevents double Print while waiting for Bluetooth off the UI thread. */
@@ -186,7 +189,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
 
     /**
-     * Reload cart from DB (initial open / clear / discount). Uses AppExecutors â€” not WorkManager â€”
+     * Reload cart from DB (initial open / clear / discount). Uses AppExecutors Ã¢â‚¬â€� not WorkManager Ã¢â‚¬â€�
      * so qty taps never stack workers or show a loading flash.
      */
     public static void getCartProductList() {
@@ -226,7 +229,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
     /**
      * After +/- / open-price / delete already updated the in-memory list + DB.
-     * Refresh totals and print previews only â€” no DB reload, no loading UI.
+     * Refresh totals and print previews only Ã¢â‚¬â€� no DB reload, no loading UI.
      */
     public static void refreshCartUiAfterLocalEdit() {
         if (activity == null) {
@@ -250,9 +253,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 cartRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
                 cartRecyclerView.setAdapter(cartAdapter);
             }
-            // Local +/- / price edits already notified the cart row â€” do not rebind the whole list.
+            // Local +/- / price edits already notified the cart row Ã¢â‚¬â€� do not rebind the whole list.
 
-            // Print preview lists only needed on full reload / before print â€” not on every qty tap.
+            // Print preview lists only needed on full reload / before print Ã¢â‚¬â€� not on every qty tap.
             if (rebindCartAdapter) {
                 TwoPrintAdapter twoPrintAdapter = new TwoPrintAdapter(activity, productCartResponseList);
                 twoRecyclerView.setLayoutManager(new GridLayoutManager(activity, 1));
@@ -486,7 +489,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     /**
      * Bill number for the working billing date (Print Fast Bill selected day, or today).
      * Sequence is date-wise: returning to an older date continues that day's last number
-     * (18-Sep 1..10 then later 18-Sep → 11), it does not restart at 1.
+     * (18-Sep 1..10 then later 18-Sep â†’ 11), it does not restart at 1.
      */
     @SuppressLint("Range")
     public static String getInvoiceNumber() {
@@ -563,6 +566,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                         + "<br/><b>Customer Mobile:</b> " + (customerMobile != null ? customerMobile : "NA")
                         + "<br/><b>Customer Address:</b> " + (customerAddress != null ? customerAddress : "NA");
             }
+            billDetails = InvoiceReceiptHelper.prependSalesInvoiceTitle(
+                    billDetails,
+                    InvoiceReceiptHelper.salesInvoiceTitleFrom(printerSettingResponseList));
         }
         return String.valueOf(Html.fromHtml(billDetails));
     }
@@ -610,13 +616,14 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 finishAfterInvoiceSaved();
                 return;
             }
-            Bitmap bitmap = convertLayout(twoNestedScrollView, 48);
+            int shareWidthMm = billPrintableWidthMm();
+            Bitmap bitmap = convertLayout(twoNestedScrollView, shareWidthMm);
             if (bitmap != null) {
                 final String fileName = invoiceNumber;
                 printBitmapExecutor.execute(() -> {
                     Bitmap resized = null;
                     try {
-                        resized = getResizedBitmap(bitmap, 48);
+                        resized = getResizedBitmap(bitmap, shareWidthMm);
                         // getResizedBitmap may recycle the source when it creates a new bitmap
                         if (resized != bitmap && bitmap != null && !bitmap.isRecycled()) {
                             bitmap.recycle();
@@ -727,7 +734,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             Toast.makeText(this, getString(R.string.toast_failed_to_save_invoice_please_try_again),
                     Toast.LENGTH_SHORT).show();
         } finally {
-            // Share chooser is open (or failed) — return to billing without forcing Back.
+            // Share chooser is open (or failed) â€” return to billing without forcing Back.
             if (!isFinishing() && !isDestroyed()) {
                 finishAfterInvoiceSaved();
             }
@@ -742,7 +749,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
         activity = BluetoothPrint.this;
         posBillingWalaDatabase = new POSBillingWalaDatabase(activity);
-        // Fresh checkout session â€” do not reuse a previous bill's reserved number
+        // Fresh checkout session Ã¢â‚¬â€� do not reuse a previous bill's reserved number
         invoiceNumber = "";
         paymentMode = "";
 
@@ -1021,7 +1028,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             });
         }
 
-        /* Payment mode is collected via dialog on Save / Share / Print — not on this screen. */
+        /* Payment mode is collected via dialog on Save / Share / Print â€” not on this screen. */
         setupBillSummaryExpandCollapse();
 
         // Phone layout uses NestedScrollView (wrap-content product card). Land already splits in XML.
@@ -1248,7 +1255,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         }
         int copies = com.pos_billingwala.Extra.DineInKotHelper.kotCopies(posBillingWalaDatabase);
         // Print requested copies sequentially via the same bitmap path
-        if (kotSize != null && kotSize.equalsIgnoreCase("3-Inch")) {
+        if (PaperSizeHelper.isWide(kotSize)) {
             printKOT3InchBill(false);
         } else {
             printKOT2InchBill(false);
@@ -1258,7 +1265,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             final String sizeFinal = kotSize;
             for (int i = 1; i < copies; i++) {
                 AppExecutors.get().postMainDelayed(() -> {
-                    if (sizeFinal != null && sizeFinal.equalsIgnoreCase("3-Inch")) {
+                    if (PaperSizeHelper.isWide(sizeFinal)) {
                         printKOT3InchBill(false);
                     } else {
                         printKOT2InchBill(false);
@@ -1272,11 +1279,13 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
         showDialog();
         try {
+            applyKotTicketChrome();
             String BillDetails = buildKotHeaderHtml();
             twoKOTInvoiceDetails.setText(Html.fromHtml(BillDetails));
-            Bitmap bitmap = convertLayout(twoKOTNestedScrollView, 48);
+            int widthMm = kotPrintableWidthMm();
+            Bitmap bitmap = convertLayout(twoKOTNestedScrollView, widthMm);
             if (bitmap != null) {
-                printKOTImage(bitmap, 48);
+                printKOTImage(bitmap, widthMm);
             } else {
                 markKotPrintResult(false);
                 hideDialog();
@@ -1293,12 +1302,14 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
         showDialog();
         try {
+            applyKotTicketChrome();
             String BillDetails = buildKotHeaderHtml();
             threeKOTInvoiceDetails.setText(Html.fromHtml(BillDetails));
 
-            Bitmap bitmap = convertLayout(threeKOTNestedScrollView, 72);
+            int widthMm = kotPrintableWidthMm();
+            Bitmap bitmap = convertLayout(threeKOTNestedScrollView, widthMm);
             if (bitmap != null) {
-                printKOTImage(bitmap, 72);
+                printKOTImage(bitmap, widthMm);
             } else {
                 markKotPrintResult(false);
                 hideDialog();
@@ -1316,26 +1327,56 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 ? activeKotNumber
                 : (invoiceNumber != null && !invoiceNumber.isEmpty() ? resolveInvoiceNumber() : "-");
         String dateTime = resolveKotDateTime();
+        com.pos_billingwala.Model.KotResponse kot = null;
+        if (activeKotId != null && !activeKotId.trim().isEmpty() && posBillingWalaDatabase != null) {
+            kot = posBillingWalaDatabase.getKotById(activeKotId);
+        }
+        String table = kot != null && kot.getTableNumber() != null && !kot.getTableNumber().trim().isEmpty()
+                ? kot.getTableNumber().trim()
+                : (tableNumber != null ? tableNumber : "");
+        String round = "";
+        String kitchen = "";
+        if (kot != null && posBillingWalaDatabase != null) {
+            round = posBillingWalaDatabase.orderRoundNumber(kot.getOrderRoundId());
+            kitchen = kot.getKitchenName() != null ? kot.getKitchenName().trim() : "";
+        }
+        if (round.isEmpty()) {
+            round = "1";
+        }
         StringBuilder sb = new StringBuilder();
         sb.append("<b>KOT:</b> ").append(kotLabel)
-                .append("<br/><b>Date:</b> ").append(dateTime);
-        if (cartOrderStatus != null && cartOrderStatus.equalsIgnoreCase("table_wise")) {
-            sb.append("<br/><b>Table:</b> T").append(tableNumber != null ? tableNumber : "");
-            com.pos_billingwala.Model.DiningSessionResponse session =
-                    posBillingWalaDatabase.getOpenDiningSessionForTable(tableNumber);
-            if (session != null && session.getGuestCount() != null
-                    && !session.getGuestCount().isEmpty()
-                    && !"0".equals(session.getGuestCount())) {
-                sb.append("<br/><b>Guests:</b> ").append(session.getGuestCount());
-            }
+                .append("<br/><b>Date:</b> ").append(dateTime)
+                .append("<br/><b>Table No:</b> ").append(table)
+                .append("<br/><b>Round:</b> ").append(round);
+        if (!kitchen.isEmpty()) {
+            sb.append("<br/>").append(kitchen);
         }
         return sb.toString();
+    }
+
+    /** Flutter KOT title is centered "KOT", not the shop name or logo. */
+    private void applyKotTicketChrome() {
+        if (twoKOTCompanyLogo != null) {
+            twoKOTCompanyLogo.setVisibility(View.GONE);
+        }
+        if (threeKOTCompanyLogo != null) {
+            threeKOTCompanyLogo.setVisibility(View.GONE);
+        }
+        String kotLabel = activeKotNumber != null && !activeKotNumber.trim().isEmpty()
+                ? activeKotNumber.trim() : "KOT";
+        String title = "KOT\n" + kotLabel;
+        if (twoKOTShopName != null) {
+            twoKOTShopName.setText(title);
+        }
+        if (threeKOTShopName != null) {
+            threeKOTShopName.setText(title);
+        }
     }
 
     /** Always show a printable date/time on KOT (does not depend on bill invoiceDate). */
     private String resolveKotDateTime() {
         SimpleDateFormat display =
-                new SimpleDateFormat("dd-MM-yyyy hh:mm a", Locale.getDefault());
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         if (activeKotId != null && !activeKotId.trim().isEmpty() && posBillingWalaDatabase != null) {
             com.pos_billingwala.Model.KotResponse kot = posBillingWalaDatabase.getKotById(activeKotId);
             if (kot != null && kot.getCreatedAt() != null && !kot.getCreatedAt().trim().isEmpty()) {
@@ -1470,7 +1511,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         }
         String billAddress = printerSettingResponseList.get(0).getBluetoothAddress();
         printerEnsureInFlight = true;
-        // Wait for BT off the UI thread â€” never block before BottomSheet / ProgressDialog.
+        // Wait for BT off the UI thread Ã¢â‚¬â€� never block before BottomSheet / ProgressDialog.
         PrinterConnectionHelper.ensureBillPrinterAsync(activity,
                 billAddress != null ? billAddress : "",
                 () -> {
@@ -1510,9 +1551,9 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                         progressDialog = new ProgressDialog(activity);
                         progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
 
-                        if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+                        if (PaperSizeHelper.isNarrow(printerSettingResponseList.get(0).getPrinterName())) {
                             print2InchBill(customerName, customerMobile, customerAddress);
-                        } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+                        } else if (PaperSizeHelper.isWide(printerSettingResponseList.get(0).getPrinterName())) {
                             print3InchBill(customerName, customerMobile, customerAddress);
                         }
 
@@ -1523,17 +1564,17 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
             } else {
                 resolveInvoiceNumber();
-                if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+                if (PaperSizeHelper.isNarrow(printerSettingResponseList.get(0).getPrinterName())) {
                     print2InchBill("", "", "");
-                } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+                } else if (PaperSizeHelper.isWide(printerSettingResponseList.get(0).getPrinterName())) {
                     print3InchBill("", "", "");
                 }
             }
         } else {
             resolveInvoiceNumber();
-            if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+            if (PaperSizeHelper.isNarrow(printerSettingResponseList.get(0).getPrinterName())) {
                 print2InchBill("", "", "");
-            } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+            } else if (PaperSizeHelper.isWide(printerSettingResponseList.get(0).getPrinterName())) {
                 print3InchBill("", "", "");
             }
         }
@@ -1594,9 +1635,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             twoInvoiceDetails.setText(BillDetails);
             twoShopPrintStatus.setText("**** Original Copy ****");
 
-            Bitmap bitmap = convertLayout(twoNestedScrollView, 48);
+            int widthMm = billPrintableWidthMm();
+            Bitmap bitmap = convertLayout(twoNestedScrollView, widthMm);
             if (bitmap != null) {
-                printImage(bitmap, 48, customerName, customerMobile, customerAddress);
+                printImage(bitmap, widthMm, customerName, customerMobile, customerAddress);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_print_layout_failed_saving_bill), Toast.LENGTH_SHORT).show();
                 saveInvoice(customerName, customerMobile, customerAddress, 0);
@@ -1618,9 +1660,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             threeInvoiceDetails.setText(BillDetails);
             threeShopPrintStatus.setText("**** Original Copy ****");
 
-            Bitmap bitmap = convertLayout(threeNestedScrollView, 72);
+            int widthMm = billPrintableWidthMm();
+            Bitmap bitmap = convertLayout(threeNestedScrollView, widthMm);
             if (bitmap != null) {
-                printImage(bitmap, 72, customerName, customerMobile, customerAddress);
+                printImage(bitmap, widthMm, customerName, customerMobile, customerAddress);
             } else {
                 Toast.makeText(activity, getString(R.string.toast_print_layout_failed_saving_bill), Toast.LENGTH_SHORT).show();
                 saveInvoice(customerName, customerMobile, customerAddress, 0);
@@ -1690,7 +1733,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                         Log.w("BluetoothPrint", "Invoice save triggered without successful print");
                     }
                     try {
-                        // Save bill even when print fails â€” payment and print are separate.
+                        // Save bill even when print fails Ã¢â‚¬â€� payment and print are separate.
                         saveInvoiceAfterPrintAttempt(customerName, customerMobile, customerAddress, ok);
                     } catch (Exception e) {
                         Toast.makeText(activity, getString(R.string.toast_failed_to_save_invoice_after_print), Toast.LENGTH_LONG).show();
@@ -1807,17 +1850,38 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         return bm;
     }
 
+    private int billPrintableWidthMm() {
+        String label = "2-Inch";
+        try {
+            if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
+                    && printerSettingResponseList.get(0).getPrinterName() != null) {
+                label = printerSettingResponseList.get(0).getPrinterName();
+            }
+        } catch (Exception ignored) {
+        }
+        return PrinterPaperProfile.of(label).effectivePrintWidthMm();
+    }
+
+    private int kotPrintableWidthMm() {
+        String label = "2-Inch";
+        try {
+            if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()) {
+                String kot = printerSettingResponseList.get(0).getKOTPrinterName();
+                if (kot == null || kot.trim().isEmpty()) {
+                    kot = printerSettingResponseList.get(0).getPrinterName();
+                }
+                if (kot != null) {
+                    label = kot;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return PrinterPaperProfile.of(label).effectivePrintWidthMm();
+    }
+
     public void checkAndFeedPaper(String lines) {
         try {
-            if (lines == null || lines.trim().isEmpty()) {
-                return;
-            }
-            int count = Integer.parseInt(lines.trim());
-            StringBuilder lineBreaks = new StringBuilder();
-            for (int i = 0; i < count; i++) {
-                lineBreaks.append("\n");
-            }
-            PrinterConnectionHelper.safeWriteBill(activity, lineBreaks.toString().getBytes());
+            PrinterConnectionHelper.feedLinesAndCut(activity, true, lines);
         } catch (Exception e) {
             Log.e("BluetoothPrint", "checkAndFeedPaper failed", e);
         }
@@ -1825,15 +1889,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
 
     public void KOTCheckAndFeedPaper(String lines) {
         try {
-            if (lines == null || lines.trim().isEmpty()) {
-                return;
-            }
-            int count = Integer.parseInt(lines.trim());
-            StringBuilder lineBreaks = new StringBuilder();
-            for (int i = 0; i < count; i++) {
-                lineBreaks.append("\n");
-            }
-            PrinterConnectionHelper.safeWriteKot(activity, lineBreaks.toString().getBytes());
+            PrinterConnectionHelper.feedLinesAndCut(activity, false, lines);
         } catch (Exception e) {
             Log.e("BluetoothPrint", "KOTCheckAndFeedPaper failed", e);
         }
@@ -1973,27 +2029,13 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
             } catch (Exception e) {
                 componentQty = 1;
             }
-            int saleQty = Math.max(1, comboQty) * Math.max(1, componentQty);
-            List<InventoryResponse> inventoryList = posBillingWalaDatabase.getInventoryDetails(component.getProductId());
-            if (inventoryList == null || inventoryList.isEmpty()) {
-                continue;
-            }
-            for (InventoryResponse inventoryResponse : inventoryList) {
-                try {
-                    int oldInventoryQty = Integer.parseInt(inventoryResponse.getProductInventoryQuantity());
-                    int afterSaleInventoryQuantity = Integer.parseInt(inventoryResponse.getAfterSaleInventoryQuantity());
-                    int totalQty = afterSaleInventoryQuantity - saleQty;
-                    posBillingWalaDatabase.addInventory(
-                            component.getProductId(),
-                            String.valueOf(oldInventoryQty),
-                            String.valueOf(totalQty),
-                            String.valueOf(saleQty),
-                            inventoryDate,
-                            0,
-                            getRandomString(10));
-                } catch (Exception ignored) {
-                }
-            }
+            double saleQty = Math.max(1, comboQty) * Math.max(1d, componentQty);
+            posBillingWalaDatabase.recordStockDelta(
+                    component.getProductId(),
+                    component.getProductName(),
+                    -saleQty,
+                    inventoryDate,
+                    false);
         }
     }
 
@@ -2128,24 +2170,15 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                         deductComboInventory(productCartResponse, inventoryDate);
                         continue;
                     }
-                    List<InventoryResponse> inventoryList =
-                            posBillingWalaDatabase.getInventoryDetails(productCartResponse.getProductId());
-                    if (inventoryList != null && !inventoryList.isEmpty()) {
-                        for (InventoryResponse inventoryResponse : inventoryList) {
-                            int saleInventoryQty = (int) Float.parseFloat(productCartResponse.getProductQuantity());
-                            int oldInventoryQty = Integer.parseInt(inventoryResponse.getProductInventoryQuantity());
-                            int afterSaleInventoryQuantity = Integer.parseInt(inventoryResponse.getAfterSaleInventoryQuantity());
-                            int totalQty = afterSaleInventoryQuantity - saleInventoryQty;
-
-                            posBillingWalaDatabase.addInventory(
-                                    productCartResponse.getProductId(),
-                                    String.valueOf(oldInventoryQty),
-                                    String.valueOf(totalQty),
-                                    String.valueOf(saleInventoryQty),
-                                    inventoryDate,
-                                    0,
-                                    getRandomString(10));
-                        }
+                    double saleInventoryQty = POSBillingWalaDatabase.parseStockQty(
+                            productCartResponse.getProductQuantity());
+                    if (saleInventoryQty > 0d) {
+                        posBillingWalaDatabase.recordStockDelta(
+                                productCartResponse.getProductId(),
+                                productCartResponse.getProductName(),
+                                -saleInventoryQty,
+                                inventoryDate,
+                                false);
                     }
                 }
 
@@ -2240,7 +2273,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     if (saveError != null) {
                         saveError.printStackTrace();
                     }
-                    // Payment did not complete â€” keep table open for retry.
+                    // Payment did not complete Ã¢â‚¬â€� keep table open for retry.
                     if ("table_wise".equalsIgnoreCase(invoiceType) && reservedTableNumber != null) {
                         com.pos_billingwala.Extra.DineInSettlementHelper.markPaymentPending(
                                 posBillingWalaDatabase, reservedTableNumber);
@@ -2257,8 +2290,10 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                 } catch (Exception ignored) {
                 }
 
-                // Share Invoice is only via overflow menu — never auto-open after print.
-                final boolean shouldShare = shareAfterSave;
+                // Share Invoice is only via overflow menu — never auto-open after print
+                // unless "Share / print prompt after save" is enabled in printer settings.
+                final boolean shouldShare = shareAfterSave
+                        || com.pos_billingwala.Print.PrinterEndpointPrefs.isAutoShareOnSave(activity);
                 shareAfterSave = false;
 
                 if (invoiceType.equalsIgnoreCase("table_wise")) {
@@ -2268,7 +2303,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                         return;
                     }
                     if (shouldShare) {
-                        automaticSavePDF(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, reservedInvoiceNumber);
+                        offerShareOrDoneAfterSave(reservedCustomerName, reservedCustomerMobile,
+                                reservedCustomerAddress, reservedInvoiceNumber);
                     } else {
                         Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
                         finishAfterInvoiceSaved();
@@ -2278,7 +2314,8 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
                     setPaymentMode(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, totalAmt, shouldShare);
                 } else {
                     if (shouldShare) {
-                        automaticSavePDF(reservedCustomerName, reservedCustomerMobile, reservedCustomerAddress, reservedInvoiceNumber);
+                        offerShareOrDoneAfterSave(reservedCustomerName, reservedCustomerMobile,
+                                reservedCustomerAddress, reservedInvoiceNumber);
                     } else {
                         Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
                         finishAfterInvoiceSaved();
@@ -2312,6 +2349,20 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
     private void finishAfterInvoiceSaved() {
         clearCartUiState();
         onCallBack();
+    }
+
+    private void offerShareOrDoneAfterSave(String customerName, String customerMobile,
+                                           String customerAddress, String invoiceNo) {
+        Toast.makeText(activity, getString(R.string.toast_invoice_saved), Toast.LENGTH_SHORT).show();
+        BottomSheetUi.showAction(activity,
+                getString(R.string.ui_share_print_prompt_after_save),
+                getString(R.string.ui_share_print_prompt_hint),
+                getString(R.string.ui_share_invoice),
+                getString(android.R.string.ok),
+                0,
+                false,
+                () -> automaticSavePDF(customerName, customerMobile, customerAddress, invoiceNo),
+                this::finishAfterInvoiceSaved);
     }
 
     public String getRandomString(final int sizeOfRandomString) {
@@ -2494,7 +2545,7 @@ public class BluetoothPrint extends BaseActivity implements View.OnClickListener
         super.onActivityResult(requestCode, resultCode, data);
         try {
             if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
-                // BT just enabled â€” reconnect saved printer; list only if none saved
+                // BT just enabled Ã¢â‚¬â€� reconnect saved printer; list only if none saved
                 String addr = "";
                 if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
                         && printerSettingResponseList.get(0).getBluetoothAddress() != null) {

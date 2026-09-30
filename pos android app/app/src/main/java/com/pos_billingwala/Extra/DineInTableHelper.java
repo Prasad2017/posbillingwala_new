@@ -61,7 +61,7 @@ public final class DineInTableHelper {
         if (enabled == null || enabled.trim().isEmpty()) {
             return true;
         }
-        return "on".equalsIgnoreCase(enabled.trim());
+        return DineInKotHelper.isFlagOn(enabled);
     }
 
     public static String kotPrefix(POSBillingWalaDatabase db) {

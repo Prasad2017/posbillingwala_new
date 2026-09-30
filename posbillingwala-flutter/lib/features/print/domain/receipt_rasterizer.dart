@@ -10,6 +10,7 @@ import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_slip_builder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_encoder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_image_encoder.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_capability.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/thermal_ticket.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -19,15 +20,14 @@ import 'package:qr_flutter/qr_flutter.dart';
 class ReceiptRasterizer {
   const ReceiptRasterizer();
 
-  /* Android effective widths: 2″ → 48*8=384, 3″ → 72*8=576. */
-  static int widthPxFor(PrinterPaperSize size) =>
-      size == PrinterPaperSize.inch3 ? 576 : 384;
+  static PrinterPaperProfile profileFor(PrinterPaperSize size) =>
+      PrinterPaperProfile.of(size);
+
+  static int widthPxFor(PrinterPaperSize size) => profileFor(size).imageWidthPx;
 
   /* Scale WoosimTicket (mm×3.78 preview) metrics onto printer pixel width. */
-  static double previewScale(PrinterPaperSize size) {
-    final widthMm = size == PrinterPaperSize.inch3 ? 72.0 : 48.0;
-    return widthPxFor(size) / (widthMm * 3.78);
-  }
+  static double previewScale(PrinterPaperSize size) =>
+      profileFor(size).previewScale;
 
   Future<List<int>> encodeTicket(
     ThermalTicket ticket, {
@@ -36,7 +36,9 @@ class ReceiptRasterizer {
     int? feedLinesOverride,
     bool useAssetLogoFallback = false,
   }) async {
-    final width = widthPxFor(settings.paperSize);
+    final profile = settings.billProfile;
+    profile.validateOrThrow();
+    final width = profile.imageWidthPx;
     final rendered = await renderTicket(
       ticket,
       width,
@@ -44,10 +46,13 @@ class ReceiptRasterizer {
       logoPath: logoPath,
       useAssetLogoFallback: useAssetLogoFallback,
     );
+    final doCut = printerCapabilityManager.shouldCutForSettings(settings);
     return await _escPosRaster(
       rendered,
-      charsPerLine: settings.charsPerLine,
+      charsPerLine: profile.charsPerLine,
       feedLines: feedLinesOverride ?? settings.feedLines,
+      autoCut: doCut,
+      fullCut: settings.cutType.useFullCut,
     );
   }
 
@@ -60,7 +65,9 @@ class ReceiptRasterizer {
     int? feedLinesOverride,
     bool useAssetLogoFallback = false,
   }) async {
-    final width = widthPxFor(settings.paperSize);
+    final profile = settings.billProfile;
+    profile.validateOrThrow();
+    final width = profile.imageWidthPx;
     final rendered = await render(
       text,
       width,
@@ -70,10 +77,13 @@ class ReceiptRasterizer {
       qrMarker: qrMarker,
       useAssetLogoFallback: useAssetLogoFallback,
     );
+    final doCut = printerCapabilityManager.shouldCutForSettings(settings);
     return await _escPosRaster(
       rendered,
-      charsPerLine: settings.charsPerLine,
+      charsPerLine: profile.charsPerLine,
       feedLines: feedLinesOverride ?? settings.feedLines,
+      autoCut: doCut,
+      fullCut: settings.cutType.useFullCut,
     );
   }
 
@@ -107,7 +117,9 @@ class ReceiptRasterizer {
     int? feedLinesOverride,
     bool useAssetLogoFallback = false,
   }) async {
-    final width = widthPxFor(settings.paperSize);
+    final profile = settings.billProfile;
+    profile.validateOrThrow();
+    final width = profile.imageWidthPx;
     final rendered = await renderMessLayout(
       layout,
       width,
@@ -115,10 +127,13 @@ class ReceiptRasterizer {
       logoPath: logoPath,
       useAssetLogoFallback: useAssetLogoFallback,
     );
+    final doCut = printerCapabilityManager.shouldCutForSettings(settings);
     return await _escPosRaster(
       rendered,
-      charsPerLine: settings.charsPerLine,
+      charsPerLine: profile.charsPerLine,
       feedLines: feedLinesOverride ?? settings.feedLines,
+      autoCut: doCut,
+      fullCut: settings.cutType.useFullCut,
     );
   }
 
@@ -146,14 +161,13 @@ class ReceiptRasterizer {
     String? logoPath,
     bool useAssetLogoFallback = false,
   }) async {
-    final is2Inch = paperSize != PrinterPaperSize.inch3;
-    final hPad = is2Inch ? 6.0 : 8.0;
-    /* Match invoice / [renderTicket] absolute pt sizes. */
-    final shopSize = is2Inch ? 20.0 : 24.0;
-    final bodySize = is2Inch ? 17.0 : 20.0;
-    final bannerSize = is2Inch ? 15.0 : 17.0;
-    final lineGap = is2Inch ? 2.0 : 2.5;
-    final sectionGap = is2Inch ? 3.5 : 4.5;
+    final profile = profileFor(paperSize);
+    final hPad = profile.marginLeft;
+    final shopSize = profile.shopFontSize;
+    final bodySize = profile.bodyFontSize;
+    final bannerSize = profile.bannerFontSize;
+    final lineGap = profile.lineGap;
+    final sectionGap = profile.sectionGap;
     final contentW = widthPx - hPad * 2;
 
     TextStyle style({
@@ -169,7 +183,7 @@ class ReceiptRasterizer {
       logoPath: logoPath,
       widthPx: widthPx,
       useAssetLogoFallback: useAssetLogoFallback,
-      widthFraction: 0.28,
+      widthFraction: profile.logoWidthFraction,
     );
 
     final ops = <_PaintOp>[];
@@ -220,10 +234,10 @@ class ReceiptRasterizer {
 
     final qr = layout.qrPayload?.trim() ?? '';
     if (qr.isNotEmpty) {
-      final qrSize = (widthPx * 0.42).clamp(100.0, is2Inch ? 160.0 : 200.0);
+      final qrSize = profile.qrSizeFor(widthPx);
       y += sectionGap;
       ops.add(_PaintOp.qr(qr, (widthPx - qrSize) / 2, y, qrSize));
-      y += qrSize + sectionGap;
+      y += qrSize + sectionGap + lineGap * 2;
     }
 
     for (var i = 0; i < layout.footerLines.length; i++) {
@@ -296,6 +310,8 @@ class ReceiptRasterizer {
     RenderedImage rendered, {
     required int charsPerLine,
     required int feedLines,
+    bool autoCut = true,
+    bool fullCut = true,
   }) async {
     /* Floyd–Steinberg is CPU-heavy — keep it off the UI isolate. */
     final raster = await compute(
@@ -307,10 +323,20 @@ class ReceiptRasterizer {
         brightValue: 128,
       ),
     );
+    final lines = feedLines.clamp(0, 20);
     final out = EscPosEncoder(charsPerLine: charsPerLine)
       ..init()
-      ..raw(raster)
-      ..feed(feedLines);
+      ..raw(raster);
+    /* Trailing advance = user feed lines only (no hardcoded extras). */
+    if (autoCut) {
+      try {
+        out.cut(full: fullCut, feedToCutter: lines);
+      } catch (_) {
+        out.feed(lines);
+      }
+    } else {
+      out.feed(lines);
+    }
     return out.bytes;
   }
 
@@ -323,19 +349,19 @@ class ReceiptRasterizer {
     String? logoPath,
     bool useAssetLogoFallback = false,
   }) async {
-    final is2Inch = paperSize != PrinterPaperSize.inch3;
-    final colScale = previewScale(paperSize) * 0.72;
-    final hPad = is2Inch ? 6.0 : 8.0;
-    final rateW = (is2Inch ? 48.0 : 64.0) * colScale;
-    final amountW = (is2Inch ? 56.0 : 72.0) * colScale;
-    /* Absolute pt — full previewScale (~2.1×) made print look oversized. */
-    final shopSize = is2Inch ? 20.0 : 24.0;
-    final bodySize = is2Inch ? 17.0 : 20.0;
-    final bannerSize = is2Inch ? 15.0 : 17.0;
-    final lineGap = is2Inch ? 2.0 : 2.5;
-    final sectionGap = is2Inch ? 3.5 : 4.5;
+    final profile = profileFor(paperSize);
+    final hPad = profile.marginLeft;
+    final qtyW = profile.qtyColumnWidth;
+    final rateW = profile.rateColumnWidth;
+    final amountW = profile.amountColumnWidth;
+    final shopSize = profile.shopFontSize;
+    final bodySize = profile.bodyFontSize;
+    final bannerSize = profile.bannerFontSize;
+    final lineGap = profile.lineGap;
+    final sectionGap = profile.sectionGap;
     final contentW = widthPx - hPad * 2;
-    final itemColW = (contentW - rateW - amountW).clamp(40.0, contentW);
+    final itemColW =
+        (contentW - qtyW - rateW - amountW).clamp(40.0, contentW);
 
     TextStyle style({
       double? size,
@@ -350,7 +376,7 @@ class ReceiptRasterizer {
       logoPath: logoPath,
       widthPx: widthPx,
       useAssetLogoFallback: useAssetLogoFallback,
-      widthFraction: 0.28,
+      widthFraction: profile.logoWidthFraction,
     );
 
     final ops = <_PaintOp>[];
@@ -409,6 +435,7 @@ class ReceiptRasterizer {
       gap: lineGap,
       cells: [
         _Col(ticket.colItem, itemColW, TextAlign.left, FontWeight.w700),
+        _Col(ticket.colQty, qtyW, TextAlign.center, FontWeight.w700),
         _Col(ticket.colRate, rateW, TextAlign.center, FontWeight.w700),
         _Col(ticket.colAmount, amountW, TextAlign.right, FontWeight.w700),
       ],
@@ -433,7 +460,8 @@ class ReceiptRasterizer {
         y: y,
         gap: sectionGap,
         cells: [
-          _Col('X${item.qty}', itemColW, TextAlign.left, FontWeight.w500),
+          _Col('', itemColW, TextAlign.left, FontWeight.w500),
+          _Col(item.qty, qtyW, TextAlign.center, FontWeight.w500),
           _Col(item.rate, rateW, TextAlign.center, FontWeight.w500),
           _Col(item.amount, amountW, TextAlign.right, FontWeight.w500),
         ],
@@ -472,12 +500,13 @@ class ReceiptRasterizer {
 
     final qr = ticket.qrPayload?.trim() ?? '';
     if (qr.isNotEmpty) {
-      final qrSize = (widthPx * 0.42).clamp(100.0, is2Inch ? 160.0 : 200.0);
+      final qrSize = profile.qrSizeFor(widthPx);
       y += sectionGap;
       ops.add(
         _PaintOp.qr(qr, (widthPx - qrSize) / 2, y, qrSize),
       );
-      y += qrSize + sectionGap;
+      /* Extra gap so Powered by is not tight under the QR. */
+      y += qrSize + sectionGap + lineGap * 2;
     }
 
     for (final line in ticket.footerLines) {
@@ -644,22 +673,21 @@ class ReceiptRasterizer {
   Future<RenderedImage> render(
     String text,
     int widthPx, {
-    PrinterPaperSize paperSize = PrinterPaperSize.inch2,
+    PrinterPaperSize paperSize = PrinterPaperSize.mm58,
     String? qrPayload,
     String? logoPath,
     String? qrMarker,
     bool useAssetLogoFallback = false,
   }) async {
-    final is2Inch = paperSize != PrinterPaperSize.inch3;
-    /* Match [renderTicket] / bill print absolute pt sizes. */
-    final bodySize = is2Inch ? 17.0 : 20.0;
+    final profile = profileFor(paperSize);
+    final bodySize = profile.bodyFontSize;
     final lineHeight = 1.15;
 
     final logoImage = await loadLogo(
       logoPath: logoPath,
       widthPx: widthPx,
       useAssetLogoFallback: useAssetLogoFallback,
-      widthFraction: 0.28,
+      widthFraction: profile.logoWidthFraction,
     );
     final logoDrawH = logoImage == null
         ? 0.0
@@ -714,7 +742,7 @@ class ReceiptRasterizer {
     }
 
     /* Same QR budget as [renderTicket]. */
-    final qrSize = (widthPx * 0.42).clamp(100.0, is2Inch ? 160.0 : 200.0);
+    final qrSize = profile.qrSizeFor(widthPx);
     final qrData = qrPayload?.trim() ?? '';
     final drawQr = qrData.isNotEmpty && (hasInlineQr || marker.isEmpty);
     final qrGap = drawQr ? qrSize + 24 : 0.0;

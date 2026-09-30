@@ -7,7 +7,7 @@ import 'package:pos_billingwala_v2/features/print/domain/thermal_ticket.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 /* On-screen clone of WithTable `twoLinearLayout` / `threeLinearLayout`. */
-/* widthMm 48 ≈ 2-Inch (58mm), 72 ≈ 3-Inch (80mm). */
+/* widthMm follows PrinterPaperProfile.previewWidthMm (48/50/70/72). */
 class WoosimTicket extends StatelessWidget {
   const WoosimTicket({
     super.key,
@@ -24,15 +24,16 @@ class WoosimTicket extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final is2Inch = widthMm <= 50;
+    final is2Inch = widthMm <= 55;
     final mm = widthMm;
     const black = Color(0xFF000000);
     final shopSize = is2Inch ? 14.0 : 18.0;
     final bodySize = is2Inch ? 12.0 : 16.0;
-    final rateW = is2Inch ? 48.0 : 64.0;
-    final amountW = is2Inch ? 56.0 : 72.0;
+    final rateW = is2Inch ? (widthMm <= 49 ? 48.0 : 50.0) : (widthMm <= 71 ? 62.0 : 64.0);
+    final amountW = is2Inch ? (widthMm <= 49 ? 56.0 : 58.0) : (widthMm <= 71 ? 70.0 : 72.0);
+    final qtyW = is2Inch ? (widthMm <= 49 ? 36.0 : 38.0) : (widthMm <= 71 ? 44.0 : 46.0);
     final logoSize = is2Inch ? 64.0 : 88.0;
-    final qrSize = is2Inch ? 110.0 : 150.0;
+    final qrSize = is2Inch ? (widthMm <= 49 ? 110.0 : 118.0) : (widthMm <= 71 ? 140.0 : 150.0);
     TextStyle pop({double? size, FontWeight weight = FontWeight.w500}) =>
         AppFonts.printBody(
           fontSize: size ?? bodySize,
@@ -111,6 +112,14 @@ class WoosimTicket extends StatelessWidget {
                     ),
                   ),
                   SizedBox(
+                    width: qtyW,
+                    child: Text(
+                      ticket.colQty,
+                      textAlign: TextAlign.center,
+                      style: pop(weight: FontWeight.w700),
+                    ),
+                  ),
+                  SizedBox(
                     width: rateW,
                     child: Text(
                       ticket.colRate,
@@ -139,7 +148,11 @@ class WoosimTicket extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(5, 0, 5, 4),
                 child: Row(
                   children: [
-                    Expanded(child: Text('X${item.qty}')),
+                    const Expanded(child: SizedBox.shrink()),
+                    SizedBox(
+                      width: qtyW,
+                      child: Text(item.qty, textAlign: TextAlign.center),
+                    ),
                     SizedBox(
                       width: rateW,
                       child: Text(item.rate, textAlign: TextAlign.center),
@@ -175,9 +188,9 @@ class WoosimTicket extends StatelessWidget {
                   style: pop(size: 13),
                 ),
               ),
-            if (qr.isNotEmpty)
+            if (qr.isNotEmpty) ...[
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.fromLTRB(0, 8, 0, 4),
                 child: Center(
                   child: QrImageView(
                     data: qr,
@@ -195,6 +208,9 @@ class WoosimTicket extends StatelessWidget {
                   ),
                 ),
               ),
+              /* Space between QR and Powered by / website footer. */
+              const SizedBox(height: 14),
+            ],
             for (final line in ticket.footerLines)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),

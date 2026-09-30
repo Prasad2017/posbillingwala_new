@@ -5431,6 +5431,68 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
 
     }
 
+    public static double parseStockQty(String value) {
+        if (value == null) {
+            return 0d;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return 0d;
+        }
+        try {
+            return Double.parseDouble(trimmed);
+        } catch (NumberFormatException e) {
+            return 0d;
+        }
+    }
+
+    public static String formatStockQty(double value) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return "0";
+        }
+        if (Math.abs(value - Math.rint(value)) < 0.0005d) {
+            return String.valueOf((long) Math.rint(value));
+        }
+        String formatted = String.format(java.util.Locale.US, "%.3f", value);
+        return formatted.replaceAll("\\.?0+$", "");
+    }
+
+    /**
+     * Latest balance plus {@code delta}. Positive adds stock, negative removes it.
+     * Sales pass {@code createIfMissing=false} so untracked items are skipped.
+     */
+    public boolean recordStockDelta(String productId, String productName, double delta,
+                                    String inventoryDate, boolean createIfMissing) {
+        if (productId == null || productId.trim().isEmpty() || delta == 0d) {
+            return false;
+        }
+        List<InventoryResponse> existing = getInventoryDetails(productId);
+        boolean tracked = existing != null && !existing.isEmpty();
+        if (!tracked && !createIfMissing) {
+            return false;
+        }
+        double previous = tracked
+                ? parseStockQty(existing.get(0).getAfterSaleInventoryQuantity())
+                : 0d;
+        double remaining = previous + delta;
+        double inQty = delta > 0d ? delta : 0d;
+        double outQty = delta < 0d ? -delta : 0d;
+        String when = inventoryDate;
+        if (when == null || when.trim().isEmpty()) {
+            when = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                    .format(new java.util.Date());
+        }
+        return addInventory(
+                productId,
+                productName,
+                formatStockQty(inQty),
+                formatStockQty(remaining),
+                formatStockQty(outQty),
+                when,
+                0,
+                getRandomString(10));
+    }
+
     private String lookupProductName(SQLiteDatabase db, String productId) {
         if (productId == null || productId.trim().isEmpty()) {
             return "";
@@ -9145,6 +9207,31 @@ public class POSBillingWalaDatabase extends SQLiteOpenHelper {
             db.close();
         }
         return 1;
+    }
+
+    /** Printed KOT line, matching Flutter ReceiptBuilder (Round: n). */
+    public String orderRoundNumber(String orderRoundId) {
+        if (orderRoundId == null || orderRoundId.trim().isEmpty()) {
+            return "";
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT roundNumber FROM " + ORDER_ROUND_TABLE + " WHERE orderRoundId = ?",
+                    new String[]{orderRoundId.trim()});
+            if (cursor.moveToFirst() && !cursor.isNull(0)) {
+                return String.valueOf(cursor.getInt(0));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+        return "";
     }
 
     /**

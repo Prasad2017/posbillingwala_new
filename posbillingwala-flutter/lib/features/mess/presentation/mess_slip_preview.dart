@@ -8,7 +8,6 @@ import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_rasterizer.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/bill_print_preview_page.dart';
-import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /* On-screen thermal slip — same shop header + raster as bill print. */
 class MessSlipPreview extends ConsumerStatefulWidget {
@@ -99,21 +98,20 @@ class MessSlipPreviewState extends ConsumerState<MessSlipPreview> {
 
     final settings = ref.watch(printerSettingsProvider);
     final shop = ref.watch(shopReceiptProfileProvider);
-    final strings = AppStrings.of(ref);
     final paper = settings.paperSizeFor(isKot: false);
-    final is3 = paper == PrinterPaperSize.inch3;
-    final widthMm = is3 ? 72.0 : 48.0;
+    final profile = paper.profile;
+    final widthMm = profile.previewWidthMm;
     final displayW = widthMm * 3.78;
 
     final details = [
-      'Paper ${paper.dbValue}',
+      'Paper ${profile.shortLabel}',
       if (settings.logoUse)
         shop.logoLocalPath.trim().isNotEmpty
             ? 'Logo ON'
             : 'Logo ON (no shop logo file)'
       else
         'Logo OFF',
-      '${settings.charsPerLine} chars',
+      '${profile.charsPerLine} chars',
     ].join(' · ');
 
     Widget previewBody;
@@ -158,7 +156,7 @@ class MessSlipPreviewState extends ConsumerState<MessSlipPreview> {
           const SizedBox(height: 12),
         ],
         PreviewCard(
-          title: is3 ? strings.paper3Inch : strings.paper2Inch,
+          title: paper.shortLabel,
           child: previewBody,
         ),
       ],

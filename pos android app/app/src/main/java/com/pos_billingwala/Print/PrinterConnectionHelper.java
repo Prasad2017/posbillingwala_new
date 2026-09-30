@@ -51,11 +51,29 @@ public final class PrinterConnectionHelper {
     }
 
     public static boolean isBillPrinterReady() {
-        return BluetoothPrinterChannel.bill().isReady();
+        return isChannelReady(null, true);
     }
 
     public static boolean isKotPrinterReady() {
-        return BluetoothPrinterChannel.kot().isReady();
+        return isChannelReady(null, false);
+    }
+
+    private static boolean isChannelReady(Context context, boolean bill) {
+        if (context != null) {
+            PrinterEndpointPrefs.Transport transport =
+                    PrinterEndpointPrefs.transportFor(context, !bill);
+            if (transport == PrinterEndpointPrefs.Transport.NETWORK) {
+                return !PrinterEndpointPrefs.networkHost(context).trim().isEmpty();
+            }
+            if (transport == PrinterEndpointPrefs.Transport.USB) {
+                String id = PrinterEndpointPrefs.usbIdFor(context, !bill);
+                return id != null && !id.trim().isEmpty()
+                        && UsbEscPosPrinter.findById(context, id) != null;
+            }
+        }
+        return bill
+                ? BluetoothPrinterChannel.bill().isReady()
+                : BluetoothPrinterChannel.kot().isReady();
     }
 
     public static void autoConnectBillPrinter(Context context, String savedAddress) {
@@ -192,6 +210,41 @@ public final class PrinterConnectionHelper {
             return;
         }
 
+        PrinterEndpointPrefs.Transport transport =
+                PrinterEndpointPrefs.transportFor(activity, !bill);
+        if (transport == PrinterEndpointPrefs.Transport.NETWORK) {
+            if (PrinterEndpointPrefs.networkHost(activity).trim().isEmpty()) {
+                showToast(activity, R.string.toast_enter_network_printer);
+                if (onFailed != null) {
+                    onFailed.run();
+                }
+                return;
+            }
+            onReady.run();
+            return;
+        }
+        if (transport == PrinterEndpointPrefs.Transport.USB) {
+            String usbId = PrinterEndpointPrefs.usbIdFor(activity, !bill);
+            if (usbId == null || usbId.trim().isEmpty()
+                    || UsbEscPosPrinter.findById(activity, usbId) == null) {
+                showToast(activity, R.string.toast_select_usb_printer);
+                if (onFailed != null) {
+                    onFailed.run();
+                }
+                return;
+            }
+            android.hardware.usb.UsbDevice device = UsbEscPosPrinter.findById(activity, usbId);
+            if (!UsbEscPosPrinter.hasPermission(activity, device)) {
+                showToast(activity, R.string.toast_usb_permission_required);
+                if (onFailed != null) {
+                    onFailed.run();
+                }
+                return;
+            }
+            onReady.run();
+            return;
+        }
+
         BluetoothPrinterChannel channel = bill
                 ? BluetoothPrinterChannel.bill()
                 : BluetoothPrinterChannel.kot();
@@ -205,7 +258,8 @@ public final class PrinterConnectionHelper {
             return;
         }
 
-        boolean ready = bill ? isBillPrinterReady() : isKotPrinterReady();
+        boolean ready = bill ? BluetoothPrinterChannel.bill().isReady()
+                : BluetoothPrinterChannel.kot().isReady();
         if (ready) {
             onReady.run();
             return;
@@ -357,45 +411,95 @@ public final class PrinterConnectionHelper {
     }
 
     public static boolean safeWriteBill(Context context, byte[] data) {
-        try {
-            if (data == null || data.length == 0) {
-                showToast(context, R.string.print_error);
-                return false;
-            }
-            if (!BluetoothPrinterChannel.isBluetoothOn()) {
-                showToast(context, R.string.toast_bluetooth_is_off);
-                if (context instanceof Activity) {
-                    BluetoothPrinterChannel.bill().ensureBluetoothOn((Activity) context, true);
-                }
-                return false;
-            }
-            BluetoothPrinterChannel channel = BluetoothPrinterChannel.bill();
-            waitOffMainIfConnecting(channel);
-            if (!channel.write(data)) {
-                showToast(context, R.string.toast_printer_disconnect);
-                return false;
-            }
-            return true;
-        } catch (Exception e) {
-            showToast(context, R.string.connect_fail);
-            return false;
-        }
+        return safeWrite(context, true, data);
     }
 
     public static boolean safeWriteKot(Context context, byte[] data) {
+        return safeWrite(context, false, data);
+    }
+
+    /** Feed blank lines then ESC/POS cut (respects auto-cut prefs). Works on BT, USB, and network. */
+    public static void feedLinesAndCut(Context context, boolean bill, String lines) {
+        if (context == null) {
+            return;
+        }
+        try {
+            if (lines != null && !lines.trim().isEmpty()) {
+                int count = Integer.parseInt(lines.trim());
+                if (count > 0) {
+                    StringBuilder lineBreaks = new StringBuilder();
+                    for (int i = 0; i < count; i++) {
+                        lineBreaks.append('\n');
+                    }
+                    byte[] feedBytes = lineBreaks.toString().getBytes();
+                    if (bill) {
+                        safeWriteBill(context, feedBytes);
+                    } else {
+                        safeWriteKot(context, feedBytes);
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        sendAutoCut(context, bill);
+    }
+
+    /** Sends cut bytes on the configured bill or KOT transport. */
+    public static void sendAutoCut(Context context, boolean bill) {
+        if (context == null) {
+            return;
+        }
+        try {
+            if (!PrinterCapabilityManager.shouldCut(context)) {
+                return;
+            }
+            EscPosCutHelper.CutType type = PrinterCapabilityManager.cutType(context);
+            byte[] cut = EscPosCutHelper.cutCommand(type);
+            if (bill) {
+                safeWriteBill(context, cut);
+            } else {
+                safeWriteKot(context, cut);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static boolean safeWrite(Context context, boolean bill, byte[] data) {
         try {
             if (data == null || data.length == 0) {
                 showToast(context, R.string.print_error);
                 return false;
             }
+            PrinterEndpointPrefs.Transport transport =
+                    PrinterEndpointPrefs.transportFor(context, !bill);
+            if (transport == PrinterEndpointPrefs.Transport.NETWORK) {
+                if (!NetworkEscPosPrinter.write(context, data)) {
+                    showToast(context, R.string.toast_network_printer_failed);
+                    return false;
+                }
+                return true;
+            }
+            if (transport == PrinterEndpointPrefs.Transport.USB) {
+                if (!UsbEscPosPrinter.write(context, !bill, data)) {
+                    showToast(context, R.string.toast_usb_printer_failed);
+                    return false;
+                }
+                return true;
+            }
             if (!BluetoothPrinterChannel.isBluetoothOn()) {
                 showToast(context, R.string.toast_bluetooth_is_off);
                 if (context instanceof Activity) {
-                    BluetoothPrinterChannel.kot().ensureBluetoothOn((Activity) context, true);
+                    if (bill) {
+                        BluetoothPrinterChannel.bill().ensureBluetoothOn((Activity) context, true);
+                    } else {
+                        BluetoothPrinterChannel.kot().ensureBluetoothOn((Activity) context, true);
+                    }
                 }
                 return false;
             }
-            BluetoothPrinterChannel channel = BluetoothPrinterChannel.kot();
+            BluetoothPrinterChannel channel = bill
+                    ? BluetoothPrinterChannel.bill()
+                    : BluetoothPrinterChannel.kot();
             waitOffMainIfConnecting(channel);
             if (!channel.write(data)) {
                 showToast(context, R.string.toast_printer_disconnect);

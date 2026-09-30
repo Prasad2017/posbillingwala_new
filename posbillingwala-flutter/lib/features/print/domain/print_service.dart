@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -6,6 +7,11 @@ import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_slip_builder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
+import 'package:pos_billingwala_v2/features/print/domain/print_job_manager.dart';
+import 'package:pos_billingwala_v2/features/print/domain/print_job_state.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_capability.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_config.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_builder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_image_share.dart';
@@ -25,11 +31,83 @@ enum PrintOutcome {
 }
 
 class PrintResult {
-  const PrintResult({required this.outcome, required this.text, this.message});
+  const PrintResult({
+    required this.outcome,
+    required this.text,
+    this.message,
+    this.printerId = '',
+    this.connectionType,
+    this.errorCode = PrintErrorCode.none,
+    this.cutterCapability = CutterCapability.unknown,
+    this.cutExecuted = false,
+    this.durationMs = 0,
+    this.jobState = PrintJobState.completed,
+  });
 
   final PrintOutcome outcome;
   final String text;
   final String? message;
+  final String printerId;
+  final PosPrinterTransport? connectionType;
+  final PrintErrorCode errorCode;
+  final CutterCapability cutterCapability;
+  final bool cutExecuted;
+  final int durationMs;
+  final PrintJobState jobState;
+
+  bool get success =>
+      outcome != PrintOutcome.failed &&
+      jobState != PrintJobState.failed &&
+      jobState != PrintJobState.unknownResult;
+
+  PrintResult copyWith({
+    PrintOutcome? outcome,
+    String? text,
+    String? message,
+    String? printerId,
+    PosPrinterTransport? connectionType,
+    PrintErrorCode? errorCode,
+    CutterCapability? cutterCapability,
+    bool? cutExecuted,
+    int? durationMs,
+    PrintJobState? jobState,
+  }) {
+    return PrintResult(
+      outcome: outcome ?? this.outcome,
+      text: text ?? this.text,
+      message: message ?? this.message,
+      printerId: printerId ?? this.printerId,
+      connectionType: connectionType ?? this.connectionType,
+      errorCode: errorCode ?? this.errorCode,
+      cutterCapability: cutterCapability ?? this.cutterCapability,
+      cutExecuted: cutExecuted ?? this.cutExecuted,
+      durationMs: durationMs ?? this.durationMs,
+      jobState: jobState ?? this.jobState,
+    );
+  }
+
+  static PrintResult failure({
+    required String text,
+    required PrintErrorCode errorCode,
+    String? message,
+    String printerId = '',
+    PosPrinterTransport? connectionType,
+    CutterCapability cutterCapability = CutterCapability.unknown,
+    int durationMs = 0,
+    PrintJobState jobState = PrintJobState.failed,
+  }) {
+    return PrintResult(
+      outcome: PrintOutcome.failed,
+      text: text,
+      message: message ?? errorCode.userMessage,
+      printerId: printerId,
+      connectionType: connectionType,
+      errorCode: errorCode,
+      cutterCapability: cutterCapability,
+      durationMs: durationMs,
+      jobState: jobState,
+    );
+  }
 }
 
 /* Routes ESC/POS raster bytes to Bluetooth, USB, or Network. */
@@ -42,6 +120,7 @@ class PrintService {
       originalCopy: '***** Original Copy *****',
       duplicateCopy: '***** Duplicate Copy *****',
       item: 'ITEM',
+      qty: 'QTY',
       rate: 'RATE',
       amount: 'AMOUNT',
       subTotal: 'SUB TOTAL',
@@ -269,6 +348,7 @@ class PrintService {
       identifier: settings.usbIdFor(isKot: isKot),
       name: settings.usbNameFor(isKot: isKot),
     );
+    unawaited(PrinterAutoConnect.ensureSavedPrinters(settings));
   }
 
   Future<bool> printNetworkTo(String host, int port, List<int> bytes) async {
@@ -303,6 +383,7 @@ class PrintService {
     String usbName = '',
     String networkHost = '',
     int networkPort = 9100,
+    String printerId = '',
   }) async {
     if (kIsWeb) {
       await shareReceiptAsImage(text: text, label: label);
@@ -310,50 +391,151 @@ class PrintService {
         outcome: PrintOutcome.shared,
         text: text,
         message: '$label queued for share (web has no local thermal printer)',
+        connectionType: transport,
+        printerId: printerId,
       );
     }
-    try {
-      switch (transport) {
-        case PosPrinterTransport.bluetooth:
-          final mac = bluetoothAddress.trim();
-          if (mac.isEmpty) break;
-          final sent = await hub.writeToMac(mac, bytes);
-          if (sent) {
-            return PrintResult(
-              outcome: PrintOutcome.bluetoothPrinted,
-              text: text,
-              message: '$label sent to Bluetooth printer',
-            );
-          }
-        case PosPrinterTransport.usb:
-          if (usbIdentifier.trim().isEmpty) break;
-          usbHub.updateSavedUsb(identifier: usbIdentifier, name: usbName);
-          final sent = await usbHub.writeBytes(bytes);
-          if (sent) {
-            return PrintResult(
-              outcome: PrintOutcome.usbPrinted,
-              text: text,
-              message: '$label sent to USB printer',
-            );
-          }
-        case PosPrinterTransport.network:
-          if (networkHost.trim().isEmpty) break;
-          final ok = await printNetworkTo(networkHost, networkPort, bytes);
-          if (ok) {
-            return PrintResult(
-              outcome: PrintOutcome.networkPrinted,
-              text: text,
-              message: '$label sent to $networkHost:$networkPort',
-            );
-          }
-      }
-    } catch (e) {
-      AppLogger.error('dispatchToEndpoint failed', e);
+
+    final config = PrinterConfig(
+      id: printerId.isEmpty ? 'endpoint' : printerId,
+      name: label,
+      connectionType: transport,
+      ipAddress: networkHost,
+      port: networkPort,
+      bluetoothDeviceId: bluetoothAddress,
+      usbDeviceId: usbIdentifier,
+      usbName: usbName,
+      autoCutEnabled: settings.supportsAutoCut,
+      cutType: settings.cutType,
+      feedLines: settings.feedLines,
+    );
+    final validationError = config.validate();
+    if (validationError != null) {
+      return PrintResult.failure(
+        text: text,
+        errorCode: PrintErrorCode.invalidConfiguration,
+        message: validationError,
+        printerId: config.id,
+        connectionType: transport,
+      );
     }
-    return PrintResult(
-      outcome: PrintOutcome.failed,
-      text: text,
-      message: '$label failed — printer not reachable',
+
+    final key = config.endpointKey;
+    return PrintJobManager.instance.runExclusive(
+      printerKey: key,
+      jobLabel: label,
+      body: (setState) async {
+        final sw = Stopwatch()..start();
+        setState(PrintJobState.connecting);
+        await printerCapabilityManager.probe(
+          printerKey: key,
+          autoCutEnabled: settings.supportsAutoCut,
+          profileSupportsAutoCut: settings.billProfile.supportsAutoCut,
+        );
+        final capability = printerCapabilityManager.snapshotFor(key).cutter;
+        final cutExecuted = printerCapabilityManager.shouldCutForSettings(
+          settings,
+          printerKey: key,
+        );
+        try {
+          setState(PrintJobState.sending);
+          switch (transport) {
+            case PosPrinterTransport.bluetooth:
+              final sent = await hub.writeToMac(bluetoothAddress.trim(), bytes);
+              if (!sent) {
+                setState(PrintJobState.failed);
+                return PrintResult.failure(
+                  text: text,
+                  errorCode: PrintErrorCode.writeFailed,
+                  message: '$label failed — Bluetooth printer not reachable',
+                  printerId: config.id,
+                  connectionType: transport,
+                  cutterCapability: capability,
+                  durationMs: sw.elapsedMilliseconds,
+                );
+              }
+              setState(PrintJobState.completed);
+              return PrintResult(
+                outcome: PrintOutcome.bluetoothPrinted,
+                text: text,
+                message: '$label sent to Bluetooth printer',
+                printerId: config.id,
+                connectionType: transport,
+                cutterCapability: capability,
+                cutExecuted: cutExecuted,
+                durationMs: sw.elapsedMilliseconds,
+              );
+            case PosPrinterTransport.usb:
+              usbHub.updateSavedUsb(
+                identifier: usbIdentifier,
+                name: usbName,
+              );
+              final sent = await usbHub.writeBytes(bytes);
+              if (!sent) {
+                setState(PrintJobState.failed);
+                return PrintResult.failure(
+                  text: text,
+                  errorCode: PrintErrorCode.usbUnavailable,
+                  message: '$label failed — USB printer not reachable',
+                  printerId: config.id,
+                  connectionType: transport,
+                  cutterCapability: capability,
+                  durationMs: sw.elapsedMilliseconds,
+                );
+              }
+              setState(PrintJobState.completed);
+              return PrintResult(
+                outcome: PrintOutcome.usbPrinted,
+                text: text,
+                message: '$label sent to USB printer',
+                printerId: config.id,
+                connectionType: transport,
+                cutterCapability: capability,
+                cutExecuted: cutExecuted,
+                durationMs: sw.elapsedMilliseconds,
+              );
+            case PosPrinterTransport.network:
+              final ok = await printNetworkTo(networkHost, networkPort, bytes);
+              if (!ok) {
+                /* Do not auto-retry — may have partially printed. */
+                setState(PrintJobState.unknownResult);
+                return PrintResult.failure(
+                  text: text,
+                  errorCode: PrintErrorCode.unknownResult,
+                  message: PrintErrorCode.unknownResult.userMessage,
+                  printerId: config.id,
+                  connectionType: transport,
+                  cutterCapability: capability,
+                  durationMs: sw.elapsedMilliseconds,
+                  jobState: PrintJobState.unknownResult,
+                );
+              }
+              setState(PrintJobState.completed);
+              return PrintResult(
+                outcome: PrintOutcome.networkPrinted,
+                text: text,
+                message: '$label sent to $networkHost:$networkPort',
+                printerId: config.id,
+                connectionType: transport,
+                cutterCapability: capability,
+                cutExecuted: cutExecuted,
+                durationMs: sw.elapsedMilliseconds,
+              );
+          }
+        } catch (e) {
+          AppLogger.error('dispatchToEndpoint failed', e);
+          setState(PrintJobState.failed);
+          return PrintResult.failure(
+            text: text,
+            errorCode: PrintErrorCode.unknownError,
+            message: '$label failed — printer not reachable',
+            printerId: config.id,
+            connectionType: transport,
+            cutterCapability: capability,
+            durationMs: sw.elapsedMilliseconds,
+          );
+        }
+      },
     );
   }
 

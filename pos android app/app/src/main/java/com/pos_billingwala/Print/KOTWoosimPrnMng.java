@@ -65,9 +65,18 @@ public final class KOTWoosimPrnMng {
     }
 
     public static void sendAutoCutter() {
+        sendAutoCutter(null);
+    }
+
+    public static void sendAutoCutter(android.content.Context context) {
         try {
-            byte[] cut = new byte[]{0x1B, 0x69};
-            BluetoothPrinterChannel.kot().write(cut);
+            if (context == null) {
+                EscPosCutHelper.tryCut(
+                        data -> BluetoothPrinterChannel.kot().write(data),
+                        EscPosCutHelper.CutType.DEFAULT);
+                return;
+            }
+            PrinterConnectionHelper.sendAutoCut(context, false);
         } catch (Exception ignored) {
         }
     }
@@ -76,6 +85,8 @@ public final class KOTWoosimPrnMng {
         BluetoothPrinterChannel.kot().release(context);
     }
 
+    /** @deprecated use {@link #isServiceConnected()} */
+    @Deprecated
     public boolean printSucc() {
         return isServiceConnected();
     }

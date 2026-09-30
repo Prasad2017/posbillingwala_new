@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,10 +15,10 @@ import 'package:pos_billingwala_v2/features/company/data/company_api.dart';
 import 'package:pos_billingwala_v2/features/company/data/company_dtos.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/printer_device_picker_page.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/connectivity_sync_listener.dart';
-import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -83,12 +84,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
   Future<void> syncHubAddresses() async {
     final s = ref.read(printerSettingsProvider);
-    hub.updateSavedAddresses(
-      billMac: s.billBluetoothAddress,
-      kotMac: s.kotBluetoothAddress,
-    );
-    usbHub.updateSavedUsb(identifier: s.billUsbIdentifier, name: s.billUsbName);
-    /* Do not auto-connect BT — connect only on Print / Connect button. */
+    /* Reconnect saved bill/KOT printers whenever Printer Details opens. */
+    await PrinterAutoConnect.ensureSavedPrinters(s);
   }
 
   Future<void> refreshBtStatus() async {
@@ -119,23 +116,17 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
 
   Future<bool> pickPrinter(PrinterChannelKind channel) async {
     final settings = ref.read(printerSettingsProvider);
-    final initial = localTransport(
-      channel == PrinterChannelKind.bill
-          ? settings.billTransport
-          : settings.kotTransport,
-    );
+    final initial = channel == PrinterChannelKind.bill
+        ? settings.billTransport
+        : settings.kotTransport;
     final picked = await Navigator.of(context).push<PickedPrinter>(
       MaterialPageRoute(
         builder: (_) => PrinterDevicePickerPage(
           channel: channel,
-          initialTransport: initial == PosPrinterTransport.usb
-              ? PosPrinterTransport.usb
-              : PosPrinterTransport.bluetooth,
-          showNetwork: false,
-          lockToInitialTransport: true,
-          title: initial == PosPrinterTransport.usb
-              ? 'Select USB printer'
-              : 'Select Bluetooth printer',
+          initialTransport: initial,
+          showNetwork: true,
+          lockToInitialTransport: false,
+          title: 'Select printer',
         ),
       ),
     );
@@ -221,11 +212,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     try {
       await settingsPageSave(showSnack: false);
       var settings = ref.read(printerSettingsProvider);
-      final transport = localTransport(
-        channel == PrinterChannelKind.bill
-            ? settings.billTransport
-            : settings.kotTransport,
-      );
+      final transport = channel == PrinterChannelKind.bill
+          ? settings.billTransport
+          : settings.kotTransport;
 
       var ok = false;
       switch (transport) {
@@ -257,8 +246,19 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             name: settings.usbNameFor(isKot: channel == PrinterChannelKind.kot),
           );
         case PosPrinterTransport.network:
-          await pickPrinter(channel);
-          return;
+          var ip = host.text.trim();
+          if (ip.isEmpty) {
+            final picked = await pickPrinter(channel);
+            if (!picked || !mounted) return;
+            ip = host.text.trim();
+          }
+          if (ip.isEmpty) return;
+          await settingsPageSave(showSnack: false);
+          settings = ref.read(printerSettingsProvider);
+          ok = await testNetworkPrinter(
+            settings.networkHost,
+            settings.networkPort,
+          );
       }
 
       if (!mounted) return;
@@ -266,15 +266,38 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         SnackBar(
           content: Text(
             ok
-                ? '${transport.label} printer ready'
+                ? transport == PosPrinterTransport.network
+                      ? 'Network printer reachable '
+                            '(${host.text.trim()}:${settingsPagePort.text.trim()})'
+                      : '${transport.label} printer ready'
+                : transport == PosPrinterTransport.network
+                ? 'Network printer not reachable — check IP, port, and Wi‑Fi'
                 : 'Connect failed — pick a ${transport.label} printer',
           ),
         ),
       );
-      if (!ok) await pickPrinter(channel);
+      if (!ok && transport != PosPrinterTransport.network) {
+        await pickPrinter(channel);
+      }
       await refreshBtStatus();
     } finally {
       if (mounted) setState(() => btBusy = false);
+    }
+  }
+
+  Future<bool> testNetworkPrinter(String ip, int port) async {
+    if (ip.trim().isEmpty) return false;
+    final resolved = port <= 0 ? 9100 : port;
+    try {
+      final socket = await Socket.connect(
+        ip.trim(),
+        resolved,
+        timeout: const Duration(seconds: 5),
+      );
+      await socket.close();
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -282,14 +305,12 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     setState(() => btBusy = true);
     try {
       final settings = ref.read(printerSettingsProvider);
-      final transport = localTransport(
-        channel == PrinterChannelKind.bill
-            ? settings.billTransport
-            : settings.kotTransport,
-      );
+      final transport = channel == PrinterChannelKind.bill
+          ? settings.billTransport
+          : settings.kotTransport;
       if (transport == PosPrinterTransport.usb) {
         await usbHub.clearSavedUsb();
-      } else {
+      } else if (transport == PosPrinterTransport.bluetooth) {
         await hub.disconnect(channel);
       }
       if (channel == PrinterChannelKind.bill) {
@@ -299,10 +320,20 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             .update(
               settings.copyWith(
                 billBluetoothAddress: '',
-                billUsbIdentifier: '',
-                billUsbName: '',
+                billUsbIdentifier: transport == PosPrinterTransport.usb
+                    ? ''
+                    : settings.billUsbIdentifier,
+                billUsbName: transport == PosPrinterTransport.usb
+                    ? ''
+                    : settings.billUsbName,
+                networkHost: transport == PosPrinterTransport.network
+                    ? ''
+                    : settings.networkHost,
               ),
             );
+        if (transport == PosPrinterTransport.network) {
+          host.clear();
+        }
       } else {
         settingsPageKotMac.clear();
         await ref
@@ -310,10 +341,20 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
             .update(
               settings.copyWith(
                 kotBluetoothAddress: '',
-                kotUsbIdentifier: '',
-                kotUsbName: '',
+                kotUsbIdentifier: transport == PosPrinterTransport.usb
+                    ? ''
+                    : settings.kotUsbIdentifier,
+                kotUsbName: transport == PosPrinterTransport.usb
+                    ? ''
+                    : settings.kotUsbName,
+                networkHost: transport == PosPrinterTransport.network
+                    ? ''
+                    : settings.networkHost,
               ),
             );
+        if (transport == PosPrinterTransport.network) {
+          host.clear();
+        }
       }
       await refreshBtStatus();
       if (!mounted) return;
@@ -558,8 +599,8 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       kotBluetoothAddress: settingsPageKotMac.text.trim(),
       networkHost: host.text.trim(),
       networkPort: port.clamp(1, 65535),
-      feedLines: feed.clamp(1, 10),
-      kotFeedLines: kotFeed.clamp(1, 10),
+      feedLines: feed.clamp(0, 20),
+      kotFeedLines: kotFeed.clamp(0, 20),
       invoiceTitle: settingsPageInvoiceTitle.text.trim(),
       invoiceTerms: settingsPageInvoiceTerms.text.trim(),
       invoicePrefix: settingsPageInvoicePrefix.text.trim().isEmpty
@@ -613,6 +654,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       if (settings.billTransport == PosPrinterTransport.bluetooth &&
           settings.billBluetoothAddress.isNotEmpty)
         settings.billBluetoothAddress,
+      if (settings.billTransport == PosPrinterTransport.network &&
+          settings.networkHost.isNotEmpty)
+        '${settings.networkHost}:${settings.networkPort}',
     ];
     return parts.join(' · ');
   }
@@ -626,24 +670,20 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
       if (settings.kotTransport == PosPrinterTransport.bluetooth &&
           settings.kotBluetoothAddress.isNotEmpty)
         settings.kotBluetoothAddress,
+      if (settings.kotTransport == PosPrinterTransport.network &&
+          settings.networkHost.isNotEmpty)
+        '${settings.networkHost}:${settings.networkPort}',
     ];
     return parts.join(' · ');
   }
-
-  PosPrinterTransport localTransport(PosPrinterTransport value) =>
-      value == PosPrinterTransport.usb
-      ? PosPrinterTransport.usb
-      : PosPrinterTransport.bluetooth;
 
   bool isChannelConnected(
     PrinterChannelKind channel,
     PrinterSettings settings,
   ) {
-    final transport = localTransport(
-      channel == PrinterChannelKind.bill
-          ? settings.billTransport
-          : settings.kotTransport,
-    );
+    final transport = channel == PrinterChannelKind.bill
+        ? settings.billTransport
+        : settings.kotTransport;
     switch (transport) {
       case PosPrinterTransport.usb:
         final id = settings.usbIdFor(isKot: channel == PrinterChannelKind.kot);
@@ -658,13 +698,11 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
         if (mac.isEmpty || hub.connectedAddress.isEmpty) return false;
         return hub.connectedAddress.toLowerCase() == mac.toLowerCase();
       case PosPrinterTransport.network:
-        return false;
+        return settings.networkHost.trim().isNotEmpty;
     }
   }
 
   Widget typeAndSizeBlock({
-    required String stringsPaper2,
-    required String stringsPaper3,
     required PosPrinterTransport transport,
     required PrinterPaperSize paperSize,
     required String statusLine,
@@ -674,7 +712,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
     required VoidCallback onConnect,
     required VoidCallback onDisconnect,
   }) {
-    final type = localTransport(transport);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -683,55 +720,79 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
-        SegmentedButton<PosPrinterTransport>(
-          segments: const [
-            ButtonSegment(
-              value: PosPrinterTransport.bluetooth,
-              icon: Icon(Icons.bluetooth_rounded),
-              label: Text('Bluetooth'),
-            ),
-            ButtonSegment(
-              value: PosPrinterTransport.usb,
-              icon: Icon(Icons.usb_rounded),
-              label: Text('USB'),
-            ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final t in PosPrinterTransport.values)
+              ChoiceChip(
+                label: Text(t.label),
+                avatar: Icon(
+                  t == PosPrinterTransport.bluetooth
+                      ? Icons.bluetooth_rounded
+                      : t == PosPrinterTransport.usb
+                      ? Icons.usb_rounded
+                      : Icons.wifi_rounded,
+                  size: 18,
+                ),
+                selected: transport == t,
+                onSelected: (_) => onTransport(t),
+              ),
           ],
-          selected: {type},
-          onSelectionChanged: (v) => onTransport(v.first),
         ),
+        if (transport == PosPrinterTransport.network) ...[
+          const SizedBox(height: 12),
+          AppTextField(
+            controller: host,
+            label: 'Printer IP / host',
+            hint: '192.168.1.100',
+            keyboardType: TextInputType.url,
+          ),
+          const SizedBox(height: 8),
+          AppTextField(
+            controller: settingsPagePort,
+            label: 'Port',
+            hint: '9100',
+            keyboardType: TextInputType.number,
+          ),
+        ],
         const SizedBox(height: 16),
         const Text('Page size', style: TextStyle(fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
-        SegmentedButton<PrinterPaperSize>(
-          segments: [
-            ButtonSegment(
-              value: PrinterPaperSize.inch2,
-              label: Text(stringsPaper2),
-            ),
-            ButtonSegment(
-              value: PrinterPaperSize.inch3,
-              label: Text(stringsPaper3),
-            ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final size in PrinterPaperSize.values)
+              ChoiceChip(
+                label: Text(size.shortLabel),
+                selected: paperSize == size,
+                onSelected: (_) => onPaper(size),
+              ),
           ],
-          selected: {paperSize},
-          onSelectionChanged: (v) => onPaper(v.first),
         ),
         const SizedBox(height: 8),
         Text(
           statusLine.isEmpty
-              ? (type == PosPrinterTransport.usb
+              ? (transport == PosPrinterTransport.usb
                     ? 'Tap Connect to pick a USB printer'
+                    : transport == PosPrinterTransport.network
+                    ? 'Enter printer IP and port, then tap Connect / Test'
                     : 'Tap Connect to pick a Bluetooth printer')
               : statusLine,
           style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 10),
         AppButton(
-          label: connected ? 'Disconnect' : 'Connect',
+          label: transport == PosPrinterTransport.network
+              ? (connected ? 'Clear network' : 'Test connection')
+              : (connected ? 'Disconnect' : 'Connect'),
           icon: connected
               ? Icons.link_off_rounded
-              : (type == PosPrinterTransport.usb
+              : (transport == PosPrinterTransport.usb
                     ? Icons.usb_rounded
+                    : transport == PosPrinterTransport.network
+                    ? Icons.wifi_rounded
                     : Icons.bluetooth_rounded),
           variant: connected
               ? AppButtonVariant.outlined
@@ -745,7 +806,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(printerSettingsProvider);
-    final strings = AppStrings.of(ref);
     final billPicked = billStatusLine(settings);
     final kotPicked = kotStatusLine(settings);
 
@@ -789,8 +849,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         typeAndSizeBlock(
-                          stringsPaper2: strings.paper2Inch,
-                          stringsPaper3: strings.paper3Inch,
                           transport: settings.billTransport,
                           paperSize: settings.paperSize,
                           statusLine: billPicked,
@@ -839,6 +897,46 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                           label: 'Print Feed Lines',
                           keyboardType: TextInputType.number,
                         ),
+                        const SizedBox(height: 4),
+                        SettingSwitchTile(
+                          title: 'Auto cut after print',
+                          subtitle:
+                              'Uses printer capability + profile. Safe if cutter is unknown or missing.',
+                          value: settings.supportsAutoCut,
+                          showDivider: true,
+                          onChanged: (value) {
+                            ref
+                                .read(printerSettingsProvider.notifier)
+                                .update(
+                                  settings.copyWith(supportsAutoCut: value),
+                                );
+                          },
+                        ),
+                        if (settings.supportsAutoCut) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Cut type',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              for (final cut in PrinterCutType.values)
+                                ChoiceChip(
+                                  label: Text(cut.label),
+                                  selected: settings.cutType == cut,
+                                  onSelected: (_) {
+                                    ref
+                                        .read(printerSettingsProvider.notifier)
+                                        .update(
+                                          settings.copyWith(cutType: cut),
+                                        );
+                                  },
+                                ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -862,8 +960,6 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                         ),
                         const SizedBox(height: 8),
                         typeAndSizeBlock(
-                          stringsPaper2: strings.paper2Inch,
-                          stringsPaper3: strings.paper3Inch,
                           transport: settings.kotTransport,
                           paperSize: settings.kotPaperSize,
                           statusLine: kotPicked,

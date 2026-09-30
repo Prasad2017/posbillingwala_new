@@ -377,8 +377,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/inventory',
             name: 'inventory',
             builder: (context, state) {
-              final tab = state.uri.queryParameters['tab'];
-              return InventoryPage(initialTab: tab == 'expenses' ? 1 : 0);
+              if (state.uri.queryParameters['tab'] == 'expenses') {
+                return const ExpensePage();
+              }
+              return const InventoryPage();
             },
           ),
           GoRoute(

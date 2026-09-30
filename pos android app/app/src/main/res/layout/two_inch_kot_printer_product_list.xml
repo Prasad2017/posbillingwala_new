@@ -26,9 +26,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:fontFamily="@font/poppinsmedium"
-            android:gravity="center"
+            android:gravity="end|center_vertical"
             android:textColor="@color/black"
-            android:textSize="15dp" />
+            android:textSize="17dp" />
 
     </LinearLayout>
 

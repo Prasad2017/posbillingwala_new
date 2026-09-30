@@ -26,6 +26,7 @@ import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.d
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/printer_device_picker_page.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/connectivity_sync_listener.dart';
@@ -162,12 +163,10 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     if (AppPlatform.isWeb) return true;
 
     var settings = ref.read(printerSettingsProvider);
+    await PrinterAutoConnect.ensureSavedPrinters(settings);
+    settings = ref.read(printerSettingsProvider);
     final hub = BluetoothPrinterHub.instance;
     final usbHub = EscPosTransportHub.instance;
-    hub.updateSavedAddresses(
-      billMac: settings.billBluetoothAddress,
-      kotMac: settings.kotBluetoothAddress,
-    );
 
     Future<bool> pickBillPrinter() async {
       final picked = await Navigator.of(context).push<PickedPrinter>(

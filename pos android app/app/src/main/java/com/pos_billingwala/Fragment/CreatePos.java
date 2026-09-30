@@ -625,8 +625,6 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
         final String table = tableNumber;
         final java.util.List<com.pos_billingwala.Model.ProductCartResponse>[] unprintedHolder =
                 new java.util.List[]{null};
-        final com.pos_billingwala.Model.KotResponse[] kotHolder =
-                new com.pos_billingwala.Model.KotResponse[]{null};
         AppExecutors.get().runDbThenMain(this, () -> {
             unprintedHolder[0] = posBillingWalaDatabase.getUnprintedCartProductList(
                     table, com.pos_billingwala.Extra.DineInTableHelper.CART_ORDER_TABLE);
@@ -635,27 +633,13 @@ public class CreatePos extends Fragment implements ClickListerInterface, View.On
                 Toast.makeText(activity, "No new items for KOT", Toast.LENGTH_SHORT).show();
                 return;
             }
-            boolean preview = com.pos_billingwala.Extra.DineInKotHelper.isPreviewEnabled(posBillingWalaDatabase);
-            boolean autoPrint = com.pos_billingwala.Extra.DineInKotHelper.isAutoPrint(posBillingWalaDatabase);
-            if (!preview && !autoPrint) {
-                AppExecutors.get().runDbThenMain(this, () -> {
-                    kotHolder[0] = com.pos_billingwala.Extra.DineInKotHelper.createKotForTable(
-                            posBillingWalaDatabase, table);
-                }, () -> {
-                    if (kotHolder[0] == null) {
-                        Toast.makeText(activity, "Unable to create KOT", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(activity, kotHolder[0].getKotNumber() + " saved", Toast.LENGTH_SHORT).show();
-                    }
-                });
-                return;
-            }
+            boolean skipPreview = com.pos_billingwala.Extra.DineInKotHelper.shouldSkipKotPreview(posBillingWalaDatabase);
             Intent intent = new Intent(activity, BluetoothPrint.class);
             intent.putExtra("invoiceRunningStatus", "printBill");
             intent.putExtra("tableNumber", tableNumber);
             intent.putExtra("cartOrderStatus", cartOrderStatus);
             intent.putExtra("kotMode", true);
-            intent.putExtra("autoKotPrint", autoPrint);
+            intent.putExtra("autoKotPrint", skipPreview);
             startActivity(intent);
         });
     }

@@ -130,7 +130,12 @@ class PrintJobDispatcher {
           );
         }
       }
-      return await service.printKot(ticket);
+      return last ??
+          PrintResult(
+            outcome: PrintOutcome.previewOnly,
+            text: '',
+            message: 'KOT routed to store printers',
+          );
     } catch (e) {
       AppLogger.warning('printKotRouted fallback', e);
       return service.printKot(ticket);

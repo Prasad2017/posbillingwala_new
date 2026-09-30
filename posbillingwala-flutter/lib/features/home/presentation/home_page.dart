@@ -24,6 +24,7 @@ import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_host_service.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_meal_token_print_worker.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_providers.dart';
@@ -69,10 +70,7 @@ class HomePageState extends ConsumerState<HomePage> {
           await service.requestAll();
         }
         final settings = ref.read(printerSettingsProvider);
-        BluetoothPrinterHub.instance.updateSavedAddresses(
-          billMac: settings.billBluetoothAddress,
-          kotMac: settings.kotBluetoothAddress,
-        );
+        unawaited(PrinterAutoConnect.ensureSavedPrinters(settings));
         if (!mounted) return;
         await refreshPrinterChip();
         await refreshHoursLabels();

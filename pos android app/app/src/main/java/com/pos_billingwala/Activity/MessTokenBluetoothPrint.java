@@ -30,6 +30,7 @@ import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.PaperSizeHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
 import com.pos_billingwala.Extra.TabletPrintUi;
@@ -232,7 +233,8 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         showDialog();
         Bitmap bitmap = convertLayout(twoNestedScrollView);
         if (bitmap != null) {
-            printImage(bitmap, 48);
+            printImage(bitmap, PaperSizeHelper.printableWidthMm(
+                    printerSettingResponseList.get(0).getPrinterName()));
         }
         hideDialog();
     }
@@ -299,7 +301,7 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
         }
         CompanyResponse company = companyResponseList.get(0);
         twoShopName.setText(ShopHeaderBuilder.resolveShopName1(company));
-        twoShopDetails.setText(ShopHeaderBuilder.buildShopDetailsBlock(company, true, true, false, false));
+        twoShopDetails.setText(ShopHeaderBuilder.buildShopDetailsBlock(company));
 
         if (company.getCompanyLogo() != null) {
             byte[] bytes = Base64.decode(company.getCompanyLogo(), Base64.DEFAULT);
@@ -374,14 +376,7 @@ public class MessTokenBluetoothPrint extends BaseActivity implements View.OnClic
 
     private void checkAndFeedPaper(String lines) {
         try {
-            if (lines == null || lines.trim().isEmpty()) {
-                return;
-            }
-            StringBuilder lineBreaks = new StringBuilder();
-            for (int i = 0; i < Integer.parseInt(lines); i++) {
-                lineBreaks.append("\n");
-            }
-            PrinterConnectionHelper.safeWriteBill(this, lineBreaks.toString().getBytes());
+            PrinterConnectionHelper.feedLinesAndCut(this, false, lines);
         } catch (Exception ignored) {
         }
     }

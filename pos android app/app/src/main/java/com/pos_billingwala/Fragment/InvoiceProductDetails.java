@@ -35,6 +35,7 @@ import com.pos_billingwala.Activity.MainActivity;
 import com.pos_billingwala.Adapter.InvoiceProductAdapter;
 import com.pos_billingwala.BuildConfig;
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
+import com.pos_billingwala.Extra.PaperSizeHelper;
 import com.pos_billingwala.Extra.ReportCursorHelper;
 import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Extra.TabletFormUi;
@@ -205,7 +206,12 @@ public class InvoiceProductDetails extends Fragment implements View.OnClickListe
 
             try {
 
-                Bitmap bitmap1 = getResizedBitmap(bitmap, 48);
+                String paper = "2-Inch";
+                if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
+                        && printerSettingResponseList.get(0).getPrinterName() != null) {
+                    paper = printerSettingResponseList.get(0).getPrinterName();
+                }
+                Bitmap bitmap1 = getResizedBitmap(bitmap, PaperSizeHelper.printableWidthMm(paper));
 
                 File file = new File(directory_path + "/" + invoiceNumber + ".png");
                 FileOutputStream out = new FileOutputStream(file);

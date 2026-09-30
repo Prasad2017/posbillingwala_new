@@ -24,31 +24,34 @@ class AppSwitchTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          dense: dense,
-          title: Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: dense ? 14 : 15,
-              color: AppColors.textPrimary,
+        Material(
+          type: MaterialType.transparency,
+          child: SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: dense,
+            title: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: dense ? 14 : 15,
+                color: AppColors.textPrimary,
+              ),
             ),
-          ),
-          subtitle: subtitle == null
-              ? null
-              : Text(
-                  subtitle!,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                    height: 1.35,
+            subtitle: subtitle == null
+                ? null
+                : Text(
+                    subtitle!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      height: 1.35,
+                    ),
                   ),
-                ),
-          value: value,
-          activeThumbColor: Colors.white,
-          activeTrackColor: AppColors.green,
-          onChanged: onChanged,
+            value: value,
+            activeThumbColor: Colors.white,
+            activeTrackColor: AppColors.green,
+            onChanged: onChanged,
+          ),
         ),
         if (showDivider)
           const Divider(height: 1, thickness: 1, color: AppColors.border),

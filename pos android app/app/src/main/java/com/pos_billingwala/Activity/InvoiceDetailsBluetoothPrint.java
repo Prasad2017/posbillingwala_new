@@ -1,5 +1,8 @@
 package com.pos_billingwala.Activity;
 
+import com.pos_billingwala.Extra.InvoiceReceiptHelper;
+import com.pos_billingwala.Extra.PaperSizeHelper;
+
 import static com.pos_billingwala.Utils.RequestCodes.directory_path;
 
 import android.Manifest;
@@ -167,6 +170,9 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         if (invoiceResponseList.get(0).isRefunded()) {
             BillDetails = BillDetails + "<br/><b>Status:</b> Refunded";
         }
+        BillDetails = InvoiceReceiptHelper.prependSalesInvoiceTitle(
+                BillDetails,
+                InvoiceReceiptHelper.salesInvoiceTitleFrom(printerSettingResponseList));
         return String.valueOf(Html.fromHtml(BillDetails));
     }
 
@@ -390,9 +396,9 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
         }
         progressDialog = new ProgressDialog(activity);
         progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
-        if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+        if (PaperSizeHelper.isNarrow(printerSettingResponseList.get(0).getPrinterName())) {
             print2InchBill();
-        } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+        } else if (PaperSizeHelper.isWide(printerSettingResponseList.get(0).getPrinterName())) {
             print3InchBill();
         }
     }
@@ -436,10 +442,11 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
 
         invoiceInvoiceDetails.setText(Html.fromHtml(BillDetails));
 
-        Bitmap bitmap = convertLayout(twoNestedScrollView, 48);
+        int widthMm = billPrintableWidthMm();
+        Bitmap bitmap = convertLayout(twoNestedScrollView, widthMm);
 
         if (bitmap != null) {
-            Bitmap bitmap1 = getResizedBitmap(bitmap, 48);
+            Bitmap bitmap1 = getResizedBitmap(bitmap, widthMm);
             // Prepare to insert the image into MediaStore
             ContentValues values = new ContentValues();
             values.put(MediaStore.Images.Media.DISPLAY_NAME, invoiceNumber + ".png"); // File name
@@ -483,13 +490,23 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
 
     }
 
+    private int billPrintableWidthMm() {
+        String label = "2-Inch";
+        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
+                && printerSettingResponseList.get(0).getPrinterName() != null) {
+            label = printerSettingResponseList.get(0).getPrinterName();
+        }
+        return PaperSizeHelper.printableWidthMm(label);
+    }
+
     public void print2InchBill() {
 
         showDialog();
 
-        Bitmap bitmap = convertLayout(twoNestedScrollView, 48);
+        int widthMm = billPrintableWidthMm();
+        Bitmap bitmap = convertLayout(twoNestedScrollView, widthMm);
         if (bitmap != null) {
-            printImage(bitmap, 48);
+            printImage(bitmap, widthMm);
         }
 
         hideDialog();
@@ -500,9 +517,10 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
 
         showDialog();
 
-        Bitmap bitmap = convertLayout(threeNestedScrollView, 72);
+        int widthMm = billPrintableWidthMm();
+        Bitmap bitmap = convertLayout(threeNestedScrollView, widthMm);
         if (bitmap != null) {
-            printImage(bitmap, 72);
+            printImage(bitmap, widthMm);
         }
 
         hideDialog();
@@ -594,15 +612,7 @@ public class InvoiceDetailsBluetoothPrint extends BaseActivity implements View.O
 
     public void checkAndFeedPaper(String lines) {
         try {
-            if (lines == null || lines.trim().isEmpty()) {
-                return;
-            }
-            int count = Integer.parseInt(lines.trim());
-            StringBuilder lineBreaks = new StringBuilder();
-            for (int i = 0; i < count; i++) {
-                lineBreaks.append("\n");
-            }
-            PrinterConnectionHelper.safeWriteBill(activity, lineBreaks.toString().getBytes());
+            PrinterConnectionHelper.feedLinesAndCut(activity, true, lines);
         } catch (Exception ignored) {
         }
     }

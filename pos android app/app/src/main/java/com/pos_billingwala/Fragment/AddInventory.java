@@ -113,21 +113,16 @@ public class AddInventory extends Fragment implements View.OnClickListener {
             }
         }
 
-        inventoryResponseList = posBillingWalaDatabase.getInventoryDetails(productId);
-        if (!inventoryResponseList.isEmpty()) {
-
-            int newInventoryQty = Integer.parseInt(binding.inventoryQty.getText().toString());
-            int oldInventoryQty = Integer.parseInt(inventoryResponseList.get(0).getProductInventoryQuantity());
-            int afterSaleInventoryQuantity = Integer.parseInt(inventoryResponseList.get(0).getAfterSaleInventoryQuantity());
-            int totalQty = newInventoryQty + afterSaleInventoryQuantity;
-
-            posBillingWalaDatabase.addInventory(productId, productName, "" + totalQty, "0", "0", inventoryDate, 0, getRandomString(10));
-            Toast.makeText(activity, getString(R.string.toast_update_inventory_successfully), Toast.LENGTH_SHORT).show();
-        } else {
-            posBillingWalaDatabase.addInventory(productId, productName, binding.inventoryQty.getText().toString(), binding.inventoryQty.getText().toString(), "0", inventoryDate, 0, getRandomString(10));
-
-            Toast.makeText(activity, getString(R.string.toast_add_inventory_successfully), Toast.LENGTH_SHORT).show();
+        double qty = POSBillingWalaDatabase.parseStockQty(binding.inventoryQty.getText().toString());
+        if (qty <= 0d) {
+            Toast.makeText(activity, getString(R.string.toast_please_add_inventory_qty), Toast.LENGTH_SHORT).show();
+            return;
         }
+        boolean hadStock = !posBillingWalaDatabase.getInventoryDetails(productId).isEmpty();
+        posBillingWalaDatabase.recordStockDelta(productId, productName, qty, inventoryDate, true);
+        Toast.makeText(activity, getString(hadStock
+                ? R.string.toast_update_inventory_successfully
+                : R.string.toast_add_inventory_successfully), Toast.LENGTH_SHORT).show();
 
         ((MainActivity) activity).navigateBack();
 

@@ -28,13 +28,13 @@
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/twoNestedScrollView"
-        android:layout_width="45mm"
+        android:layout_width="48mm"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:visibility="invisible">
 
         <LinearLayout
-            android:layout_width="45mm"
+            android:layout_width="48mm"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"

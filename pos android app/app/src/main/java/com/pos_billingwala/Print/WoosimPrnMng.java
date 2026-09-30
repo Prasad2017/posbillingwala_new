@@ -65,9 +65,19 @@ public final class WoosimPrnMng {
     }
 
     public static void sendAutoCutter() {
+        sendAutoCutter(null);
+    }
+
+    /** Safe GS V cut — gated by capability when context is available. */
+    public static void sendAutoCutter(android.content.Context context) {
         try {
-            byte[] cut = new byte[]{0x1B, 0x69};
-            BluetoothPrinterChannel.bill().write(cut);
+            if (context == null) {
+                EscPosCutHelper.tryCut(
+                        data -> BluetoothPrinterChannel.bill().write(data),
+                        EscPosCutHelper.CutType.DEFAULT);
+                return;
+            }
+            PrinterConnectionHelper.sendAutoCut(context, true);
         } catch (Exception ignored) {
         }
     }
@@ -77,6 +87,7 @@ public final class WoosimPrnMng {
     }
 
     /** @deprecated use {@link #isServiceConnected()} */
+    @Deprecated
     public boolean printSucc() {
         return isServiceConnected();
     }

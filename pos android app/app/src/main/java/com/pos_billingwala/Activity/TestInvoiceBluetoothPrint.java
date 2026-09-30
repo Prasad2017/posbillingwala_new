@@ -1,5 +1,8 @@
 package com.pos_billingwala.Activity;
 
+import com.pos_billingwala.Extra.InvoiceReceiptHelper;
+import com.pos_billingwala.Extra.PaperSizeHelper;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -44,6 +47,7 @@ import com.pos_billingwala.Print.BluetoothPrintService;
 import com.pos_billingwala.Print.DeviceListActivity;
 import com.pos_billingwala.Print.PrintImage;
 import com.pos_billingwala.Print.PrintImage.dither;
+import com.pos_billingwala.Print.KOTWoosimPrnMng;
 import com.pos_billingwala.Print.PrinterConnectionHelper;
 import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.R;
@@ -228,6 +232,10 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
             qrOn = false;
             terms = "";
         } else {
+            String salesTitle = InvoiceReceiptHelper.salesInvoiceTitleFrom(printerSettingResponseList);
+            if (!salesTitle.isEmpty()) {
+                invoiceDetails.append(salesTitle).append("\n");
+            }
             invoiceDetails.append("Bill No: ").append(invoicePrefix).append("-TEST\n");
             invoiceDetails.append("Date: ").append(dateStr);
             if (customerOn) {
@@ -244,13 +252,25 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
             float qty = Float.parseFloat(line.getProductQuantity());
             subTotal += price * qty;
         }
-        applyPaymentQr(qrOn, subTotal, shopName, invoicePrefix + "-TEST");
-        String subTotalText = kotPreviewMode
-                ? ""
-                : "Sub Total: " + currency + String.format(Locale.US, "%.2f", subTotal);
+        float payable = subTotal;
+        StringBuilder subTotalLines = new StringBuilder();
+        if (!kotPreviewMode) {
+            subTotalLines.append("Sub Total: ")
+                    .append(currency)
+                    .append(String.format(Locale.US, "%.2f", subTotal));
+            if (!companyResponseList.isEmpty()
+                    && "On".equalsIgnoreCase(companyResponseList.get(0).getGstStatus())) {
+                payable += appendShopTaxLine(subTotalLines, "CGST",
+                        companyResponseList.get(0).getShopCGST(), subTotal);
+                payable += appendShopTaxLine(subTotalLines, "SGST",
+                        companyResponseList.get(0).getShopSGST(), subTotal);
+            }
+        }
+        String subTotalText = subTotalLines.toString();
         String totalText = kotPreviewMode
                 ? ""
-                : "Total: " + currency + String.format(Locale.US, "%.2f", subTotal);
+                : "Total: " + currency + String.format(Locale.US, "%.2f", payable);
+        applyPaymentQr(qrOn, payable, shopName, invoicePrefix + "-TEST");
 
         binding.previewShopName.setText(shopName);
         binding.previewShopDetails.setText(shopDetails);
@@ -312,6 +332,31 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         binding.threeCompanyLogo.setVisibility(visibility);
     }
 
+    /** Adds a CGST/SGST line when the shop rate is set. Returns the tax amount. */
+    private float appendShopTaxLine(StringBuilder lines, String label, String rateRaw, float subTotal) {
+        if (rateRaw == null || rateRaw.trim().isEmpty()) {
+            return 0f;
+        }
+        float rate;
+        try {
+            rate = Float.parseFloat(rateRaw.trim());
+        } catch (NumberFormatException e) {
+            return 0f;
+        }
+        if (rate <= 0f) {
+            return 0f;
+        }
+        float tax = subTotal * rate / 100f;
+        lines.append('\n')
+                .append(label)
+                .append('@')
+                .append(rateRaw.trim())
+                .append("%: ")
+                .append(currency)
+                .append(String.format(Locale.US, "%.2f", tax));
+        return tax;
+    }
+
     private void applyPaymentQr(boolean qrOn, float amount, String payeeName, String note) {
         String upiId = "";
         if (!companyResponseList.isEmpty()) {
@@ -356,29 +401,61 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         return line;
     }
 
-    private String savedInvoicePrinterAddress() {
+    private PrinterSettingResponse currentSetting() {
         if (printerSettingResponseList == null || printerSettingResponseList.isEmpty()) {
+            return null;
+        }
+        return printerSettingResponseList.get(0);
+    }
+
+    /** Bill preview uses the bill paper size; KOT preview uses the KOT paper size. */
+    private String activePaperLabel() {
+        PrinterSettingResponse setting = currentSetting();
+        if (setting == null) {
+            return "2-Inch";
+        }
+        if (kotPreviewMode) {
+            String kot = setting.getKOTPrinterName();
+            if (kot != null && !kot.trim().isEmpty()) {
+                return kot;
+            }
+        }
+        String bill = setting.getPrinterName();
+        return bill != null && !bill.trim().isEmpty() ? bill : "2-Inch";
+    }
+
+    private String savedInvoicePrinterAddress() {
+        PrinterSettingResponse setting = currentSetting();
+        if (setting == null) {
             return "";
         }
-        String addr = printerSettingResponseList.get(0).getBluetoothAddress();
+        String addr = kotPreviewMode ? setting.getBluetoothKOTAddress() : setting.getBluetoothAddress();
         return addr != null ? addr : "";
     }
 
     private void connectInvoicePrinter() {
-        WoosimPrnMng.connectFromButton(activity, savedInvoicePrinterAddress(), activity);
+        String address = savedInvoicePrinterAddress();
+        if (kotPreviewMode) {
+            KOTWoosimPrnMng.connectFromButton(activity, address, activity, false);
+        } else {
+            WoosimPrnMng.connectFromButton(activity, address, activity);
+        }
     }
 
     private void getPrinterSettingDetails() {
         printerSettingResponseList = posBillingWalaDatabase.getPrinterSettingDetails();
-        if (!printerSettingResponseList.isEmpty()) {
-            String bluetoothAddress = savedInvoicePrinterAddress();
-            if (!bluetoothAddress.isEmpty()) {
-                try {
-                    new WoosimPrnMng(activity, bluetoothAddress, activity);
-                } catch (Exception e) {
-                    Log.e(TAG, "Auto-connect failed", e);
-                }
+        String bluetoothAddress = savedInvoicePrinterAddress();
+        if (bluetoothAddress.isEmpty()) {
+            return;
+        }
+        try {
+            if (kotPreviewMode) {
+                new KOTWoosimPrnMng(activity, bluetoothAddress, activity);
+            } else {
+                new WoosimPrnMng(activity, bluetoothAddress, activity);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Auto-connect failed", e);
         }
     }
 
@@ -400,8 +477,13 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
             return;
         }
 
-        PrinterConnectionHelper.ensureBillPrinterAsync(activity, savedInvoicePrinterAddress(),
-                this::runTestPrintAfterPrinterReady);
+        if (kotPreviewMode) {
+            PrinterConnectionHelper.ensureKotPrinterAsync(activity, savedInvoicePrinterAddress(),
+                    this::runTestPrintAfterPrinterReady);
+        } else {
+            PrinterConnectionHelper.ensureBillPrinterAsync(activity, savedInvoicePrinterAddress(),
+                    this::runTestPrintAfterPrinterReady);
+        }
     }
 
     private void runTestPrintAfterPrinterReady() {
@@ -415,23 +497,17 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
         showDialog();
 
         try {
-            String printerName = printerSettingResponseList.get(0).getPrinterName();
-            if (printerName != null && printerName.equalsIgnoreCase("3-Inch")) {
-                Bitmap bitmap = convertLayout(binding.threeNestedScrollView, 72);
-                if (bitmap != null) {
-                    printImage(bitmap, 72);
-                } else {
-                    hideDialog();
-                    Toast.makeText(activity, getString(R.string.toast_print_layout_failed), Toast.LENGTH_SHORT).show();
-                }
+            String printerName = activePaperLabel();
+            int widthMm = PaperSizeHelper.printableWidthMm(printerName);
+            NestedScrollView ticket = PaperSizeHelper.isWide(printerName)
+                    ? binding.threeNestedScrollView
+                    : binding.twoNestedScrollView;
+            Bitmap bitmap = convertLayout(ticket, widthMm);
+            if (bitmap != null) {
+                printImage(bitmap, widthMm);
             } else {
-                Bitmap bitmap = convertLayout(binding.twoNestedScrollView, 48);
-                if (bitmap != null) {
-                    printImage(bitmap, 48);
-                } else {
-                    hideDialog();
-                    Toast.makeText(activity, getString(R.string.toast_print_layout_failed), Toast.LENGTH_SHORT).show();
-                }
+                hideDialog();
+                Toast.makeText(activity, getString(R.string.toast_print_layout_failed), Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
             Log.e(TAG, "Test print failed", e);
@@ -446,17 +522,26 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
             try {
                 PrintImage printImage = new PrintImage(getResizedBitmap(image, effectivePrintWidth));
                 printImage.PrepareImage(dither.floyd_steinberg, 128);
-                if (!PrinterConnectionHelper.safeWriteBill(activity, printImage.getPrintImageData())) {
+                boolean wrote = kotPreviewMode
+                        ? PrinterConnectionHelper.safeWriteKot(activity, printImage.getPrintImageData())
+                        : PrinterConnectionHelper.safeWriteBill(activity, printImage.getPrintImageData());
+                if (!wrote) {
                     toastMsg = getString(R.string.toast_printer_offline_connect);
                     runOnUiThread(() -> {
                         try {
-                            WoosimPrnMng.connect(activity, savedInvoicePrinterAddress(), activity);
+                            if (kotPreviewMode) {
+                                KOTWoosimPrnMng.connect(activity, savedInvoicePrinterAddress(), activity);
+                            } else {
+                                WoosimPrnMng.connect(activity, savedInvoicePrinterAddress(), activity);
+                            }
                         } catch (Exception e) {
                             Log.e(TAG, "Connect prompt failed", e);
                         }
                     });
                 } else {
-                    String feed = printerSettingResponseList.get(0).getPrinterFeedLines();
+                    PrinterSettingResponse setting = currentSetting();
+                    String feed = setting == null ? "1"
+                            : (kotPreviewMode ? setting.getKotPrinterFeedLines() : setting.getPrinterFeedLines());
                     checkAndFeedPaper(feed == null || feed.trim().isEmpty() ? "1" : feed);
                     toastMsg = getString(R.string.toast_test_print_sent);
                 }
@@ -477,15 +562,7 @@ public class TestInvoiceBluetoothPrint extends BaseActivity implements View.OnCl
 
     private void checkAndFeedPaper(String lines) {
         try {
-            if (lines == null || lines.trim().isEmpty()) {
-                return;
-            }
-            int count = Integer.parseInt(lines.trim());
-            StringBuilder lineBreaks = new StringBuilder();
-            for (int i = 0; i < count; i++) {
-                lineBreaks.append("\n");
-            }
-            PrinterConnectionHelper.safeWriteBill(activity, lineBreaks.toString().getBytes());
+            PrinterConnectionHelper.feedLinesAndCut(activity, !kotPreviewMode, lines);
         } catch (Exception e) {
             Log.e(TAG, "checkAndFeedPaper failed", e);
         }

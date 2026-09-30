@@ -1,8 +1,14 @@
 package com.pos_billingwala.Activity;
 
+import com.pos_billingwala.Extra.PaperSizeHelper;
+
 import android.content.ContentValues;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -19,6 +25,7 @@ import android.content.Intent;
 
 import com.pos_billingwala.Database.POSBillingWalaDatabase;
 import com.pos_billingwala.Extra.MessTokenQrHelper;
+import com.pos_billingwala.Extra.ShopHeaderBuilder;
 import com.pos_billingwala.Model.AllApiResponse;
 import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.MessQrInfo;
@@ -282,12 +289,83 @@ public class MessQrManagementActivity extends BaseActivity {
             return;
         }
         Toast.makeText(this, getString(R.string.toast_printing_in_progress), Toast.LENGTH_SHORT).show();
+        Bitmap slip = buildCommonQrSlip(qrOnlyBitmapForPrint());
         PrinterConnectionHelper.ensureBillPrinterAsync(this, addr, () -> printExecutor.execute(() -> {
-            boolean ok = writeQrToBillPrinter(composed);
+            boolean ok = writeQrToBillPrinter(slip != null ? slip : composed);
             runOnUiThread(() -> Toast.makeText(MessQrManagementActivity.this,
                     ok ? "QR printed" : "Unable to print QR. Check printer.",
                     Toast.LENGTH_SHORT).show());
         }));
+    }
+
+    /**
+     * Same slip as Flutter MessSlipBuilder.commonQrLayout:
+     * shop header, title, QR, powered-by.
+     */
+    private Bitmap buildCommonQrSlip(Bitmap qr) {
+        if (qr == null) {
+            return null;
+        }
+        POSBillingWalaDatabase db = new POSBillingWalaDatabase(this);
+        java.util.List<CompanyResponse> companies = db.getCompanyDetails();
+        CompanyResponse company = companies != null && !companies.isEmpty() ? companies.get(0) : null;
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        if (company != null) {
+            String name = ShopHeaderBuilder.resolveShopName1(company);
+            if (!name.isEmpty()) {
+                lines.add(name);
+            }
+            String details = ShopHeaderBuilder.buildShopDetailsBlock(company);
+            if (!details.isEmpty()) {
+                for (String line : details.split("\n")) {
+                    if (!line.trim().isEmpty()) {
+                        lines.add(line.trim());
+                    }
+                }
+            }
+        }
+        String title = resolvedMessName().trim().toUpperCase(java.util.Locale.US);
+        if (title.isEmpty()) {
+            title = "MESS QR";
+        }
+
+        int width = 384;
+        int qrSize = 160;
+        Bitmap qrScaled = Bitmap.createScaledBitmap(qr, qrSize, qrSize, false);
+        Paint body = new Paint(Paint.ANTI_ALIAS_FLAG);
+        body.setColor(Color.BLACK);
+        body.setTextAlign(Paint.Align.CENTER);
+        body.setTextSize(17f);
+        Paint banner = new Paint(body);
+        banner.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        banner.setTextSize(19f);
+        Paint namePaint = new Paint(body);
+        namePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        namePaint.setTextSize(20f);
+
+        float y = 28f;
+        float lineStep = 24f;
+        float textBlock = 16f + lines.size() * lineStep + 36f + qrSize + 16f + lineStep * 2 + 24f;
+        Bitmap out = Bitmap.createBitmap(width, Math.max(320, (int) textBlock), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(out);
+        canvas.drawColor(Color.WHITE);
+        float cx = width / 2f;
+        for (int i = 0; i < lines.size(); i++) {
+            canvas.drawText(lines.get(i), cx, y, i == 0 ? namePaint : body);
+            y += lineStep;
+        }
+        y += 8f;
+        canvas.drawText(title, cx, y, banner);
+        y += 16f;
+        canvas.drawBitmap(qrScaled, (width - qrSize) / 2f, y, null);
+        y += qrSize + 28f;
+        canvas.drawText("Powered by POS Billingwala", cx, y, body);
+        y += lineStep;
+        canvas.drawText("www.posbillingwala.com", cx, y, body);
+        if (qrScaled != qr) {
+            qrScaled.recycle();
+        }
+        return out;
     }
 
     private boolean writeQrToBillPrinter(Bitmap qrOnly) {
@@ -296,11 +374,8 @@ public class MessQrManagementActivity extends BaseActivity {
                 return false;
             }
             PrinterSettingResponse setting = printerSettingResponseList.get(0);
-            int dots = 48;
-            if (setting.getPrinterName() != null && setting.getPrinterName().equalsIgnoreCase("3-Inch")) {
-                dots = 72;
-            }
-            Bitmap resized = getResizedBitmap(qrOnly, dots);
+            int widthMm = PaperSizeHelper.printableWidthMm(setting.getPrinterName());
+            Bitmap resized = getResizedBitmap(qrOnly, widthMm);
             PrintImage printImage = new PrintImage(resized);
             printImage.PrepareImage(PrintImage.dither.floyd_steinberg, 128);
             if (!PrinterConnectionHelper.safeWriteBill(this, printImage.getPrintImageData())) {

@@ -1,5 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_cut_type.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_paper_profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+export 'printer_cut_type.dart' show PrinterCutType, PrinterCutTypeX;
+export 'printer_paper_profile.dart'
+    show PrinterPaperProfile, PrinterPaperSize, PrinterPaperSizeX;
 
 /* Android stores logo/payment/customer as on/off; Flutter also accepts 1/0. */
 bool printerFlagOn(String? value) {
@@ -41,11 +50,9 @@ extension PosPrinterTransportX on PosPrinterTransport {
     }
   }
 
-  /* Bill/KOT company printers are Bluetooth or USB only. */
+  /* Bill/KOT may be Bluetooth, USB, or Network (LAN/Wi‑Fi ESC/POS). */
   static PosPrinterTransport fromLocalStorage(String? value) {
-    return fromStorage(value) == PosPrinterTransport.usb
-        ? PosPrinterTransport.usb
-        : PosPrinterTransport.bluetooth;
+    return fromStorage(value);
   }
 
   String get dbValue {
@@ -73,8 +80,8 @@ extension PosPrinterTransportX on PosPrinterTransport {
 
 class PrinterSettings {
   const PrinterSettings({
-    this.paperSize = PrinterPaperSize.inch2,
-    this.kotPaperSize = PrinterPaperSize.inch2,
+    this.paperSize = PrinterPaperSize.mm58,
+    this.kotPaperSize = PrinterPaperSize.mm58,
     this.billTransport = PosPrinterTransport.bluetooth,
     this.kotTransport = PosPrinterTransport.bluetooth,
     this.billBluetoothAddress = '',
@@ -85,8 +92,10 @@ class PrinterSettings {
     this.kotUsbName = '',
     this.networkHost = '',
     this.networkPort = 9100,
-    this.feedLines = 3,
-    this.kotFeedLines = 3,
+    this.feedLines = 1,
+    this.kotFeedLines = 1,
+    this.supportsAutoCut = true,
+    this.cutType = PrinterCutType.defaultCut,
     this.autoShareOnSave = true,
     this.invoiceTitle = '',
     this.invoiceTerms = '',
@@ -120,6 +129,10 @@ class PrinterSettings {
   final int networkPort;
   final int feedLines;
   final int kotFeedLines;
+
+  /* When true, send ESC/POS cut after feed if capability allows. */
+  final bool supportsAutoCut;
+  final PrinterCutType cutType;
   final bool autoShareOnSave;
   final String invoiceTitle;
   final String invoiceTerms;
@@ -140,17 +153,21 @@ class PrinterSettings {
 
   int get kotCharsPerLine => charsPerLineFor(isKot: true);
 
+  PrinterPaperProfile profileFor({required bool isKot}) =>
+      PrinterPaperProfile.of(paperSizeFor(isKot: isKot));
+
+  PrinterPaperProfile get billProfile => profileFor(isKot: false);
+
+  PrinterPaperProfile get kotProfile => profileFor(isKot: true);
+
   int charsPerLineFor({required bool isKot}) =>
-      paperSizeFor(isKot: isKot) == PrinterPaperSize.inch3 ? 48 : 32;
+      profileFor(isKot: isKot).charsPerLine;
 
   PrinterPaperSize paperSizeFor({required bool isKot}) =>
       isKot ? kotPaperSize : paperSize;
 
   PosPrinterTransport transportFor({required bool isKot}) {
-    final t = isKot ? kotTransport : billTransport;
-    return t == PosPrinterTransport.usb
-        ? PosPrinterTransport.usb
-        : PosPrinterTransport.bluetooth;
+    return isKot ? kotTransport : billTransport;
   }
 
   String bluetoothFor({required bool isKot}) =>
@@ -177,6 +194,8 @@ class PrinterSettings {
     int? networkPort,
     int? feedLines,
     int? kotFeedLines,
+    bool? supportsAutoCut,
+    PrinterCutType? cutType,
     bool? autoShareOnSave,
     String? invoiceTitle,
     String? invoiceTerms,
@@ -208,6 +227,8 @@ class PrinterSettings {
       networkPort: networkPort ?? this.networkPort,
       feedLines: feedLines ?? this.feedLines,
       kotFeedLines: kotFeedLines ?? this.kotFeedLines,
+      supportsAutoCut: supportsAutoCut ?? this.supportsAutoCut,
+      cutType: cutType ?? this.cutType,
       autoShareOnSave: autoShareOnSave ?? this.autoShareOnSave,
       invoiceTitle: invoiceTitle ?? this.invoiceTitle,
       invoiceTerms: invoiceTerms ?? this.invoiceTerms,
@@ -225,18 +246,6 @@ class PrinterSettings {
       printFastBill: printFastBill ?? this.printFastBill,
       kotCopies: kotCopies ?? this.kotCopies,
     );
-  }
-}
-
-enum PrinterPaperSize { inch2, inch3 }
-
-extension PrinterPaperSizeX on PrinterPaperSize {
-  String get dbValue => this == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch';
-
-  static PrinterPaperSize fromDb(String? raw) {
-    final n = (raw ?? '').toLowerCase().replaceAll(' ', '');
-    if (n.contains('3')) return PrinterPaperSize.inch3;
-    return PrinterPaperSize.inch2;
   }
 }
 
@@ -258,6 +267,8 @@ class PrinterSettingsStore {
   static const portKey = 'printer_network_port';
   static const feedKey = 'printer_feed_lines';
   static const kotFeedKey = 'printer_kot_feed_lines';
+  static const autoCutKey = 'printer_supports_auto_cut';
+  static const cutTypeKey = 'printer_cut_type';
   static const autoShareKey = 'printer_auto_share';
   static const invoiceTitleKey = 'printer_invoice_title';
   static const invoiceTermsKey = 'printer_invoice_terms';
@@ -287,15 +298,11 @@ class PrinterSettingsStore {
 
   Future<PrinterSettings> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final paper = prefs.getString(paperKey) == '3-Inch'
-        ? PrinterPaperSize.inch3
-        : PrinterPaperSize.inch2;
+    final paper = PrinterPaperSizeX.fromDb(prefs.getString(paperKey));
     final kotPaperRaw = prefs.getString(kotPaperKey);
     final kotPaper = kotPaperRaw == null
         ? paper
-        : (kotPaperRaw == '3-Inch'
-              ? PrinterPaperSize.inch3
-              : PrinterPaperSize.inch2);
+        : PrinterPaperSizeX.fromDb(kotPaperRaw);
     var loaded = PrinterSettings(
       paperSize: paper,
       kotPaperSize: kotPaper,
@@ -313,8 +320,10 @@ class PrinterSettingsStore {
       kotUsbName: prefs.getString(kotUsbNameKey) ?? '',
       networkHost: prefs.getString(hostKey) ?? '',
       networkPort: prefs.getInt(portKey) ?? 9100,
-      feedLines: prefs.getInt(feedKey) ?? 3,
-      kotFeedLines: prefs.getInt(kotFeedKey) ?? prefs.getInt(feedKey) ?? 3,
+      feedLines: prefs.getInt(feedKey) ?? 1,
+      kotFeedLines: prefs.getInt(kotFeedKey) ?? prefs.getInt(feedKey) ?? 1,
+      supportsAutoCut: prefs.getBool(autoCutKey) ?? true,
+      cutType: PrinterCutTypeX.fromStorage(prefs.getString(cutTypeKey)),
       autoShareOnSave: prefs.getBool(autoShareKey) ?? true,
       invoiceTitle: prefs.getString(invoiceTitleKey) ?? '',
       invoiceTerms: prefs.getString(invoiceTermsKey) ?? '',
@@ -340,14 +349,8 @@ class PrinterSettingsStore {
 
   Future<void> save(PrinterSettings settings) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      paperKey,
-      settings.paperSize == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch',
-    );
-    await prefs.setString(
-      kotPaperKey,
-      settings.kotPaperSize == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch',
-    );
+    await prefs.setString(paperKey, settings.paperSize.dbValue);
+    await prefs.setString(kotPaperKey, settings.kotPaperSize.dbValue);
     await prefs.setString(
       billTransportKey,
       settings.billTransport.storageValue,
@@ -363,6 +366,8 @@ class PrinterSettingsStore {
     await prefs.setInt(portKey, settings.networkPort);
     await prefs.setInt(feedKey, settings.feedLines);
     await prefs.setInt(kotFeedKey, settings.kotFeedLines);
+    await prefs.setBool(autoCutKey, settings.supportsAutoCut);
+    await prefs.setString(cutTypeKey, settings.cutType.storageValue);
     await prefs.setBool(autoShareKey, settings.autoShareOnSave);
     await prefs.setString(invoiceTitleKey, settings.invoiceTitle.trim());
     await prefs.setString(invoiceTermsKey, settings.invoiceTerms.trim());
@@ -409,6 +414,8 @@ class PrinterSettingsController extends Notifier<PrinterSettings> {
 
   Future<void> reload() async {
     state = await store.load();
+    /* Restore last saved BT/USB link app-wide after settings hydrate. */
+    unawaited(PrinterAutoConnect.ensureSavedPrinters(state));
   }
 
   Future<bool> isPendingUpload() => store.isPendingUpload();
@@ -421,10 +428,21 @@ class PrinterSettingsController extends Notifier<PrinterSettings> {
     PrinterSettings settings, {
     bool fromCloud = false,
   }) async {
+    final previous = state;
     await store.save(settings);
     state = settings;
     if (!fromCloud) {
       await store.setPendingUpload(true);
+    }
+    final endpointsChanged =
+        previous.billBluetoothAddress != settings.billBluetoothAddress ||
+        previous.kotBluetoothAddress != settings.kotBluetoothAddress ||
+        previous.billUsbIdentifier != settings.billUsbIdentifier ||
+        previous.kotUsbIdentifier != settings.kotUsbIdentifier ||
+        previous.billTransport != settings.billTransport ||
+        previous.kotTransport != settings.kotTransport;
+    if (fromCloud || endpointsChanged) {
+      unawaited(PrinterAutoConnect.ensureSavedPrinters(settings));
     }
   }
 }

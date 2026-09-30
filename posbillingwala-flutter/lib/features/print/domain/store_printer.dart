@@ -39,11 +39,7 @@ class StorePrinter {
   final String primaryPrinterId;
   final String deviceId;
 
-  PrinterPaperSize get paperSizeEnum {
-    final n = paperSize.toLowerCase().replaceAll(' ', '');
-    if (n.contains('3')) return PrinterPaperSize.inch3;
-    return PrinterPaperSize.inch2;
-  }
+  PrinterPaperSize get paperSizeEnum => PrinterPaperSizeX.fromDb(paperSize);
 
   String get connectionLabel {
     switch (connectionType.toUpperCase()) {
@@ -57,8 +53,7 @@ class StorePrinter {
     }
   }
 
-  String get paperSizeLabel =>
-      paperSizeEnum == PrinterPaperSize.inch3 ? '3-Inch' : '2-Inch';
+  String get paperSizeLabel => paperSizeEnum.dbValue;
 
   factory StorePrinter.fromJson(Map<String, dynamic> json) {
     String s(Object? v) => v?.toString() ?? '';

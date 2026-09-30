@@ -95,6 +95,106 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/spacing_md"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:text="@string/ui_printer_type"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="@dimen/text_body" />
+
+                    <RadioGroup
+                        android:id="@+id/billTransportGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_xs"
+                        android:orientation="horizontal">
+
+                        <RadioButton
+                            android:id="@+id/billTransportBluetooth"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsregular"
+                            android:text="@string/ui_transport_bluetooth" />
+
+                        <RadioButton
+                            android:id="@+id/billTransportUsb"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/spacing_sm"
+                            android:fontFamily="@font/poppinsregular"
+                            android:text="@string/ui_transport_usb" />
+
+                        <RadioButton
+                            android:id="@+id/billTransportNetwork"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/spacing_sm"
+                            android:fontFamily="@font/poppinsregular"
+                            android:text="@string/ui_transport_network" />
+                    </RadioGroup>
+
+                    <LinearLayout
+                        android:id="@+id/networkPrinterFields"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/networkHostLayout"
+                            style="@style/PosFormTextInput"
+                            android:layout_marginTop="@dimen/spacing_sm">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/networkHost"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:hint="@string/ui_printer_ip_host"
+                                android:imeOptions="actionNext"
+                                android:inputType="textUri"
+                                android:paddingStart="@dimen/spacing_lg"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:singleLine="true"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="@dimen/text_body" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/networkPortLayout"
+                            style="@style/PosFormTextInput"
+                            android:layout_marginTop="@dimen/spacing_sm">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/networkPort"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:digits="0123456789"
+                                android:fontFamily="@font/poppinsregular"
+                                android:hint="@string/ui_printer_port"
+                                android:imeOptions="actionNext"
+                                android:inputType="number"
+                                android:paddingStart="@dimen/spacing_lg"
+                                android:paddingEnd="@dimen/spacing_md"
+                                android:singleLine="true"
+                                android:text="9100"
+                                android:textColor="@color/colorTextPrimary"
+                                android:textSize="@dimen/text_body" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/billUsbStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_xs"
+                        android:fontFamily="@font/poppinsregular"
+                        android:textColor="@color/colorTextSecondary"
+                        android:textSize="@dimen/text_caption"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_md"
                         android:fontFamily="@font/poppinsregular"
                         android:text="@string/ui_bill_printer_name"
                         android:textColor="@color/colorTextSecondary"
@@ -203,6 +303,26 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/invoiceTitleLayout"
+                        style="@style/PosFormTextInput"
+                        android:layout_marginTop="@dimen/spacing_md">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/invoiceTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsregular"
+                            android:hint="@string/ui_sales_invoice_title"
+                            android:imeOptions="actionNext"
+                            android:inputType="textCapWords"
+                            android:paddingStart="@dimen/spacing_lg"
+                            android:paddingEnd="@dimen/spacing_md"
+                            android:singleLine="true"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_body" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/printerFeedLinesLayout"
                         style="@style/PosFormTextInput"
                         android:layout_marginTop="@dimen/spacing_md">
@@ -222,6 +342,68 @@
                             android:textColor="@color/colorTextPrimary"
                             android:textSize="@dimen/text_body" />
                     </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.pos_billingwala.Extra.PosSwitchRowView
+                        android:id="@+id/autoCutSwitch"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        app:psr_label="@string/ui_auto_cut_after_print" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppinsregular"
+                        android:text="@string/ui_auto_cut_hint"
+                        android:textColor="@color/colorTextHint"
+                        android:textSize="@dimen/text_caption" />
+
+                    <LinearLayout
+                        android:id="@+id/cutTypeContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:text="@string/ui_cut_type"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_body" />
+
+                        <RadioGroup
+                            android:id="@+id/cutTypeGroup"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xs"
+                            android:orientation="horizontal">
+
+                            <RadioButton
+                                android:id="@+id/cutTypeDefault"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:text="@string/ui_cut_type_default" />
+
+                            <RadioButton
+                                android:id="@+id/cutTypeFull"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/spacing_sm"
+                                android:fontFamily="@font/poppinsregular"
+                                android:text="@string/ui_cut_type_full" />
+
+                            <RadioButton
+                                android:id="@+id/cutTypePartial"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/spacing_sm"
+                                android:fontFamily="@font/poppinsregular"
+                                android:text="@string/ui_cut_type_partial" />
+                        </RadioGroup>
+                    </LinearLayout>
                 </LinearLayout>
             </com.pos_billingwala.Extra.PosCardView>
 
@@ -253,6 +435,56 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_md"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:text="@string/ui_printer_type"
+                            android:textColor="@color/colorTextPrimary"
+                            android:textSize="@dimen/text_body" />
+
+                        <RadioGroup
+                            android:id="@+id/kotTransportGroup"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xs"
+                            android:orientation="horizontal">
+
+                            <RadioButton
+                                android:id="@+id/kotTransportBluetooth"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppinsregular"
+                                android:text="@string/ui_transport_bluetooth" />
+
+                            <RadioButton
+                                android:id="@+id/kotTransportUsb"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/spacing_sm"
+                                android:fontFamily="@font/poppinsregular"
+                                android:text="@string/ui_transport_usb" />
+
+                            <RadioButton
+                                android:id="@+id/kotTransportNetwork"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/spacing_sm"
+                                android:fontFamily="@font/poppinsregular"
+                                android:text="@string/ui_transport_network" />
+                        </RadioGroup>
+
+                        <TextView
+                            android:id="@+id/kotUsbStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_xs"
+                            android:fontFamily="@font/poppinsregular"
+                            android:textColor="@color/colorTextSecondary"
+                            android:textSize="@dimen/text_caption"
+                            android:visibility="gone" />
 
                         <LinearLayout
                             android:id="@+id/KOTPrinterLayout"
@@ -423,6 +655,12 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/spacing_sm"
                             app:psr_label="@string/ui_auto_print_kot" />
+
+                        <com.pos_billingwala.Extra.PosSwitchRowView
+                            android:id="@+id/kotPreviewSwitch"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:psr_label="@string/ui_kot_preview" />
                     </LinearLayout>
                 </LinearLayout>
             </com.pos_billingwala.Extra.PosCardView>
@@ -524,6 +762,26 @@
                         android:text="@string/ui_print_fast_bill_hint"
                         android:textColor="@color/colorTextHint"
                         android:textSize="@dimen/text_caption" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/colorBorder" />
+
+                    <com.pos_billingwala.Extra.PosSwitchRowView
+                        android:id="@+id/autoShareOnSaveSwitch"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:psr_label="@string/ui_share_print_prompt_after_save" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/spacing_sm"
+                        android:fontFamily="@font/poppinsregular"
+                        android:text="@string/ui_share_print_prompt_hint"
+                        android:textColor="@color/colorTextHint"
+                        android:textSize="@dimen/text_caption" />
                 </LinearLayout>
             </com.pos_billingwala.Extra.PosCardView>
 
@@ -541,27 +799,6 @@
                     android:padding="@dimen/spacing_lg">
 
                     <include layout="@layout/include_printer_section_header_terms" />
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/invoiceTitleLayout"
-                        style="@style/PosFormTextInput"
-                        android:layout_marginTop="@dimen/spacing_md"
-                        android:visibility="gone">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/invoiceTitle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsregular"
-                            android:hint="@string/ui_sales_invoice_title"
-                            android:imeOptions="actionNext"
-                            android:inputType="textCapWords"
-                            android:paddingStart="@dimen/spacing_lg"
-                            android:paddingEnd="@dimen/spacing_md"
-                            android:singleLine="true"
-                            android:textColor="@color/colorTextPrimary"
-                            android:textSize="@dimen/text_body" />
-                    </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/invoiceTermsConditionLayout"

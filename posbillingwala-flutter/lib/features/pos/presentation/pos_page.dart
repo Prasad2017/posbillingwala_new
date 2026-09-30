@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +15,7 @@ import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dar
 import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/product_image_thumb.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
+import 'package:pos_billingwala_v2/features/pos/domain/billing_date.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/kot_providers.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 import 'package:pos_billingwala_v2/features/pos/presentation/category_rail.dart';
@@ -22,6 +25,7 @@ import 'package:pos_billingwala_v2/features/pos/presentation/pos_action_footer.d
 import 'package:pos_billingwala_v2/features/pos/presentation/pos_checkout_flow.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_job_dispatcher.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_service.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/staff/domain/permission_controller.dart';
 import 'package:pos_billingwala_v2/features/tables/presentation/table_ops.dart';
@@ -92,18 +96,21 @@ class PosPageState extends ConsumerState<PosPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.resetSessionOnOpen) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        PrinterAutoConnect.ensureSavedPrinters(
+          ref.read(printerSettingsProvider),
+        ),
+      );
+      if (widget.resetSessionOnOpen) {
         ref.read(billingSessionProvider.notifier).usePos();
-      });
-    }
-    if (widget.openCartOnStart) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
+      }
+      if (widget.openCartOnStart) {
         final route = ref.read(billingSessionProvider).cartRoute;
         context.push(route);
-      });
-    }
+      }
+    });
   }
 
   @override
@@ -143,6 +150,9 @@ class PosPageState extends ConsumerState<PosPage> {
 
     final isFastBilling = session.invoiceType == 'fast_billing';
     final strings = AppStrings.of(ref);
+    final printFastBill = ref.watch(
+      printerSettingsProvider.select((s) => s.printFastBill),
+    );
 
     final screenWidth = MediaQuery.sizeOf(context).width;
     final screenClass = AppBreakpoints.ofWidth(screenWidth);
@@ -209,22 +219,30 @@ class PosPageState extends ConsumerState<PosPage> {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            Text(
-              isFastBilling
-                  ? strings.productMenu
-                  : session.invoiceType == 'take_away'
-                  ? (session.customerName?.trim().isNotEmpty == true
-                        ? session.customerName!
-                        : strings.addProducts)
-                  : session.tableNumber != null
-                  ? '${strings.tableNo} ${session.tableNumber}'
-                  : (session.customerName ?? ''),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: isFastBilling ? AppColors.textSecondary : Colors.white70,
+            if (printFastBill)
+              BillingDateBar(
+                inAppBar: true,
+                lightAppBar: isFastBilling,
+              )
+            else
+              Text(
+                isFastBilling
+                    ? strings.productMenu
+                    : session.invoiceType == 'take_away'
+                    ? (session.customerName?.trim().isNotEmpty == true
+                          ? session.customerName!
+                          : strings.addProducts)
+                    : session.tableNumber != null
+                    ? '${strings.tableNo} ${session.tableNumber}'
+                    : (session.customerName ?? ''),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: isFastBilling
+                      ? AppColors.textSecondary
+                      : Colors.white70,
+                ),
               ),
-            ),
           ],
         ),
         actions: [
@@ -742,34 +760,14 @@ class CatalogPane extends ConsumerWidget {
                         }
                         return LayoutBuilder(
                           builder: (context, constraints) {
-                            final widthClass = AppBreakpoints.ofWidth(
-                              constraints.maxWidth,
-                            );
                             final crossAxisCount =
                                 AppBreakpoints.productColumnsForWidth(
                               constraints.maxWidth,
                             );
-                            final mainExtent =
-                                AppBreakpoints.productCardExtentFor(
-                              widthClass,
-                              height: context.heightClass,
-                            );
-                            return GridView.builder(
-                              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-                              addAutomaticKeepAlives: false,
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: crossAxisCount,
-                                    mainAxisSpacing: 6,
-                                    crossAxisSpacing: 6,
-                                    mainAxisExtent: mainExtent,
-                                  ),
-                              itemCount: filtered.length,
-                              itemBuilder: (context, index) => ProductCard(
-                                key: ValueKey(filtered[index].productId),
-                                product: filtered[index],
-                                currency: currency,
-                              ),
+                            return ProductMasonryGrid(
+                              products: filtered,
+                              columnCount: crossAxisCount,
+                              currency: currency,
                             );
                           },
                         );
@@ -947,6 +945,76 @@ class EmptyCatalog extends ConsumerWidget {
   }
 }
 
+class ProductMasonryGrid extends StatelessWidget {
+  const ProductMasonryGrid({
+    super.key,
+    required this.products,
+    required this.columnCount,
+    required this.currency,
+    this.spacing = 6,
+    this.padding = const EdgeInsets.fromLTRB(8, 6, 8, 8),
+  });
+
+  final List<Product> products;
+  final int columnCount;
+  final NumberFormat currency;
+  final double spacing;
+  final EdgeInsets padding;
+
+  /* Rough height so we pack into the shortest column (true masonry). */
+  static double estimateHeight(Product product) {
+    const textBlock = 92.0;
+    return hasProductImage(product.productImage) ? textBlock + 76 : textBlock;
+  }
+
+  List<List<Product>> packColumns() {
+    final cols = List.generate(columnCount, (_) => <Product>[]);
+    final heights = List<double>.filled(columnCount, 0);
+    for (final product in products) {
+      var shortest = 0;
+      for (var i = 1; i < columnCount; i++) {
+        if (heights[i] < heights[shortest]) shortest = i;
+      }
+      if (cols[shortest].isNotEmpty) heights[shortest] += spacing;
+      cols[shortest].add(product);
+      heights[shortest] += estimateHeight(product);
+    }
+    return cols;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final columns = packColumns();
+    return ListView(
+      padding: padding,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var c = 0; c < columns.length; c++) ...[
+              if (c > 0) SizedBox(width: spacing),
+              Expanded(
+                child: Column(
+                  children: [
+                    for (var i = 0; i < columns[c].length; i++) ...[
+                      if (i > 0) SizedBox(height: spacing),
+                      ProductCard(
+                        key: ValueKey(columns[c][i].productId),
+                        product: columns[c][i],
+                        currency: currency,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class ProductCard extends ConsumerWidget {
   const ProductCard({super.key, required this.product, required this.currency});
 
@@ -961,7 +1029,7 @@ class ProductCard extends ConsumerWidget {
     final priceLabel = unit.isEmpty
         ? '₹ ${product.productPrice.toStringAsFixed(1)}'
         : '₹ ${product.productPrice.toStringAsFixed(1)}/$unit';
-    final imageProvider = productImageProvider(product.productImage);
+    final showImage = hasProductImage(product.productImage);
 
     return RepaintBoundary(
       child: Material(
@@ -988,90 +1056,60 @@ class ProductCard extends ConsumerWidget {
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                /* Centered 70×70 product image (not full width). */
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 0),
-                  child: Center(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
-                        width: 70,
-                        height: 70,
-                        child: ColoredBox(
-                          color: AppColors.primarySoft,
-                          child: imageProvider != null
-                              ? Image(
-                                  image: imageProvider,
-                                  width: 70,
-                                  height: 70,
-                                  fit: BoxFit.cover,
-                                  gaplessPlayback: true,
-                                  filterQuality: FilterQuality.low,
-                                  errorBuilder: (_, _, _) => const Center(
-                                    child: Icon(
-                                      Icons.fastfood_rounded,
-                                      size: 32,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                )
-                              : const Center(
-                                  child: Icon(
-                                    Icons.fastfood_rounded,
-                                    size: 32,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
+            child: SizedBox(
+              width: double.infinity,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(8, showImage ? 6 : 8, 8, 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (showImage) ...[
+                      Center(
+                        child: ProductImageThumb(
+                          key: ValueKey('pos-img-${product.productId}'),
+                          value: product.productImage,
+                          size: 70,
+                          radius: 12,
+                          showPlaceholder: false,
                         ),
+                      ),
+                      const SizedBox(height: 6),
+                    ],
+                    Text(
+                      product.productName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: AppColors.navy,
+                        height: 1.1,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 2),
+                    Text(
+                      priceLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: AppColors.textPrimary,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    GestureDetector(
+                      onTap: () {},
+                      behavior: HitTestBehavior.opaque,
+                      child: ProductQtyButton(product: product),
+                    ),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        product.productName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.left,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                          color: AppColors.navy,
-                          height: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        priceLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.left,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                          color: AppColors.textPrimary,
-                          height: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      GestureDetector(
-                        onTap: () {},
-                        behavior: HitTestBehavior.opaque,
-                        child: ProductQtyButton(product: product),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

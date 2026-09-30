@@ -27,7 +27,23 @@ if (!function_exists('pos_normalize_paper_size')) {
     function pos_normalize_paper_size($raw)
     {
         $n = strtolower(preg_replace('/\s+/', '', (string) $raw));
-        if ($n !== '' && strpos($n, '3') !== false) {
+        if ($n === '') {
+            return '2-Inch';
+        }
+        /* Check specific mm sizes before generic "3" / inch heuristics. */
+        if (strpos($n, '60') !== false) {
+            return '60mm';
+        }
+        if (strpos($n, '78') !== false) {
+            return '78mm';
+        }
+        if (strpos($n, '58') !== false) {
+            return '2-Inch';
+        }
+        if (strpos($n, '80') !== false) {
+            return '3-Inch';
+        }
+        if (strpos($n, '3') !== false) {
             return '3-Inch';
         }
         return '2-Inch';

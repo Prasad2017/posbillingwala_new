@@ -1,44 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
-import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
-import 'package:pos_billingwala_v2/core/widgets/app_bottom_sheet.dart';
-import 'package:pos_billingwala_v2/core/widgets/responsive_layout.dart';
-import 'package:pos_billingwala_v2/features/expense/presentation/expense_page.dart';
+import 'package:pos_billingwala_v2/core/widgets/app_button.dart';
+import 'package:pos_billingwala_v2/core/widgets/dropdown/app_dropdown_form_field.dart';
 import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers.dart';
+import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
+import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
 import 'package:pos_billingwala_v2/features/masters/presentation/widgets/master_ui.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
-class InventoryPage extends ConsumerStatefulWidget {
-  const InventoryPage({super.key, this.initialTab = 0});
+const _lowStockBelow = 6.0;
 
-  final int initialTab;
+enum _StockReason { purchase, damage, adjustment, other }
+
+class InventoryPage extends ConsumerStatefulWidget {
+  const InventoryPage({super.key});
 
   @override
-  ConsumerState<InventoryPage> createState() => InventoryPageState();
+  ConsumerState<InventoryPage> createState() => _InventoryPageState();
 }
 
-class InventoryPageState extends ConsumerState<InventoryPage>
-    with SingleTickerProviderStateMixin {
-  late final TabController inventoryPageTabs;
+class _InventoryPageState extends ConsumerState<InventoryPage> {
+  final searchCtrl = TextEditingController();
+  final qtyCtrl = TextEditingController();
+  final costCtrl = TextEditingController();
+  String query = '';
+  int? selectedId;
+  bool formOpen = false;
+  bool adding = true;
+  bool busy = false;
+  _StockReason reason = _StockReason.purchase;
 
   @override
   void initState() {
     super.initState();
-    inventoryPageTabs = TabController(
-      length: 2,
-      vsync: this,
-      initialIndex: widget.initialTab.clamp(0, 1),
-    );
-    inventoryPageTabs.addListener(() {
-      if (mounted) setState(() {});
-    });
     Future.microtask(() async {
       try {
         await ref.read(appDatabaseProvider).backfillInventoryProductNames();
@@ -52,611 +52,355 @@ class InventoryPageState extends ConsumerState<InventoryPage>
 
   @override
   void dispose() {
-    inventoryPageTabs.dispose();
+    searchCtrl.dispose();
+    qtyCtrl.dispose();
+    costCtrl.dispose();
     super.dispose();
+  }
+
+  void openForm({required bool add, int? productId}) {
+    setState(() {
+      formOpen = true;
+      adding = add;
+      if (productId != null) selectedId = productId;
+      reason = add ? _StockReason.purchase : _StockReason.damage;
+      qtyCtrl.clear();
+    });
+  }
+
+  Future<void> save(List<_StockLine> lines) async {
+    final line = _lineFor(lines, selectedId);
+    final qty = double.tryParse(qtyCtrl.text.trim()) ?? 0;
+    if (line == null || qty <= 0) {
+      _toast('Select an item and quantity');
+      return;
+    }
+    final increase = reason == _StockReason.purchase;
+    if (!increase && qty > line.stock) {
+      _toast('Quantity is more than current stock');
+      return;
+    }
+    setState(() => busy = true);
+    try {
+      final ctrl = ref.read(inventoryControllerProvider.notifier);
+      if (increase) {
+        await ctrl.addPurchase(
+          productId: line.productId,
+          productName: line.name,
+          quantity: qty,
+          note: 'Purchase',
+          unitCost: double.tryParse(costCtrl.text.trim()) ?? 0,
+        );
+      } else {
+        await ctrl.addWaste(
+          productId: line.productId,
+          productName: line.name,
+          quantity: qty,
+          reason: _reasonLabel(reason),
+        );
+      }
+      if (!mounted) return;
+      final result = ref.read(inventoryControllerProvider);
+      if (result.hasError) {
+        _toast('${result.error}');
+        return;
+      }
+      qtyCtrl.clear();
+      _toast('Stock saved');
+    } catch (e) {
+      if (!mounted) return;
+      _toast('$e');
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
-    final onStock = inventoryPageTabs.index == 0;
+    final products = ref
+        .watch(allProductsProvider)
+        .maybeWhen(data: (rows) => rows, orElse: () => const <Product>[]);
+    final balances = ref.watch(stockBalancesProvider);
+    final movements = ref
+        .watch(inventoryMovementsProvider)
+        .maybeWhen(data: (rows) => rows, orElse: () => const <InventoryMovement>[]);
+    final lines = _buildLines(products, balances, movements);
+    final q = query.trim().toLowerCase();
+    final shown = q.isEmpty
+        ? lines
+        : lines.where((line) {
+            return line.name.toLowerCase().contains(q) ||
+                line.code.toLowerCase().contains(q);
+          }).toList();
+    final selected = _lineFor(lines, selectedId) ??
+        (lines.isEmpty ? null : lines.first);
+    if (selected != null && selectedId != selected.productId) {
+      selectedId = selected.productId;
+    }
+    final wide = MediaQuery.sizeOf(context).width >= 640;
+    final reasons = adding
+        ? _StockReason.values
+        : const [
+            _StockReason.damage,
+            _StockReason.adjustment,
+            _StockReason.other,
+          ];
+    if (!reasons.contains(reason)) {
+      reason = reasons.first;
+    }
 
-    ref.listen(inventoryControllerProvider, (prev, next) {
-      next.whenOrNull(
-        data: (msg) {
-          if (msg == null) return;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(msg)));
-        },
-        error: (e, _) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('$e')));
-        },
-      );
-    });
+    final table = Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+          child: TextField(
+            controller: searchCtrl,
+            onChanged: (value) => setState(() => query = value),
+            style: const TextStyle(
+              fontFamily: AppFonts.family,
+              fontSize: 14,
+              color: AppColors.navy,
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: 'Search Item / Barcode / Item Code',
+              hintStyle: TextStyle(
+                fontFamily: AppFonts.family,
+                fontSize: 13,
+                color: AppColors.navy.withValues(alpha: .4),
+              ),
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ),
+        const _Header(),
+        Expanded(
+          child: shown.isEmpty
+              ? Center(
+                  child: Text(
+                    q.isEmpty
+                        ? 'No items yet. Add stock to start.'
+                        : 'No matching items.',
+                    style: TextStyle(
+                      fontFamily: AppFonts.family,
+                      color: AppColors.navy.withValues(alpha: .5),
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: shown.length,
+                  itemBuilder: (context, index) {
+                    final line = shown[index];
+                    return _StockRow(
+                      index: index + 1,
+                      line: line,
+                      selected: line.productId == selected?.productId,
+                      onTap: () => openForm(add: formOpen ? adding : true, productId: line.productId),
+                    );
+                  },
+                ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: '+ Add Stock',
+                  expanded: true,
+                  onPressed: () => openForm(add: true, productId: selected?.productId),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AppButton(
+                  label: 'Stock Adjustment',
+                  expanded: true,
+                  variant: AppButtonVariant.outlined,
+                  onPressed: () => openForm(add: false, productId: selected?.productId),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    final form = !formOpen || selected == null
+        ? null
+        : _StockForm(
+            products: products,
+            selected: _productFor(products, selected.productId),
+            stockLabel: ProductUnits.formatQty(selected.stock, unit: selected.unit),
+            adding: adding,
+            reasons: reasons,
+            reason: reason,
+            qtyCtrl: qtyCtrl,
+            costCtrl: costCtrl,
+            busy: busy,
+            onProduct: (product) => setState(() => selectedId = product?.productId),
+            onReason: (value) {
+              if (value == null) return;
+              setState(() {
+                reason = value;
+                adding = value == _StockReason.purchase;
+              });
+            },
+            onSave: () => save(lines),
+          );
 
     return Scaffold(
       backgroundColor: MasterUi.bg,
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(AppStrings.of(ref).inventory),
-            Text(
-              'Quick view of remaining stock',
-              style: TextStyle(
-                fontFamily: AppFonts.family,
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: Colors.white.withValues(alpha: 0.8),
-              ),
-            ),
-          ],
-        ),
-        bottom: TabBar(
-          controller: inventoryPageTabs,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          labelStyle: const TextStyle(
-            fontFamily: AppFonts.family,
-            fontWeight: FontWeight.w700,
-            fontSize: 13.5,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontFamily: AppFonts.family,
-            fontWeight: FontWeight.w500,
-            fontSize: 13.5,
-          ),
-          tabs: const [
-            Tab(text: 'Stock'),
-            Tab(text: 'Expenses'),
-          ],
-        ),
-        actions: [
-          const SizedBox(width: 6),
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: onStock
-                ? TextButton(
-                    onPressed: () async {
-                      final value = await showAppActionSheet(
-                        context: context,
-                        title: AppStrings.of(ref).inventory,
-                        actions: const [
-                          AppSheetAction(
-                            value: 'purchase',
-                            label: 'Purchase / Stock In',
-                            icon: Icons.add_box_outlined,
-                          ),
-                          AppSheetAction(
-                            value: 'waste',
-                            label: 'Waste / Spoilage',
-                            icon: Icons.delete_outline_rounded,
-                          ),
-                        ],
-                      );
-                      if (!context.mounted) return;
-                      if (value == 'purchase') {
-                        context.push('/inventory/add');
-                      } else if (value == 'waste') {
-                        context.push('/inventory/waste');
-                      }
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppColors.navy,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+      appBar: AppBar(title: Text(AppStrings.of(ref).inventory)),
+      body: wide && form != null
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: table),
+                const VerticalDivider(width: 1),
+                SizedBox(
+                  width: 320,
+                  child: SingleChildScrollView(child: form),
+                ),
+              ],
+            )
+          : Column(
+              children: [
+                Expanded(child: table),
+                if (form != null)
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.sizeOf(context).height * 0.46,
                     ),
-                    child: const Text(
-                      'Add Inventory',
-                      style: TextStyle(
-                        fontFamily: AppFonts.family,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                  )
-                : TextButton(
-                    onPressed: () => context.push('/expenses/add'),
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppColors.navy,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Add Expense',
-                      style: TextStyle(
-                        fontFamily: AppFonts.family,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                    ),
+                    child: SingleChildScrollView(child: form),
                   ),
-          ),
-        ],
-      ),
-      body: TabBarView(
-        controller: inventoryPageTabs,
-        children: const [StockTab(), ExpensesTab()],
-      ),
+              ],
+            ),
     );
   }
 }
 
-class StockTab extends ConsumerStatefulWidget {
-  const StockTab({super.key});
-
-  @override
-  ConsumerState<StockTab> createState() => StockTabState();
-}
-
-class StockTabState extends ConsumerState<StockTab> {
-  final searchCtrl = TextEditingController();
-  String query = '';
-
-  @override
-  void dispose() {
-    searchCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final balances = ref.watch(stockBalancesProvider);
-    final movementsAsync = ref.watch(inventoryMovementsProvider);
-    final qtyFormat = NumberFormat('0.000');
-    final dateFormat = DateFormat('dd MMM');
-    final lowCount = balances.where((b) => b.lowStock).length;
-
-    return movementsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('$e')),
-      data: (rows) {
-        final q = query.trim().toLowerCase();
-        final filteredBalances = q.isEmpty
-            ? balances
-            : balances
-                  .where((b) => b.productName.toLowerCase().contains(q))
-                  .toList();
-        final filteredMoves = q.isEmpty
-            ? rows
-            : rows.where((row) {
-                final name = row.productName.isEmpty
-                    ? 'product ${row.productId}'
-                    : row.productName;
-                return name.toLowerCase().contains(q) ||
-                    row.movementType.toLowerCase().contains(q) ||
-                    row.inventoryNote.toLowerCase().contains(q);
-              }).toList();
-
-        return ResponsiveScrollShell(
-          dashboard: true,
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(
-              AppBreakpoints.pagePaddingFor(context.widthClass),
-              14,
-              AppBreakpoints.pagePaddingFor(context.widthClass),
-              28,
-            ),
-            children: [
-              StockSummaryBar(
-                productCount: balances.length,
-                lowCount: lowCount,
-                movementCount: rows.length,
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: searchCtrl,
-                onChanged: (v) => setState(() => query = v),
-                style: const TextStyle(
-                  fontFamily: AppFonts.family,
-                  fontSize: 14,
-                  color: AppColors.navy,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Search product / type / note',
-                  hintStyle: TextStyle(
-                    fontFamily: AppFonts.family,
-                    color: AppColors.navy.withValues(alpha: .38),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search_rounded,
-                    color: AppColors.navy.withValues(alpha: .45),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: AppColors.border.withValues(alpha: .9),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: AppColors.border.withValues(alpha: .9),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 1.3,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              MasterSectionLabel(
-                'Current Stock',
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${filteredBalances.length} Items',
-                    style: const TextStyle(
-                      fontFamily: AppFonts.family,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11.5,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (filteredBalances.isEmpty)
-                const MasterCard(
-                  child: MasterEmptyState(
-                    title: 'No stock yet',
-                    subtitle: 'Use Add → Purchase to stock a product.',
-                  ),
-                )
-              else
-                Column(
-                  children: [
-                    for (var i = 0; i < filteredBalances.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 10),
-                      BalanceRow(
-                        index: i + 1,
-                        balance: filteredBalances[i],
-                        qtyFormat: qtyFormat,
-                      ),
-                    ],
-                  ],
-                ),
-              const SizedBox(height: 18),
-              const MasterSectionLabel('Movements (Purchase / Waste / Sale)'),
-              const SizedBox(height: 10),
-              MasterCard(
-                padding: EdgeInsets.zero,
-                child: filteredMoves.isEmpty
-                    ? const MasterEmptyState(
-                        title: 'No movements',
-                        subtitle: 'Purchases, waste and sales appear here.',
-                      )
-                    : Column(
-                        children: [
-                          const MovementTableHeader(),
-                          const Divider(height: 1, thickness: 1),
-                          for (var i = 0; i < filteredMoves.length; i++) ...[
-                            if (i > 0)
-                              Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: AppColors.border.withValues(alpha: .7),
-                              ),
-                            MovementTableRow(
-                              index: i + 1,
-                              row: filteredMoves[i],
-                              qtyFormat: qtyFormat,
-                              dateFormat: dateFormat,
-                            ),
-                          ],
-                        ],
-                      ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class StockSummaryBar extends StatelessWidget {
-  const StockSummaryBar({
-    super.key,
-    required this.productCount,
-    required this.lowCount,
-    required this.movementCount,
+class _StockLine {
+  const _StockLine({
+    required this.productId,
+    required this.name,
+    required this.code,
+    required this.stock,
+    required this.sellPrice,
+    required this.purchasePrice,
+    required this.unit,
   });
 
-  final int productCount;
-  final int lowCount;
-  final int movementCount;
+  final int productId;
+  final String name;
+  final String code;
+  final double stock;
+  final double sellPrice;
+  final double purchasePrice;
+  final String? unit;
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: SummaryChip(
-            label: 'Products',
-            value: '$productCount',
-            color: AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: SummaryChip(
-            label: 'Low stock',
-            value: '$lowCount',
-            color: AppColors.orange,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: SummaryChip(
-            label: 'Entries',
-            value: '$movementCount',
-            color: AppColors.teal,
-          ),
-        ),
-      ],
-    );
+  String get status {
+    if (stock <= 0) return 'Out';
+    if (stock < _lowStockBelow) return 'Low';
+    return 'In Stock';
   }
 }
 
-class SummaryChip extends StatelessWidget {
-  const SummaryChip({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+List<_StockLine> _buildLines(
+  List<Product> products,
+  List<ProductStockBalance> balances,
+  List<InventoryMovement> movements,
+) {
+  final stockById = {for (final row in balances) row.productId: row.remaining};
+  final purchaseById = <int, double>{};
+  for (final row in movements) {
+    if (row.movementType == 'purchase' &&
+        row.unitCost > 0 &&
+        !purchaseById.containsKey(row.productId)) {
+      purchaseById[row.productId] = row.unitCost;
+    }
+  }
+  final lines = <_StockLine>[
+    for (final product in products)
+      _StockLine(
+        productId: product.productId,
+        name: product.productName.trim().isEmpty
+            ? 'Product ${product.productId}'
+            : product.productName.trim(),
+        code: (product.productCode ?? '').trim(),
+        stock: stockById[product.productId] ?? 0,
+        sellPrice: product.productPrice,
+        purchasePrice: purchaseById[product.productId] ?? 0,
+        unit: product.productUnit,
+      ),
+  ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  return lines;
+}
 
-  final String label;
-  final String value;
-  final Color color;
+_StockLine? _lineFor(List<_StockLine> lines, int? id) {
+  for (final line in lines) {
+    if (line.productId == id) return line;
+  }
+  return null;
+}
+
+Product? _productFor(List<Product> products, int id) {
+  for (final product in products) {
+    if (product.productId == id) return product;
+  }
+  return products.isEmpty ? null : products.first;
+}
+
+String _reasonLabel(_StockReason reason) {
+  switch (reason) {
+    case _StockReason.purchase:
+      return 'Purchase';
+    case _StockReason.damage:
+      return 'Damage';
+    case _StockReason.adjustment:
+      return 'Adjustment';
+    case _StockReason.other:
+      return 'Other';
+  }
+}
+
+String _money(double value) {
+  if (value == value.roundToDouble()) return '₹${value.round()}';
+  return '₹${value.toStringAsFixed(2)}';
+}
+
+class _Header extends StatelessWidget {
+  const _Header();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border.withValues(alpha: .8)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      color: AppColors.primaryLight,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Row(
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.family,
-              fontSize: 11,
-              color: AppColors.navy.withValues(alpha: .5),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: AppFonts.family,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-          ),
+          const SizedBox(width: 28, child: _Head('No')),
+          const Expanded(child: _Head('Item Name')),
+          const SizedBox(width: 64, child: _Head('Code', align: TextAlign.center)),
+          const SizedBox(width: 48, child: _Head('Stock', align: TextAlign.center)),
+          const SizedBox(width: 64, child: _Head('Price', align: TextAlign.end)),
+          const SizedBox(width: 68, child: _Head('Status', align: TextAlign.center)),
         ],
       ),
     );
   }
 }
 
-class BalanceRow extends StatelessWidget {
-  const BalanceRow({
-    super.key,
-    required this.index,
-    required this.balance,
-    required this.qtyFormat,
-  });
-
-  final int index;
-  final ProductStockBalance balance;
-  final NumberFormat qtyFormat;
-
-  @override
-  Widget build(BuildContext context) {
-    final remainingColor = balance.remaining <= 0
-        ? AppColors.danger
-        : balance.lowStock
-            ? AppColors.tableBillRequested
-            : AppColors.tableAvailable;
-    final name = balance.productName.trim().isEmpty
-        ? 'Product ${balance.productId}'
-        : balance.productName.trim();
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.45),
-          width: 1.4,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '$index',
-                  style: const TextStyle(
-                    fontFamily: AppFonts.family,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: AppFonts.family,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _QtyBlock(
-                  label: 'Total Qty',
-                  value: qtyFormat.format(balance.totalQty),
-                  valueColor: AppColors.navy,
-                ),
-              ),
-              Expanded(
-                child: _QtyBlock(
-                  label: 'Sale Qty',
-                  value: qtyFormat.format(balance.saleQty),
-                  valueColor: AppColors.primary,
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: remainingColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: _QtyBlock(
-                    label: 'In Stock',
-                    value: qtyFormat.format(balance.remaining),
-                    valueColor: remainingColor,
-                    valueSize: 20,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QtyBlock extends StatelessWidget {
-  const _QtyBlock({
-    required this.label,
-    required this.value,
-    required this.valueColor,
-    this.valueSize = 16,
-  });
-
-  final String label;
-  final String value;
-  final Color valueColor;
-  final double valueSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.family,
-            fontSize: 11,
-            color: AppColors.navy.withValues(alpha: .45),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            fontFamily: AppFonts.family,
-            fontSize: valueSize,
-            fontWeight: FontWeight.w800,
-            color: valueColor,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class MovementTableHeader extends StatelessWidget {
-  const MovementTableHeader({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.primaryLight.withValues(alpha: .55),
-      padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
-      child: const Row(
-        children: [
-          Expanded(flex: 4, child: HeaderCell('Product / Type')),
-          Expanded(flex: 2, child: HeaderCell('In', align: TextAlign.center)),
-          Expanded(flex: 2, child: HeaderCell('Out', align: TextAlign.center)),
-          Expanded(flex: 2, child: HeaderCell('Bal', align: TextAlign.center)),
-        ],
-      ),
-    );
-  }
-}
-
-class HeaderCell extends StatelessWidget {
-  const HeaderCell(this.label, {super.key, this.align = TextAlign.left});
+class _Head extends StatelessWidget {
+  const _Head(this.label, {this.align = TextAlign.start});
 
   final String label;
   final TextAlign align;
@@ -666,197 +410,246 @@ class HeaderCell extends StatelessWidget {
     return Text(
       label,
       textAlign: align,
-      style: TextStyle(
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
         fontFamily: AppFonts.family,
         fontSize: 11,
-        height: 1.2,
         fontWeight: FontWeight.w700,
-        color: AppColors.navy.withValues(alpha: .62),
+        color: AppColors.primary,
       ),
     );
   }
 }
 
-class MovementTableRow extends StatelessWidget {
-  const MovementTableRow({
-    super.key,
+class _StockRow extends StatelessWidget {
+  const _StockRow({
     required this.index,
-    required this.row,
-    required this.qtyFormat,
-    required this.dateFormat,
+    required this.line,
+    required this.selected,
+    required this.onTap,
   });
 
   final int index;
-  final InventoryMovement row;
-  final NumberFormat qtyFormat;
-  final DateFormat dateFormat;
-
-  String get typeLabel {
-    switch (row.movementType) {
-      case 'waste':
-        return 'Waste';
-      case 'sale':
-        return 'Sale';
-      case 'opening':
-        return 'Opening';
-      case 'adjust':
-        return 'Adjust';
-      default:
-        return 'Purchase';
-    }
-  }
-
-  Color get typeColor {
-    switch (row.movementType) {
-      case 'waste':
-        return AppColors.red;
-      case 'sale':
-        return AppColors.primary;
-      case 'opening':
-        return AppColors.teal;
-      default:
-        return AppColors.orange;
-    }
-  }
+  final _StockLine line;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final name = row.productName.trim().isEmpty
-        ? 'Product ${row.productId}'
-        : row.productName;
-    final note = row.inventoryNote.trim();
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: AppFonts.family,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
+    final statusColor = line.stock <= 0
+        ? AppColors.danger
+        : line.stock < _lowStockBelow
+            ? AppColors.tableBillRequested
+            : AppColors.tableAvailable;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        color: selected ? AppColors.primaryLight : Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 28,
+              child: Text(
+                '$index',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontFamily: AppFonts.family, fontSize: 12),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                line.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontFamily: AppFonts.family,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.navy,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 64,
+              child: Text(
+                line.code.isEmpty ? '—' : line.code,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontFamily: AppFonts.family, fontSize: 12),
+              ),
+            ),
+            SizedBox(
+              width: 48,
+              child: Text(
+                ProductUnits.formatQty(line.stock, unit: line.unit),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: AppFonts.family,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 64,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    _money(line.sellPrice),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontFamily: AppFonts.family, fontSize: 12),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: typeColor.withValues(alpha: .12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        typeLabel,
-                        style: TextStyle(
-                          fontFamily: AppFonts.family,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: typeColor,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
+                  if (line.purchasePrice > 0)
                     Text(
-                      dateFormat.format(row.inventoryDate),
-                      style: TextStyle(
-                        fontFamily: AppFonts.family,
-                        fontSize: 11,
-                        color: AppColors.navy.withValues(alpha: .45),
-                      ),
-                    ),
-                  ],
-                ),
-                if (note.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      note,
+                      'Buy ${_money(line.purchasePrice)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: AppFonts.family,
-                        fontSize: 11,
-                        color: AppColors.navy.withValues(alpha: .5),
+                        fontSize: 10,
+                        color: AppColors.navy.withValues(alpha: .45),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            flex: 2,
-            child: QtyCell(qtyFormat.format(row.productInventoryQuantity)),
-          ),
-          Expanded(
-            flex: 2,
-            child: QtyCell(
-              qtyFormat.format(row.saleInventoryQuantity),
-              emphasize: row.saleInventoryQuantity > 0,
-              emphasizeColor: typeColor,
+            SizedBox(
+              width: 68,
+              child: Text(
+                line.status,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: AppFonts.family,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: statusColor,
+                ),
+              ),
             ),
-          ),
-          Expanded(
-            flex: 2,
-            child: QtyCell(
-              qtyFormat.format(row.afterSaleInventoryQuantity),
-              emphasize: true,
-              emphasizeColor: AppColors.navy,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class QtyCell extends StatelessWidget {
-  const QtyCell(
-    this.value, {
-    super.key,
-    this.emphasize = false,
-    this.emphasizeColor,
+class _StockForm extends StatelessWidget {
+  const _StockForm({
+    required this.products,
+    required this.selected,
+    required this.stockLabel,
+    required this.adding,
+    required this.reasons,
+    required this.reason,
+    required this.qtyCtrl,
+    required this.costCtrl,
+    required this.busy,
+    required this.onProduct,
+    required this.onReason,
+    required this.onSave,
   });
 
-  final String value;
-  final bool emphasize;
-  final Color? emphasizeColor;
+  final List<Product> products;
+  final Product? selected;
+  final String stockLabel;
+  final bool adding;
+  final List<_StockReason> reasons;
+  final _StockReason reason;
+  final TextEditingController qtyCtrl;
+  final TextEditingController costCtrl;
+  final bool busy;
+  final ValueChanged<Product?> onProduct;
+  final ValueChanged<_StockReason?> onReason;
+  final VoidCallback onSave;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      value,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontFamily: AppFonts.family,
-        fontSize: 13,
-        fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
-        color: emphasize
-            ? (emphasizeColor ?? AppColors.primary)
-            : AppColors.navy.withValues(alpha: .72),
+    return Material(
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (products.isEmpty)
+              const Text('Add products in Masters first')
+            else
+              AppDropdownFormField<Product>(
+                label: 'Select Item',
+                items: products,
+                enableSearch: true,
+                itemComparer: (a, b) => a.productId == b.productId,
+                itemLabel: (p) {
+                  final code = (p.productCode ?? '').trim();
+                  return code.isEmpty ? p.productName : '${p.productName} ($code)';
+                },
+                value: selected,
+                onChanged: onProduct,
+              ),
+            const SizedBox(height: 6),
+            Text(
+              'Current Stock : $stockLabel',
+              style: const TextStyle(
+                fontFamily: AppFonts.family,
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: qtyCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+              decoration: const InputDecoration(
+                isDense: true,
+                labelText: 'Add / Remove Qty',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (adding) ...[
+              const SizedBox(height: 6),
+              TextField(
+                controller: costCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                decoration: const InputDecoration(
+                  isDense: true,
+                  labelText: 'Purchase price (optional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+            const SizedBox(height: 6),
+            DropdownButtonFormField<_StockReason>(
+              key: ValueKey('${adding}_${reason.name}'),
+              initialValue: reason,
+              decoration: const InputDecoration(
+                isDense: true,
+                labelText: 'Reason',
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                for (final item in reasons)
+                  DropdownMenuItem(value: item, child: Text(_reasonLabel(item))),
+              ],
+              onChanged: onReason,
+            ),
+            const SizedBox(height: 8),
+            AppButton(
+              label: 'Save Stock',
+              isLoading: busy,
+              onPressed: busy ? null : onSave,
+            ),
+          ],
+        ),
       ),
     );
-  }
-}
-
-class ExpensesTab extends ConsumerWidget {
-  const ExpensesTab({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const ExpenseListBody();
   }
 }

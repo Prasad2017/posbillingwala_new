@@ -371,7 +371,7 @@ class SettingsHubPage extends ConsumerWidget {
           title: strings.printerDetails,
           subtitle: AppPlatform.isWeb
               ? 'Bill / KOT · paper size · bill format'
-              : 'Bluetooth / USB · 2-Inch / 3-Inch',
+              : 'Bluetooth / USB / Network · 58 / 60 / 78 / 80 mm',
           onTap: () => context.push('/settings/devices'),
         ),
       if ((ref.watch(authControllerProvider).session?.userManagementEnabled ??
@@ -423,7 +423,7 @@ class SettingsHubPage extends ConsumerWidget {
           icon: Icons.warehouse_rounded,
           color: AppColors.teal,
           title: strings.inventory,
-          subtitle: 'Stock ledger',
+          subtitle: 'Search, add and adjust stock',
           onTap: () => context.push('/inventory'),
         ),
       if (perms.allows('expense.view'))

@@ -66,8 +66,7 @@ class BillPrintPreviewPageState extends ConsumerState<BillPrintPreviewPage> {
           shopName: shopName,
           duplicate: widget.duplicate,
         );
-        final is3Inch = settings.paperSize == PrinterPaperSize.inch3;
-        final widthMm = is3Inch ? 72.0 : 48.0;
+        final widthMm = settings.paperSize.profile.previewWidthMm;
 
         return Scaffold(
           backgroundColor: Colors.transparent,
@@ -260,11 +259,17 @@ class PreviewCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE2E8F2)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
-          ColoredBox(color: Colors.white, child: child),
+          ColoredBox(
+            color: Colors.white,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: child,
+            ),
+          ),
         ],
       ),
     );

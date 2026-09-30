@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackground"
+    android:orientation="vertical"
     tools:context=".Fragment.Inventory">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_alignParentTop="true">
+        android:layout_height="56dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -28,86 +28,259 @@
                 android:src="@drawable/ic_back"
                 app:tint="@color/white" />
 
-            <LinearLayout
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/toolbarTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_toStartOf="@+id/addInventory"
-                android:layout_toEndOf="@+id/backToSetting"
-                android:orientation="vertical">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/toolbarTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:fontFamily="@font/poppinsmedium"
-                    android:maxLines="1"
-                    android:text="@string/ui_inventory"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/text_title" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/toolbarSubtitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:fontFamily="@font/poppinsregular"
-                    android:maxLines="1"
-                    android:text="@string/ui_stock_manage_hint"
-                    android:textColor="#CCFFFFFF"
-                    android:textSize="12sp"
-                    android:visibility="visible" />
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/addInventory"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
                 android:layout_marginEnd="12dp"
-                android:background="@drawable/button_rounded_border"
-                android:backgroundTint="@color/white"
+                android:layout_toEndOf="@id/backToSetting"
+                android:ellipsize="end"
                 android:fontFamily="@font/poppinsmedium"
-                android:gravity="center"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
-                android:text="@string/ui_add_inventory"
-                android:textColor="@color/colorPrimary"
-                android:textSize="14sp" />
+                android:maxLines="1"
+                android:text="@string/ui_stock_management"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_title" />
         </RelativeLayout>
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
-        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/appBarLayout"
-        android:orientation="vertical"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
 
-        <com.pos_billingwala.Extra.AutoFitGridRecyclerView
-            android:id="@+id/recyclerView"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:columnWidth="300dp"
-            android:nestedScrollingEnabled="true"
-            android:overScrollMode="never"
-            android:paddingBottom="8dp" />
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <EditText
+                android:id="@+id/searchItem"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/button_rounded_border"
+                android:drawableStart="@android:drawable/ic_menu_search"
+                android:drawablePadding="8dp"
+                android:fontFamily="@font/poppinsregular"
+                android:hint="@string/ui_search_item_code"
+                android:imeOptions="actionSearch"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:singleLine="true"
+                android:textColor="@color/colorTextPrimary"
+                android:textColorHint="@color/colorTextHint"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="10dp"
+                android:background="@color/colorPrimaryLight"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp">
+
+                <TextView
+                    android:layout_width="28dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="@string/ui_no"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:paddingStart="4dp"
+                    android:text="@string/ui_item_name"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="52dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="@string/ui_code"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="44dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="@string/ui_col_stock"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="end"
+                    android:text="@string/ui_price"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="64dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="@string/ui_status"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_weight="1"
+                android:background="@color/white">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:overScrollMode="never" />
+
+                <TextView
+                    android:id="@+id/emptyStock"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/poppinsregular"
+                    android:gravity="center"
+                    android:padding="16dp"
+                    android:text="@string/ui_no_stock_items"
+                    android:textColor="@color/colorTextHint"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:id="@+id/addStock"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:background="@color/colorPrimary"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="@string/ui_add_stock"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/stockAdjustment"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/button_rounded_border"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="@string/ui_stock_adjustment"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:overScrollMode="never">
+
+            <LinearLayout
+                android:id="@+id/stockForm"
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/button_rounded_border"
+                android:orientation="vertical"
+                android:padding="10dp"
+                android:visibility="gone">
+
+                <com.pos_billingwala.Extra.SearchableDropdownView
+                    android:id="@+id/itemSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:sdd_hint="@string/ui_select_item"
+                    app:sdd_show_label="true" />
+
+                <TextView
+                    android:id="@+id/currentStockValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="14sp"
+                    tools:text="Current Stock : 25" />
+
+                <EditText
+                    android:id="@+id/qtyInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/button_rounded_border"
+                    android:fontFamily="@font/poppinsregular"
+                    android:hint="@string/ui_add_remove_qty"
+                    android:importantForAutofill="no"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:singleLine="true"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="14sp" />
+
+                <Spinner
+                    android:id="@+id/reasonSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="6dp" />
+
+                <TextView
+                    android:id="@+id/saveStock"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@color/colorPrimary"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:gravity="center"
+                    android:text="@string/ui_save_stock"
+                    android:textColor="@color/white"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </ScrollView>
     </LinearLayout>
 
-    <include
-        android:id="@+id/noDataFound"
-        layout="@layout/include_empty_list_state"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true" />
-
-</RelativeLayout>
+</LinearLayout>

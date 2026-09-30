@@ -7,6 +7,7 @@ import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/sample_receipt_data.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
@@ -31,6 +32,7 @@ class TestInvoicePreviewPageState
     extends ConsumerState<TestInvoicePreviewPage> {
   bool printing = false;
   bool connecting = false;
+  bool linkReady = false;
 
   bool get isKot => widget.channel == PrinterChannelKind.kot;
 
@@ -40,6 +42,50 @@ class TestInvoicePreviewPageState
   String? get testInvoicePreviewPageShopName =>
       ref.read(authControllerProvider).session?.shopName;
 
+  bool isPrinterConnected(PrinterSettings settings) {
+    final transport = settings.transportFor(isKot: isKot);
+    switch (transport) {
+      case PosPrinterTransport.usb:
+        final id = settings.usbIdFor(isKot: isKot);
+        final usb = EscPosTransportHub.instance;
+        return id.isNotEmpty &&
+            usb.isConnected &&
+            (usb.savedUsbId.isEmpty ||
+                usb.savedUsbId.toLowerCase() == id.toLowerCase());
+      case PosPrinterTransport.bluetooth:
+        final mac = settings.bluetoothFor(isKot: isKot);
+        final hub = BluetoothPrinterHub.instance;
+        if (mac.isEmpty || hub.connectedAddress.isEmpty) return false;
+        return hub.connectedAddress.toLowerCase() == mac.toLowerCase();
+      case PosPrinterTransport.network:
+        return settings.networkHost.trim().isNotEmpty;
+    }
+  }
+
+  Future<void> refreshLinkStatus() async {
+    final settings = ref.read(printerSettingsProvider);
+    final transport = settings.transportFor(isKot: isKot);
+    if (transport == PosPrinterTransport.bluetooth) {
+      await BluetoothPrinterHub.instance.connectionStatus();
+    }
+    if (!mounted) return;
+    setState(() => linkReady = isPrinterConnected(settings));
+  }
+
+  /* Re-open last saved printer when this preview opens. */
+  Future<void> autoReconnectSavedPrinter() async {
+    setState(() => connecting = true);
+    try {
+      await PrinterAutoConnect.ensureSavedPrinters(
+        ref.read(printerSettingsProvider),
+      );
+      if (!mounted) return;
+      await refreshLinkStatus();
+    } finally {
+      if (mounted) setState(() => connecting = false);
+    }
+  }
+
   Future<void> testInvoicePreviewPagePrint() async {
     setState(() => printing = true);
     try {
@@ -47,6 +93,7 @@ class TestInvoicePreviewPageState
           .read(printServiceProvider)
           .printTest(widget.channel, shopName: testInvoicePreviewPageShopName);
       if (!mounted) return;
+      await refreshLinkStatus();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result.message ?? result.outcome.name)),
       );
@@ -57,6 +104,26 @@ class TestInvoicePreviewPageState
       ).showSnackBar(SnackBar(content: Text('Print failed: $e')));
     } finally {
       if (mounted) setState(() => printing = false);
+    }
+  }
+
+  Future<void> testInvoicePreviewPageDisconnect() async {
+    setState(() => connecting = true);
+    try {
+      final settings = ref.read(printerSettingsProvider);
+      final transport = settings.transportFor(isKot: isKot);
+      if (transport == PosPrinterTransport.usb) {
+        await EscPosTransportHub.instance.disconnectLink();
+      } else if (transport == PosPrinterTransport.bluetooth) {
+        await BluetoothPrinterHub.instance.disconnectLink();
+      }
+      if (!mounted) return;
+      setState(() => linkReady = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Printer disconnected')));
+    } finally {
+      if (mounted) setState(() => connecting = false);
     }
   }
 
@@ -126,6 +193,10 @@ class TestInvoicePreviewPageState
           name: usbName,
         );
       } else {
+        BluetoothPrinterHub.instance.updateSavedAddresses(
+          billMac: settings.billBluetoothAddress,
+          kotMac: settings.kotBluetoothAddress,
+        );
         ok = await BluetoothPrinterHub.instance.connect(
           widget.channel,
           address: mac,
@@ -133,6 +204,7 @@ class TestInvoicePreviewPageState
         );
       }
       if (!mounted) return;
+      setState(() => linkReady = ok && isPrinterConnected(settings));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -150,11 +222,13 @@ class TestInvoicePreviewPageState
   @override
   void initState() {
     super.initState();
-    if (const bool.fromEnvironment('AUTO_TEST_PRINT')) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) testInvoicePreviewPagePrint();
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      autoReconnectSavedPrinter();
+      if (const bool.fromEnvironment('AUTO_TEST_PRINT')) {
+        testInvoicePreviewPagePrint();
+      }
+    });
   }
 
   @override
@@ -164,7 +238,7 @@ class TestInvoicePreviewPageState
     final strings = AppStrings.of(ref);
     final service = ref.watch(printServiceProvider);
     final shop = testInvoicePreviewPageShopName;
-    final connected = BluetoothPrinterHub.instance.isReady;
+    final connected = linkReady || isPrinterConnected(settings);
     final activePaper = isKot ? settings.kotPaperSize : settings.paperSize;
 
     final sampleBill = SampleReceiptData.sampleBill();
@@ -237,22 +311,17 @@ class TestInvoicePreviewPageState
             const SizedBox(height: 16),
             if (isKot)
               PaperSizePreviewCard(
-                title: activePaper == PrinterPaperSize.inch3
-                    ? strings.paper3Inch
-                    : strings.paper2Inch,
+                title: activePaper.shortLabel,
                 text: service.kotPreviewText(paperSize: activePaper),
                 paperSize: activePaper,
               )
             else
               PreviewCard(
-                title: activePaper == PrinterPaperSize.inch3
-                    ? strings.paper3Inch
-                    : strings.paper2Inch,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+                title: activePaper.shortLabel,
+                child: Center(
                   child: WoosimTicket(
                     ticket: ticket!,
-                    widthMm: activePaper == PrinterPaperSize.inch3 ? 72 : 48,
+                    widthMm: activePaper.profile.previewWidthMm,
                     showLogo: settings.logoUse,
                     logoPath: profile.logoLocalPath,
                   ),
@@ -268,10 +337,14 @@ class TestInvoicePreviewPageState
             children: [
               Expanded(
                 child: AppButton(
-                  label: 'Connect',
+                  label: connected ? 'Disconnect' : 'Connect',
                   variant: AppButtonVariant.outlined,
                   isLoading: connecting,
-                  onPressed: printing ? null : testInvoicePreviewPageConnect,
+                  onPressed: printing
+                      ? null
+                      : (connected
+                            ? testInvoicePreviewPageDisconnect
+                            : testInvoicePreviewPageConnect),
                 ),
               ),
               const SizedBox(width: 12),

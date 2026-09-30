@@ -79,7 +79,7 @@ class SampleReceiptData {
         deviceId: '',
       ),
     ];
-    /* 80 + 120 + 200 + 40 = 440 */
+    /* 80 + 120 + 200 + 40 = 440; shop GST (if ON) is applied in ReceiptBuilder. */
     const subTotal = 440.0;
     final invoice = Invoice(
       invoiceId: -1,

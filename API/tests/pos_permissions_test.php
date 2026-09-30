@@ -102,7 +102,7 @@ assert_true($p30 !== false && strpos($p30, 'billConnectionType') !== false && st
 $schemaPhp = file_get_contents($root . '/pos_schema.php');
 assert_true(strpos($schemaPhp, "pos_schema_add_column(\$con, 'company_printer_setting', 'paperSize'") !== false, 'Runtime schema adds company paperSize');
 assert_true(strpos($schemaPhp, "pos_schema_add_column(\$con, 'company_printer_setting', 'kotPaperSize'") !== false, 'Runtime schema adds company kotPaperSize');
-assert_true(function_exists('pos_normalize_paper_size') && pos_normalize_paper_size('3 inch') === '3-Inch' && pos_normalize_paper_size('') === '2-Inch', 'paperSize normalized to 2-Inch/3-Inch');
+assert_true(function_exists('pos_normalize_paper_size') && pos_normalize_paper_size('3 inch') === '3-Inch' && pos_normalize_paper_size('') === '2-Inch' && pos_normalize_paper_size('60mm') === '60mm' && pos_normalize_paper_size('78mm') === '78mm', 'paperSize normalized to 2-Inch/3-Inch/60mm/78mm');
 assert_true(pos_normalize_connection_type('usb') === 'USB' && pos_normalize_connection_type('bt') === 'BLUETOOTH', 'connection type Bluetooth/USB');
 assert_true(strpos($sql, 'CREATE TABLE IF NOT EXISTS `pos_devices`') !== false, 'pos_devices table exists');
 

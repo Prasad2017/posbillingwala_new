@@ -60,16 +60,16 @@ class AppCard extends StatelessWidget {
               )
             : null,
       ),
-      child: onTap == null
-          ? content
-          : Material(
-              color: Colors.transparent,
-              child: InkWell(
+      child: Material(
+        type: MaterialType.transparency,
+        child: onTap == null
+            ? content
+            : InkWell(
                 onTap: onTap,
                 borderRadius: radiusGeom,
                 child: content,
               ),
-            ),
+      ),
     );
 
     Widget card = ClipRRect(

@@ -59,14 +59,17 @@ DateTime resolveBillingDateTimeFromRef(Ref ref, {DateTime? clock}) {
 
 final billingDateDisplayFormat = DateFormat('dd-MMM-yyyy');
 
-/* Invoice-preview header only. Hidden when Print Fast Bill is OFF. Max date = today. */
+/* Invoice / POS header. Hidden when Print Fast Bill is OFF. Max date = today. */
 class BillingDateBar extends ConsumerWidget {
   const BillingDateBar({
     super.key,
     this.inAppBar = false,
+    this.lightAppBar = false,
   });
 
   final bool inAppBar;
+  /* White / light AppBar (Fast Billing) — use navy text instead of pale blue. */
+  final bool lightAppBar;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -95,6 +98,10 @@ class BillingDateBar extends ConsumerWidget {
     }
 
     if (inAppBar) {
+      final accent = lightAppBar
+          ? AppColors.textSecondary
+          : const Color(0xFFB8D4FF);
+      final valueColor = lightAppBar ? AppColors.navy : const Color(0xFFB8D4FF);
       return InkWell(
         onTap: pickDate,
         borderRadius: BorderRadius.circular(8),
@@ -103,10 +110,10 @@ class BillingDateBar extends ConsumerWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.calendar_today_rounded,
                 size: 12,
-                color: Color(0xFFB8D4FF),
+                color: accent,
               ),
               const SizedBox(width: 6),
               Flexible(
@@ -114,17 +121,17 @@ class BillingDateBar extends ConsumerWidget {
                   'Billing Date: $label',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFB8D4FF),
-                    fontWeight: FontWeight.w600,
+                  style: TextStyle(
+                    color: valueColor,
+                    fontWeight: FontWeight.w700,
                     fontSize: 12.5,
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.arrow_drop_down_rounded,
                 size: 18,
-                color: Color(0xFFB8D4FF),
+                color: accent,
               ),
             ],
           ),

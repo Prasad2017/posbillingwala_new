@@ -279,7 +279,7 @@
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
                 android:textColor="@color/black"
-                android:textSize="18dp" />
+                android:textSize="20dp" />
 
             <TextView
                 android:id="@+id/twoShopDetails"
@@ -336,49 +336,32 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
                     android:layout_weight="1"
                     android:fontFamily="@font/poppinsbold"
-                    android:gravity="center|start"
-                    android:paddingStart="5dp"
-                    android:paddingEnd="5dp"
+                    android:gravity="start|center_vertical"
                     android:text="@string/ui_item"
                     android:textColor="@color/black"
-                    android:textSize="16dp" />
-
-                <!--  <TextView
-                      android:layout_width="40dp"
-                      android:layout_height="wrap_content"
-                      android:layout_gravity="center"
-                      android:fontFamily="@font/poppinsbold"
-                      android:gravity="center"
-                      android:text="@string/ui_qty"
-                      android:textColor="@color/black"
-                      android:textSize="16dp" />-->
+                    android:textSize="17dp" />
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="48dp"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
                     android:text="@string/ui_rate"
                     android:textColor="@color/black"
-                    android:textSize="16dp" />
+                    android:textSize="17dp" />
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="56dp"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"
                     android:fontFamily="@font/poppinsbold"
-                    android:gravity="center"
+                    android:gravity="end|center_vertical"
                     android:text="@string/ui_amount"
                     android:textColor="@color/black"
-                    android:textSize="16dp" />
+                    android:textSize="17dp" />
 
             </LinearLayout>
 
@@ -432,7 +415,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 
@@ -465,7 +448,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 
@@ -499,7 +482,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 
@@ -532,7 +515,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 
@@ -565,7 +548,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 
@@ -596,7 +579,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 
@@ -783,7 +766,7 @@
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
                 android:textColor="@color/black"
-                android:textSize="18dp" />
+                android:textSize="24dp" />
 
             <TextView
                 android:id="@+id/threeShopDetails"
@@ -840,49 +823,32 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
                     android:layout_weight="1"
                     android:fontFamily="@font/poppinsbold"
-                    android:gravity="center|start"
-                    android:paddingStart="5dp"
-                    android:paddingEnd="5dp"
+                    android:gravity="start|center_vertical"
                     android:text="@string/ui_item"
                     android:textColor="@color/black"
-                    android:textSize="16dp" />
-
-                <!--  <TextView
-                      android:layout_width="40dp"
-                      android:layout_height="wrap_content"
-                      android:layout_gravity="center"
-                      android:fontFamily="@font/poppinsbold"
-                      android:gravity="center"
-                      android:text="@string/ui_oty"
-                      android:textColor="@color/black"
-                      android:textSize="16dp" />-->
+                    android:textSize="20dp" />
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="64dp"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"
                     android:fontFamily="@font/poppinsbold"
                     android:gravity="center"
                     android:text="@string/ui_rate"
                     android:textColor="@color/black"
-                    android:textSize="16dp" />
+                    android:textSize="20dp" />
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="72dp"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"
                     android:fontFamily="@font/poppinsbold"
-                    android:gravity="center"
+                    android:gravity="end|center_vertical"
                     android:text="@string/ui_amount"
                     android:textColor="@color/black"
-                    android:textSize="16dp" />
+                    android:textSize="20dp" />
 
             </LinearLayout>
 
@@ -938,7 +904,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 
@@ -971,7 +937,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 
@@ -1005,7 +971,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 
@@ -1038,7 +1004,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 
@@ -1071,7 +1037,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 
@@ -1103,7 +1069,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:fontFamily="@font/poppinsbold"
-                        android:gravity="center"
+                        android:gravity="end|center_vertical"
                         android:textColor="@color/black"
                         android:textSize="16dp" />
 

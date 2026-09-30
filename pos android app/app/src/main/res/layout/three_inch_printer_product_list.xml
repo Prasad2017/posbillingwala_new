@@ -7,14 +7,13 @@
     <TextView
         android:id="@+id/productName"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_weight="1"
         android:fontFamily="@font/poppinsmedium"
         android:gravity="center|start"
         android:maxLines="6"
         android:textColor="@color/black"
-        android:textSize="15dp" />
+        android:textSize="20dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,39 +22,34 @@
 
         <TextView
             android:id="@+id/productQuantity"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_gravity="center_vertical"
             android:layout_weight="1"
             android:fontFamily="@font/poppinsmedium"
-            android:gravity="center|start"
-            android:paddingStart="10dp"
+            android:gravity="start|center_vertical"
             android:textColor="@color/black"
-            android:textSize="15dp" />
+            android:textSize="20dp" />
 
         <TextView
             android:id="@+id/productRate"
-            android:layout_width="match_parent"
+            android:layout_width="64dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_weight="1"
+            android:layout_gravity="center_vertical"
             android:fontFamily="@font/poppinsmedium"
             android:gravity="center"
-            android:paddingEnd="5dp"
             android:textColor="@color/black"
-            android:textSize="15dp" />
+            android:textSize="20dp" />
 
         <TextView
             android:id="@+id/productAmount"
-            android:layout_width="match_parent"
+            android:layout_width="72dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_weight="1"
+            android:layout_gravity="center_vertical"
             android:fontFamily="@font/poppinsmedium"
-            android:gravity="center"
-            android:paddingEnd="5dp"
+            android:gravity="end|center_vertical"
             android:textColor="@color/black"
-            android:textSize="15dp" />
+            android:textSize="20dp" />
 
     </LinearLayout>
 

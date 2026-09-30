@@ -8,6 +8,7 @@ class ThermalTicket {
     required this.metaLines,
     required this.copyBanner,
     required this.colItem,
+    required this.colQty,
     required this.colRate,
     required this.colAmount,
     required this.items,
@@ -21,6 +22,7 @@ class ThermalTicket {
   final List<String> metaLines;
   final String copyBanner;
   final String colItem;
+  final String colQty;
   final String colRate;
   final String colAmount;
   final List<ThermalLine> items;
@@ -30,6 +32,11 @@ class ThermalTicket {
   final String? qrPayload;
 
   static const upiQrMarker = '<<<UPI_QR>>>';
+
+  /* Column char widths: Qty / Rate / Amount — rest is Item. */
+  static const qtyChars = 5;
+  static const rateChars = 6;
+  static const amountChars = 7;
 
   String toPlainText({required int width}) {
     final buf = StringBuffer();
@@ -41,13 +48,16 @@ class ThermalTicket {
     }
     buf.writeln(center(copyBanner, width));
     buf.writeln('-' * width);
-    final itemW = width - 16;
-    buf.writeln(columns([colItem, colRate, colAmount], [itemW, 8, 8]));
+    final itemW = (width - qtyChars - rateChars - amountChars).clamp(8, width);
+    final widths = [itemW, qtyChars, rateChars, amountChars];
+    buf.writeln(
+      columns([colItem, colQty, colRate, colAmount], widths),
+    );
     buf.writeln('-' * width);
     for (final item in items) {
       buf.writeln(item.name);
       buf.writeln(
-        columns(['X${item.qty}', item.rate, item.amount], [itemW, 8, 8]),
+        columns(['', item.qty, item.rate, item.amount], widths),
       );
     }
     buf.writeln('-' * width);
@@ -124,6 +134,7 @@ ThermalTicket ticketFromLabels({
     metaLines: metaLines,
     copyBanner: duplicate ? labels.duplicateCopy : labels.originalCopy,
     colItem: labels.item,
+    colQty: labels.qty,
     colRate: labels.rate,
     colAmount: labels.amount,
     items: items,

@@ -23,12 +23,30 @@ public final class DineInKotHelper {
         if (s == null || s.getKotAutoPrint() == null || s.getKotAutoPrint().trim().isEmpty()) {
             return false;
         }
-        return "on".equalsIgnoreCase(s.getKotAutoPrint().trim());
+        return isFlagOn(s.getKotAutoPrint());
     }
 
     public static boolean isPreviewEnabled(POSBillingWalaDatabase db) {
-        // KOT always opens the same preview screen as invoice (toggle removed from settings).
-        return true;
+        PrinterSettingResponse s = firstSetting(db);
+        if (s == null || s.getKotPreview() == null || s.getKotPreview().trim().isEmpty()) {
+            return true;
+        }
+        return isFlagOn(s.getKotPreview());
+    }
+
+    /** on / 1 / true enable the flag. off / 0 / false / no disable it. */
+    public static boolean isFlagOn(String value) {
+        if (value == null) {
+            return false;
+        }
+        String v = value.trim().toLowerCase(java.util.Locale.ROOT);
+        return !v.isEmpty()
+                && !("off".equals(v) || "0".equals(v) || "false".equals(v) || "no".equals(v));
+    }
+
+    /** Same as Flutter: auto print or preview off skips the on-screen ticket. */
+    public static boolean shouldSkipKotPreview(POSBillingWalaDatabase db) {
+        return isAutoPrint(db) || !isPreviewEnabled(db);
     }
 
     public static int kotCopies(POSBillingWalaDatabase db) {

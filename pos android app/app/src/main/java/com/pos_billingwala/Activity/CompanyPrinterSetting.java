@@ -3,6 +3,7 @@ package com.pos_billingwala.Activity;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,6 +12,9 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.View;
+import android.app.AlertDialog;
+import android.hardware.usb.UsbDevice;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -24,8 +28,13 @@ import com.pos_billingwala.Model.CompanyResponse;
 import com.pos_billingwala.Model.PrinterSettingResponse;
 import com.pos_billingwala.Print.BluetoothPrinterChannel;
 import com.pos_billingwala.Print.DeviceListActivity;
+import com.pos_billingwala.Print.EscPosCutHelper;
 import com.pos_billingwala.Print.KOTWoosimPrnMng;
+import com.pos_billingwala.Print.NetworkEscPosPrinter;
+import com.pos_billingwala.Print.PrinterCapabilityManager;
 import com.pos_billingwala.Print.PrinterConnectionHelper;
+import com.pos_billingwala.Print.PrinterEndpointPrefs;
+import com.pos_billingwala.Print.UsbEscPosPrinter;
 import com.pos_billingwala.Print.WoosimPrnMng;
 import com.pos_billingwala.Extra.TabletFormUi;
 import com.pos_billingwala.R;
@@ -45,7 +54,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     View view;
     String[] printerList;
     String printerName = "2-Inch", KOTPrinterName = "2-Inch", settingId, logoUse = "off", paymentUse = "off", customerUse = "off", productQuantityUpdate = "off", duplicateBillUse = "off", printFastBill = "off";
-    String kotEnable = "on", kotPrefix = "KOT-", kotCopies = "1", kotAutoPrint = "off";
+    String kotEnable = "on", kotPrefix = "KOT-", kotCopies = "1", kotAutoPrint = "off", kotPreview = "on";
     /** Paper size last used when a bill/KOT printer was successfully picked or loaded. */
     String lastConnectedPrinterName = "2-Inch", lastConnectedKOTPrinterName = "2-Inch";
     boolean loadingDropdowns;
@@ -65,6 +74,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     int REQUEST_KOT_ENABLE_BT = 8, REQUEST_KOT_CONNECT_DEVICE = 10;
     //******************** Bluetooth Printer End ************************//
     ActivityCompanyPrinterSettingBinding binding;
+    private BroadcastReceiver usbPermissionReceiver;
 
 
     public static boolean hasPermissions(Context context, String... permissions) {
@@ -164,6 +174,32 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
                 kotAutoPrint = isChecked ? "on" : "off";
             }
         });
+        binding.kotPreviewSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (!suppressSwitchListener) {
+                kotPreview = isChecked ? "on" : "off";
+            }
+        });
+        binding.autoCutSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (!suppressSwitchListener) {
+                PrinterCapabilityManager.setAutoCutEnabled(activity, isChecked);
+                updateCutTypeVisibility(isChecked);
+            }
+        });
+        binding.cutTypeGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (suppressSwitchListener) {
+                return;
+            }
+            EscPosCutHelper.CutType type = EscPosCutHelper.CutType.DEFAULT;
+            if (checkedId == R.id.cutTypeFull) {
+                type = EscPosCutHelper.CutType.FULL;
+            } else if (checkedId == R.id.cutTypePartial) {
+                type = EscPosCutHelper.CutType.PARTIAL;
+            }
+            PrinterCapabilityManager.setCutType(activity, type);
+        });
+
+        loadAutoCutSettings();
+        loadEndpointSettings();
 
         PERMISSIONS = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_COARSE_LOCATION};
         if (!hasPermissions(activity, PERMISSIONS)) {
@@ -221,11 +257,11 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         if (id == R.id.backToSetting) {
             finish();
         } else if (id == R.id.connectPrinter) {
-            WoosimPrnMng.connectFromButton(activity, bluetoothAddress, CompanyPrinterSetting.this, billSizeChangedByUser);
+            connectBillEndpoint();
         } else if (id == R.id.disconnectPrinter) {
             disconnectInvoicePrinter();
         } else if (id == R.id.connectKOTPrinter) {
-            KOTWoosimPrnMng.connectFromButton(activity, bluetoothKOTAddress, CompanyPrinterSetting.this, kotSizeChangedByUser);
+            connectKotEndpoint();
         } else if (id == R.id.disconnectKOTPrinter) {
             disconnectKotPrinter();
         } else if (id == R.id.invoicePreview) {
@@ -286,11 +322,25 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             Toast.makeText(activity, getString(R.string.toast_company_setting_updated), Toast.LENGTH_SHORT).show();
         }
 
-        getPrinterSettingDetails();
-        if (settingId == null && !printerSettingResponseList.isEmpty()) {
-            settingId = printerSettingResponseList.get(0).getSettingId();
+        captureKotSwitchState();
+        String savedKotEnable = kotEnable;
+        String savedKotAutoPrint = kotAutoPrint;
+        String savedKotPreview = kotPreview;
+        if (settingId == null || settingId.trim().isEmpty()) {
+            getPrinterSettingDetails();
         }
+        kotEnable = savedKotEnable;
+        kotAutoPrint = savedKotAutoPrint;
+        kotPreview = savedKotPreview;
         persistKotSettings();
+        getPrinterSettingDetails();
+    }
+
+    /** Switch position is the value to save. Reload must not run before this. */
+    private void captureKotSwitchState() {
+        kotEnable = binding.kotEnableSwitch.isChecked() ? "on" : "off";
+        kotAutoPrint = binding.kotAutoPrintSwitch.isChecked() ? "on" : "off";
+        kotPreview = binding.kotPreviewSwitch.isChecked() ? "on" : "off";
     }
 
     private void persistKotSettings() {
@@ -305,7 +355,240 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         if (copies.isEmpty()) {
             copies = "1";
         }
-        posBillingWalaDatabase.updateKotSettings(settingId, kotEnable, prefix, copies, kotAutoPrint, "on");
+        posBillingWalaDatabase.updateKotSettings(settingId, kotEnable, prefix, copies, kotAutoPrint, kotPreview);
+        persistEndpointSettings();
+    }
+
+    private void persistEndpointSettings() {
+        persistNetworkFields();
+        PrinterEndpointPrefs.setAutoShareOnSave(activity,
+                binding.autoShareOnSaveSwitch.isChecked());
+    }
+
+    private void persistNetworkFields() {
+        String host = binding.networkHost.getText() != null
+                ? binding.networkHost.getText().toString().trim() : "";
+        int port = 9100;
+        try {
+            String portText = binding.networkPort.getText() != null
+                    ? binding.networkPort.getText().toString().trim() : "9100";
+            if (!portText.isEmpty()) {
+                port = Integer.parseInt(portText);
+            }
+        } catch (Exception ignored) {
+        }
+        PrinterEndpointPrefs.setNetwork(activity, host, port);
+    }
+
+    private void loadEndpointSettings() {
+        suppressSwitchListener = true;
+        applyTransportRadio(binding.billTransportGroup, PrinterEndpointPrefs.billTransport(activity),
+                R.id.billTransportBluetooth, R.id.billTransportUsb, R.id.billTransportNetwork);
+        applyTransportRadio(binding.kotTransportGroup, PrinterEndpointPrefs.kotTransport(activity),
+                R.id.kotTransportBluetooth, R.id.kotTransportUsb, R.id.kotTransportNetwork);
+        binding.networkHost.setText(PrinterEndpointPrefs.networkHost(activity));
+        binding.networkPort.setText(String.valueOf(PrinterEndpointPrefs.networkPort(activity)));
+        setSwitchCheckedSilently(binding.autoShareOnSaveSwitch,
+                PrinterEndpointPrefs.isAutoShareOnSave(activity));
+        suppressSwitchListener = false;
+
+        binding.billTransportGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (suppressSwitchListener) {
+                return;
+            }
+            PrinterEndpointPrefs.setBillTransport(activity, transportFromRadio(checkedId,
+                    R.id.billTransportUsb, R.id.billTransportNetwork));
+            updateTransportUi();
+        });
+        binding.kotTransportGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (suppressSwitchListener) {
+                return;
+            }
+            PrinterEndpointPrefs.setKotTransport(activity, transportFromRadio(checkedId,
+                    R.id.kotTransportUsb, R.id.kotTransportNetwork));
+            updateTransportUi();
+        });
+        binding.autoShareOnSaveSwitch.setOnCheckedChangeListener((button, isChecked) -> {
+            if (!suppressSwitchListener) {
+                PrinterEndpointPrefs.setAutoShareOnSave(activity, isChecked);
+            }
+        });
+        updateTransportUi();
+    }
+
+    private static void applyTransportRadio(RadioGroup group, PrinterEndpointPrefs.Transport transport,
+                                            int bluetoothId, int usbId, int networkId) {
+        if (transport == PrinterEndpointPrefs.Transport.USB) {
+            group.check(usbId);
+        } else if (transport == PrinterEndpointPrefs.Transport.NETWORK) {
+            group.check(networkId);
+        } else {
+            group.check(bluetoothId);
+        }
+    }
+
+    private static PrinterEndpointPrefs.Transport transportFromRadio(int checkedId, int usbId, int networkId) {
+        if (checkedId == usbId) {
+            return PrinterEndpointPrefs.Transport.USB;
+        }
+        if (checkedId == networkId) {
+            return PrinterEndpointPrefs.Transport.NETWORK;
+        }
+        return PrinterEndpointPrefs.Transport.BLUETOOTH;
+    }
+
+    private void updateTransportUi() {
+        PrinterEndpointPrefs.Transport bill = PrinterEndpointPrefs.billTransport(activity);
+        PrinterEndpointPrefs.Transport kot = PrinterEndpointPrefs.kotTransport(activity);
+        boolean showNetwork = bill == PrinterEndpointPrefs.Transport.NETWORK
+                || kot == PrinterEndpointPrefs.Transport.NETWORK;
+        binding.networkPrinterFields.setVisibility(showNetwork ? View.VISIBLE : View.GONE);
+
+        boolean billUsb = bill == PrinterEndpointPrefs.Transport.USB;
+        binding.billUsbStatus.setVisibility(billUsb ? View.VISIBLE : View.GONE);
+        if (billUsb) {
+            String name = PrinterEndpointPrefs.billUsbName(activity);
+            if (name.isEmpty()) {
+                name = PrinterEndpointPrefs.billUsbId(activity);
+            }
+            binding.billUsbStatus.setText(name.isEmpty()
+                    ? getString(R.string.ui_usb_tap_connect)
+                    : getString(R.string.ui_usb_selected, name));
+        }
+
+        boolean kotUsb = kot == PrinterEndpointPrefs.Transport.USB;
+        binding.kotUsbStatus.setVisibility(kotUsb ? View.VISIBLE : View.GONE);
+        if (kotUsb) {
+            String name = PrinterEndpointPrefs.kotUsbName(activity);
+            if (name.isEmpty()) {
+                name = PrinterEndpointPrefs.kotUsbId(activity);
+            }
+            binding.kotUsbStatus.setText(name.isEmpty()
+                    ? getString(R.string.ui_usb_tap_connect)
+                    : getString(R.string.ui_usb_selected, name));
+        }
+        updatePrinterConnectionUi();
+    }
+
+    private void connectBillEndpoint() {
+        persistNetworkFields();
+        PrinterEndpointPrefs.Transport transport = PrinterEndpointPrefs.billTransport(activity);
+        if (transport == PrinterEndpointPrefs.Transport.NETWORK) {
+            testNetworkPrinter();
+            return;
+        }
+        if (transport == PrinterEndpointPrefs.Transport.USB) {
+            pickUsbPrinter(false);
+            return;
+        }
+        WoosimPrnMng.connectFromButton(activity, bluetoothAddress, CompanyPrinterSetting.this, billSizeChangedByUser);
+    }
+
+    private void connectKotEndpoint() {
+        persistNetworkFields();
+        PrinterEndpointPrefs.Transport transport = PrinterEndpointPrefs.kotTransport(activity);
+        if (transport == PrinterEndpointPrefs.Transport.NETWORK) {
+            testNetworkPrinter();
+            return;
+        }
+        if (transport == PrinterEndpointPrefs.Transport.USB) {
+            pickUsbPrinter(true);
+            return;
+        }
+        KOTWoosimPrnMng.connectFromButton(activity, bluetoothKOTAddress, CompanyPrinterSetting.this, kotSizeChangedByUser);
+    }
+
+    private void testNetworkPrinter() {
+        persistNetworkFields();
+        if (PrinterEndpointPrefs.networkHost(activity).trim().isEmpty()) {
+            Toast.makeText(activity, R.string.toast_enter_network_printer, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new Thread(() -> {
+            boolean ok = NetworkEscPosPrinter.testConnection(activity);
+            runOnUiThread(() -> {
+                Toast.makeText(activity,
+                        ok ? R.string.toast_network_test_ok : R.string.toast_network_test_fail,
+                        Toast.LENGTH_SHORT).show();
+                updatePrinterConnectionUi();
+            });
+        }).start();
+    }
+
+    private void ensureUsbPermissionReceiver() {
+        if (usbPermissionReceiver != null) {
+            return;
+        }
+        usbPermissionReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent == null || !UsbEscPosPrinter.ACTION_USB_PERMISSION.equals(intent.getAction())) {
+                    return;
+                }
+                updateTransportUi();
+            }
+        };
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (usbPermissionReceiver != null) {
+            try {
+                unregisterReceiver(usbPermissionReceiver);
+            } catch (Exception ignored) {
+            }
+            usbPermissionReceiver = null;
+        }
+        super.onDestroy();
+    }
+
+    private void pickUsbPrinter(boolean isKot) {
+        java.util.List<UsbDevice> devices = UsbEscPosPrinter.listPrinters(activity);
+        if (devices.isEmpty()) {
+            Toast.makeText(activity, R.string.toast_select_usb_printer, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String[] labels = new String[devices.size()];
+        for (int i = 0; i < devices.size(); i++) {
+            UsbDevice d = devices.get(i);
+            labels[i] = UsbEscPosPrinter.deviceDisplayName(d) + " (" + UsbEscPosPrinter.deviceId(d) + ")";
+        }
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.ui_select_usb_printer)
+                .setItems(labels, (dialog, which) -> {
+                    UsbDevice selected = devices.get(which);
+                    String id = UsbEscPosPrinter.deviceId(selected);
+                    String name = UsbEscPosPrinter.deviceDisplayName(selected);
+                    if (!UsbEscPosPrinter.hasPermission(activity, selected)) {
+                        ensureUsbPermissionReceiver();
+                        UsbEscPosPrinter.requestPermission(activity, selected, usbPermissionReceiver);
+                    }
+                    PrinterEndpointPrefs.setUsbFor(activity, isKot, id, name);
+                    updateTransportUi();
+                    Toast.makeText(activity, getString(R.string.ui_usb_selected, name), Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void loadAutoCutSettings() {
+        boolean enabled = PrinterCapabilityManager.isAutoCutEnabled(activity);
+        setSwitchCheckedSilently(binding.autoCutSwitch, enabled);
+        EscPosCutHelper.CutType type = PrinterCapabilityManager.cutType(activity);
+        suppressSwitchListener = true;
+        if (type == EscPosCutHelper.CutType.FULL) {
+            binding.cutTypeGroup.check(R.id.cutTypeFull);
+        } else if (type == EscPosCutHelper.CutType.PARTIAL) {
+            binding.cutTypeGroup.check(R.id.cutTypePartial);
+        } else {
+            binding.cutTypeGroup.check(R.id.cutTypeDefault);
+        }
+        suppressSwitchListener = false;
+        updateCutTypeVisibility(enabled);
+    }
+
+    private void updateCutTypeVisibility(boolean autoCutEnabled) {
+        binding.cutTypeContainer.setVisibility(autoCutEnabled ? View.VISIBLE : View.GONE);
     }
 
     private void updateKotSettingsVisibility() {
@@ -360,14 +643,13 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             printFastBill = printerSettingResponse.getPrintFastBill() != null
                     && !printerSettingResponse.getPrintFastBill().isEmpty()
                     ? printerSettingResponse.getPrintFastBill() : "off";
-            kotEnable = printerSettingResponse.getKotEnable() != null && !printerSettingResponse.getKotEnable().isEmpty()
-                    ? printerSettingResponse.getKotEnable() : "on";
+            kotEnable = flagToOnOff(printerSettingResponse.getKotEnable(), true);
             kotPrefix = printerSettingResponse.getKotPrefix() != null && !printerSettingResponse.getKotPrefix().isEmpty()
                     ? printerSettingResponse.getKotPrefix() : "KOT-";
             kotCopies = printerSettingResponse.getKotCopies() != null && !printerSettingResponse.getKotCopies().isEmpty()
                     ? printerSettingResponse.getKotCopies() : "1";
-            kotAutoPrint = printerSettingResponse.getKotAutoPrint() != null && !printerSettingResponse.getKotAutoPrint().isEmpty()
-                    ? printerSettingResponse.getKotAutoPrint() : "off";
+            kotAutoPrint = flagToOnOff(printerSettingResponse.getKotAutoPrint(), false);
+            kotPreview = flagToOnOff(printerSettingResponse.getKotPreview(), true);
             bluetoothAddress = printerSettingResponse.getBluetoothAddress() != null ? printerSettingResponse.getBluetoothAddress() : "";
             bluetoothKOTAddress = printerSettingResponse.getBluetoothKOTAddress() != null ? printerSettingResponse.getBluetoothKOTAddress() : "";
             binding.invoicePrefix.setText(printerSettingResponse.getInvoicePrefix().isEmpty() ? "POS" : printerSettingResponse.getInvoicePrefix());
@@ -396,6 +678,7 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         setSwitchCheckedSilently(binding.printFastBillSwitch, printFastBill.equalsIgnoreCase("on"));
         setSwitchCheckedSilently(binding.kotEnableSwitch, kotEnable.equalsIgnoreCase("on"));
         setSwitchCheckedSilently(binding.kotAutoPrintSwitch, kotAutoPrint.equalsIgnoreCase("on"));
+        setSwitchCheckedSilently(binding.kotPreviewSwitch, isKotPreviewOn(kotPreview));
         updateKotSettingsVisibility();
 
         printerList = activity.getResources().getStringArray(R.array.printer_list);
@@ -443,14 +726,16 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
             if (isFinishing()) {
                 return;
             }
-            if (!TextUtils.isEmpty(bluetoothAddress)
+            if (PrinterEndpointPrefs.billTransport(activity) == PrinterEndpointPrefs.Transport.BLUETOOTH
+                    && !TextUtils.isEmpty(bluetoothAddress)
                     && !BluetoothPrinterChannel.bill().isReady()
                     && !BluetoothPrinterChannel.bill().isConnecting()) {
                 PrinterConnectionHelper.autoConnectBillPrinter(activity, bluetoothAddress);
             }
             boolean sameAsBill = !TextUtils.isEmpty(bluetoothKOTAddress)
                     && bluetoothKOTAddress.equalsIgnoreCase(bluetoothAddress);
-            if (!sameAsBill
+            if (PrinterEndpointPrefs.kotTransport(activity) == PrinterEndpointPrefs.Transport.BLUETOOTH
+                    && !sameAsBill
                     && !TextUtils.isEmpty(bluetoothKOTAddress)
                     && !BluetoothPrinterChannel.kot().isReady()
                     && !BluetoothPrinterChannel.kot().isConnecting()) {
@@ -474,25 +759,57 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
     }
 
     private boolean isInvoicePrinterConnected() {
+        PrinterEndpointPrefs.Transport transport = PrinterEndpointPrefs.billTransport(activity);
+        if (transport == PrinterEndpointPrefs.Transport.NETWORK) {
+            return !PrinterEndpointPrefs.networkHost(activity).trim().isEmpty();
+        }
+        if (transport == PrinterEndpointPrefs.Transport.USB) {
+            String id = PrinterEndpointPrefs.billUsbId(activity);
+            return !TextUtils.isEmpty(id) && UsbEscPosPrinter.findById(activity, id) != null;
+        }
         return !TextUtils.isEmpty(bluetoothAddress) && BluetoothPrinterChannel.bill().isReady();
     }
 
     private boolean isKotPrinterConnected() {
+        PrinterEndpointPrefs.Transport transport = PrinterEndpointPrefs.kotTransport(activity);
+        if (transport == PrinterEndpointPrefs.Transport.NETWORK) {
+            return !PrinterEndpointPrefs.networkHost(activity).trim().isEmpty();
+        }
+        if (transport == PrinterEndpointPrefs.Transport.USB) {
+            String id = PrinterEndpointPrefs.kotUsbId(activity);
+            return !TextUtils.isEmpty(id) && UsbEscPosPrinter.findById(activity, id) != null;
+        }
         return !TextUtils.isEmpty(bluetoothKOTAddress) && BluetoothPrinterChannel.kot().isReady();
     }
 
     private void disconnectInvoicePrinter() {
-        bluetoothAddress = "";
-        BluetoothPrinterChannel.bill().disconnect(activity);
-        persistConnectionState();
-        updatePrinterConnectionUi();
+        PrinterEndpointPrefs.Transport transport = PrinterEndpointPrefs.billTransport(activity);
+        if (transport == PrinterEndpointPrefs.Transport.USB) {
+            PrinterEndpointPrefs.setBillUsb(activity, "", "");
+        } else if (transport == PrinterEndpointPrefs.Transport.NETWORK) {
+            PrinterEndpointPrefs.setNetwork(activity, "", PrinterEndpointPrefs.networkPort(activity));
+            binding.networkHost.setText("");
+        } else {
+            bluetoothAddress = "";
+            BluetoothPrinterChannel.bill().disconnect(activity);
+            persistConnectionState();
+        }
+        updateTransportUi();
     }
 
     private void disconnectKotPrinter() {
-        bluetoothKOTAddress = "";
-        BluetoothPrinterChannel.kot().disconnect(activity);
-        persistConnectionState();
-        updatePrinterConnectionUi();
+        PrinterEndpointPrefs.Transport transport = PrinterEndpointPrefs.kotTransport(activity);
+        if (transport == PrinterEndpointPrefs.Transport.USB) {
+            PrinterEndpointPrefs.setKotUsb(activity, "", "");
+        } else if (transport == PrinterEndpointPrefs.Transport.NETWORK) {
+            PrinterEndpointPrefs.setNetwork(activity, "", PrinterEndpointPrefs.networkPort(activity));
+            binding.networkHost.setText("");
+        } else {
+            bluetoothKOTAddress = "";
+            BluetoothPrinterChannel.kot().disconnect(activity);
+            persistConnectionState();
+        }
+        updateTransportUi();
     }
 
     private void persistConnectionState() {
@@ -514,6 +831,23 @@ public class CompanyPrinterSetting extends BaseActivity implements View.OnClickL
         suppressSwitchListener = true;
         switchView.setChecked(checked);
         suppressSwitchListener = false;
+    }
+
+    /** Maps on/1/true and off/0/false into the values the switches save. */
+    private static String flagToOnOff(String value, boolean defaultOn) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultOn ? "on" : "off";
+        }
+        return com.pos_billingwala.Extra.DineInKotHelper.isFlagOn(value) ? "on" : "off";
+    }
+
+    /** Empty or unknown values stay on, matching Flutter (off / 0 / false / no disable it). */
+    private static boolean isKotPreviewOn(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return true;
+        }
+        String v = value.trim().toLowerCase(Locale.ROOT);
+        return !("off".equals(v) || "0".equals(v) || "false".equals(v) || "no".equals(v));
     }
 
     @Override

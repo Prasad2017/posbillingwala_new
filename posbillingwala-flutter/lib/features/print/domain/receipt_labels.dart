@@ -6,6 +6,7 @@ class ReceiptLabels {
     required this.originalCopy,
     required this.duplicateCopy,
     required this.item,
+    required this.qty,
     required this.rate,
     required this.amount,
     required this.subTotal,
@@ -25,6 +26,7 @@ class ReceiptLabels {
   final String originalCopy;
   final String duplicateCopy;
   final String item;
+  final String qty;
   final String rate;
   final String amount;
   final String subTotal;
@@ -46,6 +48,7 @@ class ReceiptLabels {
       originalCopy: t('ui__original_copy_'),
       duplicateCopy: t('ui__duplicate_copy_'),
       item: t('ui_item'),
+      qty: t('ui_qty'),
       rate: t('ui_rate'),
       amount: t('ui_amount'),
       subTotal: t('ui_sub_total'),

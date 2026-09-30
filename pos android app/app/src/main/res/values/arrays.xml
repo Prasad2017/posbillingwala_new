@@ -32,6 +32,8 @@
 
     <array name="printer_list">
         <item>2-Inch</item>
+        <item>60mm</item>
+        <item>78mm</item>
         <item>3-Inch</item>
     </array>
 

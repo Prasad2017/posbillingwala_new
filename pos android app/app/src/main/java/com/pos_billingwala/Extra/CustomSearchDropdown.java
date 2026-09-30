@@ -80,7 +80,11 @@ public class CustomSearchDropdown {
     public void setItems(List<String> items) {
         originalItems.clear();
         if (items != null) {
-            originalItems.addAll(items);
+            for (String item : items) {
+                if (item != null) {
+                    originalItems.add(item);
+                }
+            }
         }
         filteredItems.clear();
         filteredItems.addAll(originalItems);
@@ -216,7 +220,7 @@ public class CustomSearchDropdown {
         filteredItems.clear();
         String search = query.trim().toLowerCase();
         for (String item : originalItems) {
-            if (item.toLowerCase().contains(search)) {
+            if (item != null && item.toLowerCase().contains(search)) {
                 filteredItems.add(item);
             }
         }
@@ -294,6 +298,9 @@ public class CustomSearchDropdown {
 
         for (int i = 0; i < filteredItems.size(); i++) {
             String item = filteredItems.get(i);
+            if (item == null) {
+                continue;
+            }
             int originalIndex = originalItems.indexOf(item);
             View row = inflater.inflate(R.layout.item_custom_dropdown_option, listContainer, false);
 

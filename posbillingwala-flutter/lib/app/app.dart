@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -8,6 +10,8 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/aurora_background.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/settings/presentation/in_app_update_host.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/catalog_bootstrap_listener.dart';
 import 'package:pos_billingwala_v2/features/sync/domain/connectivity_sync_listener.dart';
@@ -47,6 +51,12 @@ class _PosBillingwalaAppState extends ConsumerState<PosBillingwalaApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       applyFixedSystemUi();
+      /* Re-link saved printer after app returns from background. */
+      unawaited(
+        PrinterAutoConnect.ensureSavedPrinters(
+          ref.read(printerSettingsProvider),
+        ),
+      );
     }
   }
 

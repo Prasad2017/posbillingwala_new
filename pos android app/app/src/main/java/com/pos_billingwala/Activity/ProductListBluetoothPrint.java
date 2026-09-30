@@ -1,5 +1,7 @@
 package com.pos_billingwala.Activity;
 
+import com.pos_billingwala.Extra.PaperSizeHelper;
+
 import static com.pos_billingwala.Utils.RequestCodes.directory_path;
 
 import android.Manifest;
@@ -173,10 +175,11 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
 
-        Bitmap bitmap = convertLayout(twoNestedScrollView, 48);
+        int widthMm = billPrintableWidthMm();
+        Bitmap bitmap = convertLayout(twoNestedScrollView, widthMm);
 
         if (bitmap != null) {
-            Bitmap bitmap1 = getResizedBitmap(bitmap, 48);
+            Bitmap bitmap1 = getResizedBitmap(bitmap, widthMm);
             // Prepare to insert the image into MediaStore
             ContentValues values = new ContentValues();
             values.put(MediaStore.Images.Media.DISPLAY_NAME, "productList.png"); // File name
@@ -283,20 +286,30 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
         }
         progressDialog = new ProgressDialog(activity);
         progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
-        if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+        if (PaperSizeHelper.isNarrow(printerSettingResponseList.get(0).getPrinterName())) {
             print2InchBill(false);
-        } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+        } else if (PaperSizeHelper.isWide(printerSettingResponseList.get(0).getPrinterName())) {
             print3InchBill(false);
         }
+    }
+
+    private int billPrintableWidthMm() {
+        String label = "2-Inch";
+        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
+                && printerSettingResponseList.get(0).getPrinterName() != null) {
+            label = printerSettingResponseList.get(0).getPrinterName();
+        }
+        return PaperSizeHelper.printableWidthMm(label);
     }
 
     public void print2InchBill(boolean printStatus) {
 
         showDialog();
 
-        Bitmap bitmap = convertLayout(twoNestedScrollView, 48);
+        int widthMm = billPrintableWidthMm();
+        Bitmap bitmap = convertLayout(twoNestedScrollView, widthMm);
         if (bitmap != null) {
-            printImage(bitmap, 48);
+            printImage(bitmap, widthMm);
         }
 
         hideDialog();
@@ -305,9 +318,10 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
 
     public void print3InchBill(boolean printStatus) {
 
-        Bitmap bitmap = convertLayout(threeNestedScrollView, 72);
+        int widthMm = billPrintableWidthMm();
+        Bitmap bitmap = convertLayout(threeNestedScrollView, widthMm);
         if (bitmap != null) {
-            printImage(bitmap, 72);
+            printImage(bitmap, widthMm);
         }
 
         hideDialog();
@@ -419,11 +433,7 @@ public class ProductListBluetoothPrint extends BaseActivity implements View.OnCl
 
     public void checkAndFeedPaper(int lines) {
         try {
-            StringBuilder lineBreaks = new StringBuilder();
-            for (int i = 0; i < lines; i++) {
-                lineBreaks.append("\n");
-            }
-            PrinterConnectionHelper.safeWriteBill(activity, lineBreaks.toString().getBytes());
+            PrinterConnectionHelper.feedLinesAndCut(activity, true, String.valueOf(lines));
         } catch (Exception ignored) {
         }
     }

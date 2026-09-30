@@ -145,6 +145,12 @@ class BluetoothPrinterHub {
       return;
     }
 
+    await disconnectLink();
+  }
+
+  /* Drop the RFCOMM link only — keep saved MACs for auto-reconnect. */
+  Future<void> disconnectLink() async {
+    cancelReconnect();
     persistentSession = false;
     try {
       await PrintBluetoothThermal.disconnect;

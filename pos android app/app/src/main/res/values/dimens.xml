@@ -47,6 +47,15 @@
     <dimen name="text_billing_price">14sp</dimen>
     <dimen name="text_billing_total">20sp</dimen>
     <dimen name="qty_btn_size">40dp</dimen>
+
+    <!-- Current Order panel -->
+    <dimen name="cart_order_title">20sp</dimen>
+    <dimen name="cart_item_name">17sp</dimen>
+    <dimen name="cart_item_price">16sp</dimen>
+    <dimen name="cart_item_qty">18sp</dimen>
+    <dimen name="cart_qty_btn">52dp</dimen>
+    <dimen name="cart_qty_gap">8dp</dimen>
+    <dimen name="cart_delete_btn">48dp</dimen>
     <dimen name="stock_qty_value">22sp</dimen>
 
     <!-- KPI / report cards — same in portrait and landscape -->

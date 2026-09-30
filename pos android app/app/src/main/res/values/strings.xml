@@ -201,7 +201,7 @@
     <string name="master_table_master">Table Master</string>
     <string name="setting_shop_details">Shop Details</string>
     <string name="setting_printer_details">Printer Details</string>
-    <string name="setting_inventory">Inventory Management</string>
+    <string name="setting_inventory">Stock Management</string>
     <string name="setting_expense">Expense Management</string>
     <string name="setting_support">Help &amp; Support</string>
     <string name="setting_about">About Us</string>

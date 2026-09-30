@@ -35,15 +35,15 @@
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/twoNestedScrollView"
-        android:layout_width="45mm"
-        android:layout_height="45mm"
+        android:layout_width="48mm"
+        android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:visibility="invisible">
 
         <LinearLayout
             android:id="@+id/twoLinearLayout"
-            android:layout_width="45mm"
-            android:layout_height="45mm"
+            android:layout_width="48mm"
+            android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center"
             android:orientation="vertical"
@@ -176,15 +176,15 @@
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/threeNestedScrollView"
-        android:layout_width="69mm"
-        android:layout_height="45mm"
+        android:layout_width="72mm"
+        android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:visibility="gone">
 
         <LinearLayout
             android:id="@+id/threeLinearLayout"
-            android:layout_width="69mm"
-            android:layout_height="45mm"
+            android:layout_width="72mm"
+            android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center"
             android:orientation="vertical"

@@ -12,7 +12,6 @@ import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_builder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/store_printer.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/printer_device_picker_page.dart';
-import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 class PrinterFormPage extends ConsumerStatefulWidget {
   const PrinterFormPage({super.key, this.existing});
@@ -50,7 +49,7 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
     final existing = widget.existing;
     final type = (existing?.connectionType ?? 'BLUETOOTH').toUpperCase();
     connection = type == 'USB' ? 'USB' : 'BLUETOOTH';
-    paperSize = existing?.paperSizeLabel ?? '2-Inch';
+    paperSize = existing?.paperSizeEnum.dbValue ?? '2-Inch';
     purpose = existing?.purpose ?? 'KOT';
     area = existing?.area ?? 'KITCHEN';
     usbName = existing?.usbName ?? '';
@@ -144,19 +143,17 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
 
   Future<void> testPrint() async {
     final service = ref.read(printServiceProvider);
-    final paper = paperSize == '3-Inch'
-        ? PrinterPaperSize.inch3
-        : PrinterPaperSize.inch2;
+    final paper = PrinterPaperSizeX.fromDb(paperSize);
     final builder = ReceiptBuilder(
       service.settings.copyWith(paperSize: paper),
       shopProfile: service.shopProfile,
       labels: service.labels,
     );
     final bytes = await builder.testPrintBytes(
-      isUsb ? 'USB $paperSize' : 'Bluetooth $paperSize',
+      isUsb ? 'USB ${paper.shortLabel}' : 'Bluetooth ${paper.shortLabel}',
     );
     final result = await service.dispatchToEndpoint(
-      text: 'TEST $paperSize',
+      text: 'TEST ${paper.shortLabel}',
       bytes: bytes,
       label: 'Test print',
       transport: isUsb
@@ -174,7 +171,6 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final strings = AppStrings.of(ref);
     final selectedLabel = isUsb
         ? (usbName.isNotEmpty ? usbName : usb.text.trim())
         : (btName.isNotEmpty ? btName : bt.text.trim());
@@ -221,13 +217,17 @@ class PrinterFormPageState extends ConsumerState<PrinterFormPage> {
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          SegmentedButton<String>(
-            segments: [
-              ButtonSegment(value: '2-Inch', label: Text(strings.paper2Inch)),
-              ButtonSegment(value: '3-Inch', label: Text(strings.paper3Inch)),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final size in PrinterPaperSize.values)
+                ChoiceChip(
+                  label: Text(size.shortLabel),
+                  selected: paperSize == size.dbValue,
+                  onSelected: (_) => setState(() => paperSize = size.dbValue),
+                ),
             ],
-            selected: {paperSize},
-            onSelectionChanged: (v) => setState(() => paperSize = v.first),
           ),
           const SizedBox(height: 16),
           ListTile(

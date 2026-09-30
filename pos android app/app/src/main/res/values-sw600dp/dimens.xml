@@ -1,4 +1,12 @@
 <resources>
     <dimen name="activity_horizontal_margin">24dp</dimen>
     <dimen name="spacing_xl">28dp</dimen>
+
+    <dimen name="cart_order_title">22sp</dimen>
+    <dimen name="cart_item_name">18sp</dimen>
+    <dimen name="cart_item_price">17sp</dimen>
+    <dimen name="cart_item_qty">20sp</dimen>
+    <dimen name="cart_qty_btn">56dp</dimen>
+    <dimen name="cart_qty_gap">10dp</dimen>
+    <dimen name="cart_delete_btn">48dp</dimen>
 </resources>

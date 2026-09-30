@@ -1,5 +1,7 @@
 package com.pos_billingwala.Activity;
 
+import com.pos_billingwala.Extra.PaperSizeHelper;
+
 import static com.pos_billingwala.Utils.RequestCodes.directory_path;
 
 import android.Manifest;
@@ -221,20 +223,30 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
         progressDialog = new ProgressDialog(activity);
         progressDialog.setMessage(getString(R.string.toast_printing_in_progress));
 
-        if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("2-Inch")) {
+        if (PaperSizeHelper.isNarrow(printerSettingResponseList.get(0).getPrinterName())) {
             print2InchBill();
-        } else if (printerSettingResponseList.get(0).getPrinterName().equalsIgnoreCase("3-Inch")) {
+        } else if (PaperSizeHelper.isWide(printerSettingResponseList.get(0).getPrinterName())) {
             print3InchBill();
         }
+    }
+
+    private int billPrintableWidthMm() {
+        String label = "2-Inch";
+        if (printerSettingResponseList != null && !printerSettingResponseList.isEmpty()
+                && printerSettingResponseList.get(0).getPrinterName() != null) {
+            label = printerSettingResponseList.get(0).getPrinterName();
+        }
+        return PaperSizeHelper.printableWidthMm(label);
     }
 
     public void print2InchBill() {
 
         showDialog();
 
+        int widthMm = billPrintableWidthMm();
         Bitmap bitmap = convertLayout(twoNestedScrollView);
         if (bitmap != null) {
-            printImage(bitmap, 48);
+            printImage(bitmap, widthMm);
         }
 
         hideDialog();
@@ -245,9 +257,10 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
 
         showDialog();
 
+        int widthMm = billPrintableWidthMm();
         Bitmap bitmap = convertLayout(threeNestedScrollView);
         if (bitmap != null) {
-            printImage(bitmap, 72);
+            printImage(bitmap, widthMm);
         }
 
         hideDialog();
@@ -372,14 +385,7 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
 
     public void checkAndFeedPaper(String lines) {
         try {
-            if (lines == null || lines.trim().isEmpty()) {
-                return;
-            }
-            StringBuilder lineBreaks = new StringBuilder();
-            for (int i = 0; i < Integer.parseInt(lines); i++) {
-                lineBreaks.append("\n");
-            }
-            PrinterConnectionHelper.safeWriteBill(activity, lineBreaks.toString().getBytes());
+            PrinterConnectionHelper.feedLinesAndCut(activity, false, lines);
         } catch (Exception ignored) {
         }
     }
@@ -534,6 +540,17 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
         }
     }
 
+    private void appendCouponLine(TextView view, String couponLine) {
+        if (view == null) {
+            return;
+        }
+        String current = view.getText() != null ? view.getText().toString().trim() : "";
+        if (current.contains("MESS COUPON No:")) {
+            return;
+        }
+        view.setText(current.isEmpty() ? couponLine : current + "\n" + couponLine);
+    }
+
     public void getInvoiceDetails() {
 
         Date c = Calendar.getInstance().getTime();
@@ -547,9 +564,17 @@ public class CouponBluetoothPrint extends BaseActivity implements View.OnClickLi
         threeInvoiceMemberName.setText(memberName);
 
         int couponNumber = messInvoiceResponseList.size() + 1;
-        couponCount.setText("MESS COUPON No: " + couponNumber);
-        twoInvoiceDetails.setText("MESS COUPON No: " + couponNumber);
-        threeInvoiceDetails.setText("MESS COUPON No: " + couponNumber);
+        String couponLine = "MESS COUPON No: " + couponNumber;
+        couponCount.setText("MESS COUPON");
+        if (twoCouponCount != null) {
+            twoCouponCount.setText("MESS COUPON");
+        }
+        if (threeCouponCount != null) {
+            threeCouponCount.setText("MESS COUPON");
+        }
+        appendCouponLine(invoiceDetails, couponLine);
+        appendCouponLine(twoInvoiceDetails, couponLine);
+        appendCouponLine(threeInvoiceDetails, couponLine);
 
     }
 

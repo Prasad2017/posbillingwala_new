@@ -48,10 +48,10 @@ public class DuplicateTwoPrintAdapter extends RecyclerView.Adapter<DuplicateTwoP
         float totalPerProductGST = productPrice + (productPrice * ((totalCGST + totalSGST) / 100));
 
         holder.binding.productName.setText(invoiceProductResponse.getDisplayLineName());
-        holder.binding.productRate.setText("X" + invoiceProductResponse.getProductQuantity());
-        holder.binding.productAmount.setText(String.format(Locale.US, "%.2f", totalPerProductGST));
+        holder.binding.productQuantity.setText("X" + invoiceProductResponse.getProductQuantity());
+        holder.binding.productRate.setText(String.format(Locale.US, "%.2f", totalPerProductGST));
         float totalPerProductAmount = (totalPerProductGST * productQuantity);
-        holder.binding.productQuantity.setText(String.format(Locale.US, "%.2f", totalPerProductAmount));
+        holder.binding.productAmount.setText(String.format(Locale.US, "%.2f", totalPerProductAmount));
 
     }
 

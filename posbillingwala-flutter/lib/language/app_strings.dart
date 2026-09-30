@@ -433,6 +433,10 @@ class AppStrings {
 
   String get paper3Inch => tr('app_paper3_inch');
 
+  String get paper60Mm => tr('app_paper60_mm');
+
+  String get paper78Mm => tr('app_paper78_mm');
+
   String get paperMessCoupon => tr('ui_mess_coupon');
 
   String get payment => tr('ui_payment_mode');

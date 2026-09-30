@@ -8,6 +8,7 @@ import 'package:pos_billingwala_v2/features/mess/presentation/mess_slip_preview.
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_providers.dart';
+import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/printer_device_picker_page.dart';
@@ -29,6 +30,7 @@ class TestMessPreviewPage extends ConsumerStatefulWidget {
 class TestMessPreviewPageState extends ConsumerState<TestMessPreviewPage> {
   bool printing = false;
   bool connecting = false;
+  bool linkReady = false;
 
   bool get isQr => widget.kind == TestMessPreviewKind.qrToken;
   bool get isCommonQr => widget.kind == TestMessPreviewKind.commonQr;
@@ -46,6 +48,61 @@ class TestMessPreviewPageState extends ConsumerState<TestMessPreviewPage> {
   static const sampleQrPayload = 'MESS|DEMO|ABCD1234|Lunch';
   static const sampleCommonQrUrl =
       'https://posbillingwala.com/mess?code=DEMOQR';
+
+  bool isPrinterConnected(PrinterSettings settings) {
+    final transport = settings.transportFor(isKot: false);
+    switch (transport) {
+      case PosPrinterTransport.usb:
+        final id = settings.usbIdFor(isKot: false);
+        final usb = EscPosTransportHub.instance;
+        return id.isNotEmpty &&
+            usb.isConnected &&
+            (usb.savedUsbId.isEmpty ||
+                usb.savedUsbId.toLowerCase() == id.toLowerCase());
+      case PosPrinterTransport.bluetooth:
+        final mac = settings.bluetoothFor(isKot: false);
+        final hub = BluetoothPrinterHub.instance;
+        if (mac.isEmpty || hub.connectedAddress.isEmpty) return false;
+        return hub.connectedAddress.toLowerCase() == mac.toLowerCase();
+      case PosPrinterTransport.network:
+        return settings.networkHost.trim().isNotEmpty;
+    }
+  }
+
+  Future<void> autoReconnectSavedPrinter() async {
+    setState(() => connecting = true);
+    try {
+      await PrinterAutoConnect.ensureSavedPrinters(
+        ref.read(printerSettingsProvider),
+      );
+      if (!mounted) return;
+      setState(
+        () => linkReady = isPrinterConnected(ref.read(printerSettingsProvider)),
+      );
+    } finally {
+      if (mounted) setState(() => connecting = false);
+    }
+  }
+
+  Future<void> disconnect() async {
+    setState(() => connecting = true);
+    try {
+      final settings = ref.read(printerSettingsProvider);
+      final transport = settings.transportFor(isKot: false);
+      if (transport == PosPrinterTransport.usb) {
+        await EscPosTransportHub.instance.disconnectLink();
+      } else if (transport == PosPrinterTransport.bluetooth) {
+        await BluetoothPrinterHub.instance.disconnectLink();
+      }
+      if (!mounted) return;
+      setState(() => linkReady = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Printer disconnected')));
+    } finally {
+      if (mounted) setState(() => connecting = false);
+    }
+  }
 
   Future<void> connect() async {
     var settings = ref.read(printerSettingsProvider);
@@ -105,6 +162,7 @@ class TestMessPreviewPageState extends ConsumerState<TestMessPreviewPage> {
         );
       }
       if (!mounted) return;
+      setState(() => linkReady = ok && isPrinterConnected(settings));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -170,11 +228,20 @@ class TestMessPreviewPageState extends ConsumerState<TestMessPreviewPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) autoReconnectSavedPrinter();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final settings = ref.watch(printerSettingsProvider);
     final profile = ref.watch(shopReceiptProfileProvider);
     final strings = AppStrings.of(ref);
-    final connected = BluetoothPrinterHub.instance.isReady;
+    final connected =
+        linkReady || isPrinterConnected(settings);
     final paper = settings.paperSizeFor(isKot: false);
 
     final MessSlipLayout layout;
@@ -255,10 +322,12 @@ class TestMessPreviewPageState extends ConsumerState<TestMessPreviewPage> {
             children: [
               Expanded(
                 child: AppButton(
-                  label: 'Connect',
+                  label: connected ? 'Disconnect' : 'Connect',
                   variant: AppButtonVariant.outlined,
                   isLoading: connecting,
-                  onPressed: printing ? null : connect,
+                  onPressed: printing
+                      ? null
+                      : (connected ? disconnect : connect),
                 ),
               ),
               const SizedBox(width: 12),
