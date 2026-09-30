@@ -8,6 +8,7 @@ import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_button.dart';
 import 'package:pos_billingwala_v2/core/widgets/dropdown/app_dropdown_form_field.dart';
+import 'package:pos_billingwala_v2/core/widgets/dropdown/string_dropdown_field.dart';
 import 'package:pos_billingwala_v2/features/inventory/domain/inventory_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/masters_providers.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
@@ -610,7 +611,6 @@ class _StockForm extends StatelessWidget {
               decoration: const InputDecoration(
                 isDense: true,
                 labelText: 'Add / Remove Qty',
-                border: OutlineInputBorder(),
               ),
             ),
             if (adding) ...[
@@ -622,24 +622,26 @@ class _StockForm extends StatelessWidget {
                 decoration: const InputDecoration(
                   isDense: true,
                   labelText: 'Purchase price (optional)',
-                  border: OutlineInputBorder(),
                 ),
               ),
             ],
             const SizedBox(height: 6),
-            DropdownButtonFormField<_StockReason>(
-              key: ValueKey('${adding}_${reason.name}'),
-              initialValue: reason,
-              decoration: const InputDecoration(
-                isDense: true,
-                labelText: 'Reason',
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                for (final item in reasons)
-                  DropdownMenuItem(value: item, child: Text(_reasonLabel(item))),
-              ],
-              onChanged: onReason,
+            StringDropdownField(
+              label: 'Reason',
+              value: _reasonLabel(reason),
+              options: [for (final item in reasons) _reasonLabel(item)],
+              onChanged: (label) {
+                if (label == null) {
+                  onReason(null);
+                  return;
+                }
+                for (final item in reasons) {
+                  if (_reasonLabel(item) == label) {
+                    onReason(item);
+                    return;
+                  }
+                }
+              },
             ),
             const SizedBox(height: 8),
             AppButton(

@@ -51,13 +51,6 @@ const posPermissionDependencies = <String, String>{
 
 String posRoleLabel(String role) => posFixedRoles[role.toUpperCase()] ?? role;
 
-String posPermissionLabel(String key) {
-  final parts = key.split('.');
-  if (parts.length != 2) return key;
-  final action = parts[1].replaceAll('_', ' ');
-  return '${parts[0][0].toUpperCase()}${parts[0].substring(1)} ${action[0].toUpperCase()}${action.substring(1)}';
-}
-
 List<String> posAllPermissionKeys() {
   final keys = <String>[];
   posPermissionCatalog.forEach((module, actions) {

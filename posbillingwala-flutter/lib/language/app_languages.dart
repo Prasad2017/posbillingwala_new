@@ -11,9 +11,6 @@ class AppLanguageOption {
   final String code;
   final String label;
   final String nativeLabel;
-
-  String get displayLabel =>
-      label == nativeLabel ? label : '$label ($nativeLabel)';
 }
 
 abstract final class AppLanguages {
@@ -39,7 +36,4 @@ abstract final class AppLanguages {
     }
     return const Locale('en');
   }
-
-  static bool isSupported(String? code) =>
-      supportedCodes.contains((code ?? '').trim().toLowerCase());
 }

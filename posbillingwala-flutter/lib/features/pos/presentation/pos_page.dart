@@ -1302,7 +1302,7 @@ class CartPane extends ConsumerWidget {
                       ),
                     ),
                     SizedBox(
-                      width: narrow ? 96 : 108,
+                      width: narrow ? 100 : 116,
                       child: const Text(
                         'Qty',
                         textAlign: TextAlign.center,
@@ -1324,7 +1324,7 @@ class CartPane extends ConsumerWidget {
                           ),
                         ),
                       ),
-                    SizedBox(width: narrow ? 28 : 32),
+                    SizedBox(width: narrow ? 28 : 36),
                   ],
                 ),
               );
@@ -1469,26 +1469,22 @@ class CartItemTile extends ConsumerWidget {
                 ),
               ),
               SizedBox(
-                width: narrow ? 112 : 124,
+                width: narrow ? 100 : 116,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     QtyButton(
                       isAdd: false,
-                      dense: narrow,
+                      dense: true,
                       onTap: () => ref
                           .read(posCartControllerProvider.notifier)
                           .decrement(item),
                     ),
-                    InkWell(
-                      onTap: () => editCartLineDialog(context, ref, item),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minWidth: narrow ? 28 : 32,
-                          maxWidth: narrow ? 40 : 48,
-                        ),
+                    Flexible(
+                      child: InkWell(
+                        onTap: () => editCartLineDialog(context, ref, item),
                         child: SizedBox(
-                          height: 40,
+                          height: 36,
                           child: Center(
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
@@ -1500,7 +1496,7 @@ class CartItemTile extends ConsumerWidget {
                                 maxLines: 1,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: narrow ? 14 : 16,
+                                  fontSize: narrow ? 13 : 15,
                                 ),
                               ),
                             ),
@@ -1510,7 +1506,7 @@ class CartItemTile extends ConsumerWidget {
                     ),
                     QtyButton(
                       isAdd: true,
-                      dense: narrow,
+                      dense: true,
                       onTap: () => ref
                           .read(posCartControllerProvider.notifier)
                           .increment(item),
@@ -1535,16 +1531,17 @@ class CartItemTile extends ConsumerWidget {
               IconButton(
                 tooltip: 'Remove item',
                 padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
                 constraints: BoxConstraints(
-                  minWidth: narrow ? 28 : 32,
+                  minWidth: narrow ? 28 : 36,
                   minHeight: 32,
                 ),
                 onPressed: () =>
                     ref.read(posCartControllerProvider.notifier).remove(item),
                 icon: const AppSvg(
                   AppAssets.svgDelete,
-                  width: 20,
-                  height: 20,
+                  width: 18,
+                  height: 18,
                   color: AppColors.danger,
                 ),
               ),

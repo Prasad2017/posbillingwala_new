@@ -21,13 +21,6 @@ String amountInputText(num? value, {int decimals = 2}) {
   return fixed;
 }
 
-String numericInputText(num? value) {
-  if (value == null) return '';
-  final n = value.toDouble();
-  if (n == 0) return '';
-  return n == n.roundToDouble() ? n.toInt().toString() : n.toString();
-}
-
 String textOrEmpty(String? raw) {
   final t = raw?.trim() ?? '';
   if (t.isEmpty || t == '0' || t == '0.0' || t == '0.00' || t == '00') {

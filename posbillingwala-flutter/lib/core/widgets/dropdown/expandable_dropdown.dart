@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/widgets/dropdown/dropdown_theme.dart';
 import 'package:pos_billingwala_v2/core/widgets/widget_strings.dart';
 import 'package:pos_billingwala_v2/core/widgets/widget_theme.dart';
 
@@ -169,186 +170,157 @@ class ExpandableDropdownFieldState<T>
 
     final triggerLabel = Text(
       expandableDropdownTriggerLabel(),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
       style: bodyStyle.copyWith(
         color: hasSelection ? context.textPrimary : context.textSecondary,
         fontSize: 14,
       ),
     );
 
-    final dropdown = TapRegion(
-      onTapOutside: (_) => closeDropdown(),
-      child: Container(
-        decoration: BoxDecoration(
-          color: context.cardColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: widget.hasError ? AppColors.danger : context.borderColor,
+    final trigger = InkWell(
+      onTap: toggleExpanded,
+      borderRadius: BorderRadius.circular(AppFieldBorders.radius),
+      child: Row(
+        mainAxisSize: widget.fitContent ? MainAxisSize.min : MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (widget.fitContent) triggerLabel else Expanded(child: triggerLabel),
+          const SizedBox(width: 8),
+          Icon(
+            expanded
+                ? Icons.keyboard_arrow_up_rounded
+                : Icons.keyboard_arrow_down_rounded,
+            color: AppColors.textSecondary,
           ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: widget.fitContent
-              ? CrossAxisAlignment.start
-              : CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            InkWell(
-              onTap: toggleExpanded,
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: widget.fitContent ? 12 : 14,
-                  vertical: widget.fitContent ? 10 : 14,
-                ),
-                child: Row(
-                  mainAxisSize: widget.fitContent
-                      ? MainAxisSize.min
-                      : MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (widget.fitContent)
-                      triggerLabel
-                    else
-                      Expanded(child: triggerLabel),
-                    const SizedBox(width: 8),
-                    Icon(
-                      expanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      color: context.textSecondary,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (expanded) ...[
-              Divider(height: 1, color: context.borderColor),
-              if (widget.enableSearch && !widget.fitContent)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
-                  child: TextField(
-                    controller: searchController,
-                    onChanged: (_) => setState(() {}),
-                    cursorColor: context.textPrimary,
-                    style: bodyStyle.copyWith(
-                      color: context.textPrimary,
-                      fontSize: 14,
-                    ),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText:
-                          widget.searchHint ?? WidgetStrings.searchOptions,
-                      hintStyle: bodyStyle.copyWith(
-                        color: context.textSecondary,
-                        fontSize: 14,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search_rounded,
-                        size: 20,
-                        color: context.textSecondary,
-                      ),
-                      filled: true,
-                      fillColor: context.subtleBackground,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: context.borderColor),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: context.borderColor),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: AppColors.primary,
-                          width: 1.4,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: widget.maxListHeight),
-                child: items.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 16,
-                        ),
-                        child: Text(
-                          widget.emptyText ?? WidgetStrings.noResultsFound,
-                          style: bodySm.copyWith(color: context.textSecondary),
-                          textAlign: TextAlign.center,
-                        ),
-                      )
-                    /* fitContent must not use ListView/viewport — parents may */
-                    /* measure intrinsics, and ShrinkWrappingViewport forbids that. */
-                    : widget.fitContent
-                    ? Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (var index = 0; index < items.length; index++)
-                            buildOption(
-                              context: context,
-                              bodyStyle: bodyStyle,
-                              item: items[index],
-                              isFirst: index == 0,
-                            ),
-                          if (widget.actionLabel != null)
-                            buildAction(bodyStyle),
-                        ],
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        padding: EdgeInsets.zero,
-                        physics: const ClampingScrollPhysics(),
-                        itemCount:
-                            items.length + (widget.actionLabel != null ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (widget.actionLabel != null &&
-                              index == items.length) {
-                            return buildAction(bodyStyle);
-                          }
-                          return buildOption(
-                            context: context,
-                            bodyStyle: bodyStyle,
-                            item: items[index],
-                            isFirst: index == 0,
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ],
-        ),
+        ],
       ),
     );
 
-    return Column(
+    final panel = Column(
       crossAxisAlignment: widget.fitContent
           ? CrossAxisAlignment.start
           : CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (widget.showLabel) ...[
-          Text(
-            widget.label,
-            style: bodySm.copyWith(
-              color: context.textPrimary,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
+        trigger,
+        if (expanded) ...[
           const SizedBox(height: 8),
+          Divider(height: 1, color: AppColors.border.withValues(alpha: .9)),
+          if (widget.enableSearch && !widget.fitContent)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 6),
+              child: TextField(
+                controller: searchController,
+                onChanged: (_) => setState(() {}),
+                cursorColor: context.textPrimary,
+                style: bodyStyle.copyWith(
+                  color: context.textPrimary,
+                  fontSize: 14,
+                ),
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: widget.searchHint ?? WidgetStrings.searchOptions,
+                  hintStyle: bodyStyle.copyWith(
+                    color: context.textSecondary,
+                    fontSize: 14,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    size: 20,
+                    color: context.textSecondary,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.glassSolid,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  border: AppFieldBorders.enabled,
+                  enabledBorder: AppFieldBorders.enabled,
+                  focusedBorder: AppFieldBorders.focused,
+                ),
+              ),
+            ),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: widget.maxListHeight),
+            child: items.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 16,
+                    ),
+                    child: Text(
+                      widget.emptyText ?? WidgetStrings.noResultsFound,
+                      style: bodySm.copyWith(color: context.textSecondary),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                /* fitContent must not use ListView/viewport — parents may */
+                /* measure intrinsics, and ShrinkWrappingViewport forbids that. */
+                : widget.fitContent
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var index = 0; index < items.length; index++)
+                        buildOption(
+                          context: context,
+                          bodyStyle: bodyStyle,
+                          item: items[index],
+                          isFirst: index == 0,
+                        ),
+                      if (widget.actionLabel != null) buildAction(bodyStyle),
+                    ],
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    physics: const ClampingScrollPhysics(),
+                    itemCount:
+                        items.length + (widget.actionLabel != null ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (widget.actionLabel != null &&
+                          index == items.length) {
+                        return buildAction(bodyStyle);
+                      }
+                      return buildOption(
+                        context: context,
+                        bodyStyle: bodyStyle,
+                        item: items[index],
+                        isFirst: index == 0,
+                      );
+                    },
+                  ),
+          ),
         ],
-        /* Sized from content via MainAxisSize.min — never IntrinsicWidth. */
-        dropdown,
       ],
     );
+
+    final decoration = appDropdownDecoration(
+      context,
+      label: widget.label,
+      hint: widget.hint,
+      showLabel: widget.showLabel && !widget.fitContent,
+      hasError: widget.hasError,
+      isDense: widget.fitContent,
+    );
+
+    final field = TapRegion(
+      onTapOutside: (_) => closeDropdown(),
+      child: InputDecorator(
+        isFocused: expanded,
+        isHovering: false,
+        isEmpty: !hasSelection,
+        decoration: decoration,
+        child: panel,
+      ),
+    );
+
+    if (widget.fitContent) {
+      return Align(alignment: Alignment.centerLeft, child: field);
+    }
+    return field;
   }
 
   Widget buildAction(TextStyle bodyStyle) {
@@ -358,7 +330,7 @@ class ExpandableDropdownFieldState<T>
         closeDropdown();
       },
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
+        padding: const EdgeInsets.fromLTRB(4, 6, 4, 10),
         child: Text(
           widget.actionLabel!,
           style: bodyStyle.copyWith(
@@ -385,9 +357,9 @@ class ExpandableDropdownFieldState<T>
         onTap: () => handleItemTap(item),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-            widget.fitContent ? 12 : 14,
+            widget.fitContent ? 4 : 4,
             isFirst ? 6 : 8,
-            widget.fitContent ? 12 : 14,
+            widget.fitContent ? 4 : 4,
             8,
           ),
           child: Text(

@@ -212,37 +212,6 @@ Future<void> shareExpensesCsv({
   );
 }
 
-Future<void> shareMessInvoicesExcel({
-  required List<MessInvoice> invoices,
-  required String title,
-  String? subtitle,
-}) async {
-  final dateFmt = DateFormat('yyyy-MM-dd');
-  final timeFmt = DateFormat('hh:mm a');
-  final rows = <List<String>>[
-    const ['SR', 'Date', 'Time', 'Member', 'Meal Type'],
-  ];
-  for (var i = 0; i < invoices.length; i++) {
-    final m = invoices[i];
-    rows.add([
-      '${i + 1}',
-      dateFmt.format(m.messInvoiceDate),
-      timeFmt.format(m.messInvoiceDate),
-      m.memberName,
-      m.messType,
-    ]);
-  }
-  await shareXlsFile(
-    title: title,
-    fileStem: title,
-    htmlBody: buildHtmlSpreadsheet(
-      reportTitle: title,
-      subtitle: subtitle,
-      rows: rows,
-    ),
-  );
-}
-
 Future<void> shareMessReportExcel({
   required List<({
     bool isQr,
@@ -371,22 +340,6 @@ Future<void> shareStaffSalesExcel({
       reportTitle: title,
       subtitle: subtitle,
       rows: table,
-    ),
-  );
-}
-
-Future<void> shareGenericExcel({
-  required String title,
-  String? subtitle,
-  required List<List<String>> rows,
-}) async {
-  await shareXlsFile(
-    title: title,
-    fileStem: title,
-    htmlBody: buildHtmlSpreadsheet(
-      reportTitle: title,
-      subtitle: subtitle,
-      rows: rows,
     ),
   );
 }

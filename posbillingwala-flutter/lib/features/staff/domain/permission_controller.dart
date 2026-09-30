@@ -106,5 +106,3 @@ final permissionControllerProvider =
       PermissionController.new,
     );
 
-bool staffCan(WidgetRef ref, String key) =>
-    ref.read(permissionControllerProvider).allows(key);

@@ -5,7 +5,6 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
-import 'package:pos_billingwala_v2/features/payment_display/domain/display_connection_manager.dart';
 import 'package:pos_billingwala_v2/features/payment_display/domain/payment_display_models.dart';
 import 'package:pos_billingwala_v2/features/payment_display/domain/payment_display_service.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
@@ -116,9 +115,4 @@ Future<void> handleShowPaymentDisplayResult(
         ),
       );
   }
-}
-
-bool paymentDisplayHasActiveConnection(WidgetRef ref) {
-  final ui = ref.read(displayConnectionManagerProvider);
-  return ui.serverRunning && ui.connectedClients > 0;
 }

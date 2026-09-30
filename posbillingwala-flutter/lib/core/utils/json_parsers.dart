@@ -21,14 +21,6 @@ String? parseString(Object? value) {
   return value.toString();
 }
 
-/* PHP APIs often send `'1'` / `'0'` or bool-like strings. */
-bool parseBoolFlag(Object? value, {bool defaultValue = false}) {
-  if (value == null) return defaultValue;
-  if (value is bool) return value;
-  final text = value.toString().trim().toLowerCase();
-  return text == '1' || text == 'true' || text == 'yes';
-}
-
 DateTime? parseInvoiceDate(Object? value) {
   if (value == null) return null;
   if (value is DateTime) return value;

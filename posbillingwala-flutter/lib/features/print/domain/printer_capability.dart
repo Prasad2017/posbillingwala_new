@@ -137,22 +137,3 @@ class PrinterCapabilityManager {
 
 final printerCapabilityManager = PrinterCapabilityManager();
 
-String printerKeyFor({
-  required PosPrinterTransport transport,
-  String bluetoothAddress = '',
-  String usbIdentifier = '',
-  String networkHost = '',
-  int networkPort = 9100,
-}) {
-  switch (transport) {
-    case PosPrinterTransport.bluetooth:
-      return 'bt:${bluetoothAddress.trim().toLowerCase()}';
-    case PosPrinterTransport.usb:
-      return 'usb:${usbIdentifier.trim().toLowerCase()}';
-    case PosPrinterTransport.network:
-      return 'net:${networkHost.trim().toLowerCase()}:$networkPort';
-  }
-}
-
-PrinterPaperProfile paperProfileOf(PrinterPaperSize size) =>
-    PrinterPaperProfile.of(size);

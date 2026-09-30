@@ -1,11 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
-import 'package:pos_billingwala_v2/features/notifications/domain/fcm_service.dart';
 import 'package:pos_billingwala_v2/features/notifications/domain/in_app_notification_store.dart';
-
-final fcmServiceProvider = Provider<FcmService>((ref) {
-  return FcmService(apiClient: ref.watch(apiClientProvider));
-});
 
 final inAppNotificationsProvider =
     NotifierProvider<InAppNotificationsController, List<InAppNotification>>(

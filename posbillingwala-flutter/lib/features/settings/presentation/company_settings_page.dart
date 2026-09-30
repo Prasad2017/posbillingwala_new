@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,6 +13,7 @@ import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
+import 'package:pos_billingwala_v2/core/permissions/app_permission_service.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/utils/money_format.dart';
@@ -294,6 +297,18 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
   }
 
   Future<void> pickLogo(ImageSource source) async {
+    if (source == ImageSource.camera && !kIsWeb) {
+      final allowed =
+          await const AppPermissionService().ensureCameraPermission();
+      if (!allowed) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Camera permission is required')),
+        );
+        return;
+      }
+    }
+
     final picked = await ImagePicker().pickImage(
       source: source,
       maxWidth: 512,
@@ -301,20 +316,313 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
       imageQuality: 70,
     );
     if (picked == null) return;
-    final docs = await getApplicationDocumentsDirectory();
-    final dest = File('${docs.path}/shop_logo.jpg');
-    await File(picked.path).copy(dest.path);
-    await ref.read(shopReceiptProfileProvider.notifier).saveLogoPath(dest.path);
+
+    String savedPath;
+    if (kIsWeb) {
+      final bytes = await picked.readAsBytes();
+      if (bytes.isEmpty || bytes.length > 400000) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image is too large — try another photo')),
+        );
+        return;
+      }
+      savedPath = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+    } else {
+      final docs = await getApplicationDocumentsDirectory();
+      final dest = File('${docs.path}/shop_logo.jpg');
+      await File(picked.path).copy(dest.path);
+      savedPath = dest.path;
+    }
+
+    await ref.read(shopReceiptProfileProvider.notifier).saveLogoPath(savedPath);
     if (AppPlatform.supportsOfflineSync) {
       await ref
           .read(shopReceiptProfileProvider.notifier)
           .setPendingUpload(true);
     }
     if (!mounted) return;
-    setState(() => logoPath = dest.path);
+    setState(() => logoPath = savedPath);
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Shop logo saved')));
+  }
+
+  Future<void> clearLogo() async {
+    final previous = logoPath;
+    await ref.read(shopReceiptProfileProvider.notifier).saveLogoPath('');
+    if (!kIsWeb &&
+        previous.isNotEmpty &&
+        !previous.startsWith('data:image') &&
+        File(previous).existsSync()) {
+      try {
+        await File(previous).delete();
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    setState(() => logoPath = '');
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Shop logo removed')));
+  }
+
+  Future<void> showLogoPickerSheet() async {
+    if (busy) return;
+    final hasLogo = _hasUsableLogo;
+    final choice = await showAppBottomSheet<String>(
+      context: context,
+      title: 'Shop logo',
+      icon: Icons.image_outlined,
+      child: Builder(
+        builder: (sheetContext) {
+          Widget option({
+            required String value,
+            required String label,
+            required IconData icon,
+            bool destructive = false,
+          }) {
+            final color =
+                destructive ? AppColors.danger : AppColors.primary;
+            return Expanded(
+              child: Material(
+                color: color.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => Navigator.of(sheetContext).pop(value),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 18,
+                      horizontal: 10,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon, color: color, size: 28),
+                        const SizedBox(height: 10),
+                        Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: AppFonts.family,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: destructive
+                                ? AppColors.danger
+                                : AppColors.navy,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  option(
+                    value: 'camera',
+                    label: 'Take photo',
+                    icon: Icons.photo_camera_outlined,
+                  ),
+                  const SizedBox(width: 12),
+                  option(
+                    value: 'gallery',
+                    label: 'Choose from gallery',
+                    icon: Icons.photo_library_outlined,
+                  ),
+                ],
+              ),
+              if (hasLogo) ...[
+                const SizedBox(height: 12),
+                Material(
+                  color: AppColors.danger.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => Navigator.of(sheetContext).pop('remove'),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.delete_outline_rounded,
+                            color: AppColors.danger,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Remove logo',
+                            style: TextStyle(
+                              fontFamily: AppFonts.family,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: AppColors.danger,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case 'camera':
+        await pickLogo(ImageSource.camera);
+      case 'gallery':
+        await pickLogo(ImageSource.gallery);
+      case 'remove':
+        await clearLogo();
+    }
+  }
+
+  bool get _hasUsableLogo {
+    final path = logoPath.trim();
+    if (path.isEmpty) return false;
+    if (path.startsWith('data:image')) return true;
+    if (kIsWeb) return false;
+    return File(path).existsSync();
+  }
+
+  Widget buildLogoPreview({required double maxHeight}) {
+    final path = logoPath.trim();
+    Widget image;
+    if (path.startsWith('data:image')) {
+      try {
+        final comma = path.indexOf(',');
+        final bytes = base64Decode(path.substring(comma + 1));
+        image = Image.memory(bytes, fit: BoxFit.contain);
+      } catch (_) {
+        image = Image.asset(AppAssets.yourLogoHere, fit: BoxFit.contain);
+      }
+    } else if (!kIsWeb && path.isNotEmpty && File(path).existsSync()) {
+      image = Image.file(File(path), fit: BoxFit.contain);
+    } else {
+      image = Image.asset(AppAssets.yourLogoHere, fit: BoxFit.contain);
+    }
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: maxHeight,
+        minHeight: 140,
+      ),
+      child: AspectRatio(
+        aspectRatio: 1.15,
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
+          child: InkWell(
+            onTap: busy ? null : showLogoPickerSheet,
+            borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
+            child: Ink(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: .9),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
+                child: image,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget logoPanel() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        buildLogoPreview(maxHeight: 220),
+        const SizedBox(height: 8),
+        Text(
+          'Shown on printed bills when logo is enabled.',
+          style: TextStyle(
+            fontFamily: AppFonts.family,
+            fontSize: 12,
+            color: AppColors.navy.withValues(alpha: .48),
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: busy ? null : showLogoPickerSheet,
+            icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+            label: Text(_hasUsableLogo ? 'Change logo' : 'Add logo'),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: field(
+                companySettingsPagePhoneNo1,
+                'Phone No. 1',
+                keyboardType: TextInputType.phone,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: field(
+                companySettingsPagePhoneNo2,
+                'Phone No. 2',
+                keyboardType: TextInputType.phone,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget identityFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        field(companySettingsPageShopName1, 'Shop Name 1'),
+        const SizedBox(height: 12),
+        field(companySettingsPageShopName2, 'Shop Name 2'),
+        const SizedBox(height: 12),
+        field(companySettingsPageAddressLine1, 'Address Line 1'),
+        const SizedBox(height: 12),
+        field(companySettingsPageAddressLine2, 'Address Line 2'),
+        const SizedBox(height: 12),
+        field(companySettingsPageAddressLine3, 'Address Line 3'),
+      ],
+    );
+  }
+
+  Widget shopProfileCard() {
+    return section(
+      title: 'Shop Profile',
+      children: [
+        ResponsiveSplit(
+          primary: logoPanel(),
+          secondary: identityFields(),
+          primaryFlex: 34,
+          secondaryFlex: 66,
+          spacing: 18,
+          crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+      ],
+    );
   }
 
   Future<void> companySettingsPageSave() async {
@@ -341,12 +649,15 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
           : ref.read(shopReceiptProfileProvider).logoLocalPath;
       final encodedLogo = await encodeShopLogoFile(pathForLogo);
       final existingLogo = existing?.companyLogo?.trim();
-      final logoForSave = encodedLogo ??
-          ((existingLogo != null &&
-                  existingLogo.isNotEmpty &&
-                  existingLogo.startsWith('data:image'))
-              ? existingLogo
-              : null);
+      final logoCleared = pathForLogo.trim().isEmpty;
+      final logoForSave = logoCleared
+          ? ''
+          : (encodedLogo ??
+                ((existingLogo != null &&
+                        existingLogo.isNotEmpty &&
+                        existingLogo.startsWith('data:image'))
+                    ? existingLogo
+                    : null));
       final dto = buildDto(
         companyId: existing?.companyId,
         companyLogo: logoForSave,
@@ -411,6 +722,38 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     }
   }
 
+  InputDecoration fieldDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      hintText: label,
+      floatingLabelBehavior: FloatingLabelBehavior.auto,
+      filled: true,
+      fillColor: AppColors.glassSolid,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 16,
+      ),
+      labelStyle: TextStyle(
+        fontFamily: AppFonts.family,
+        color: AppColors.navy.withValues(alpha: .45),
+        fontWeight: FontWeight.w400,
+        fontSize: 14,
+      ),
+      floatingLabelStyle: const TextStyle(
+        fontFamily: AppFonts.family,
+        color: AppColors.primary,
+        fontWeight: FontWeight.w500,
+        fontSize: 14,
+      ),
+      border: AppFieldBorders.enabled,
+      enabledBorder: AppFieldBorders.enabled,
+      focusedBorder: AppFieldBorders.focused,
+      errorBorder: AppFieldBorders.error,
+      focusedErrorBorder: AppFieldBorders.focusedError,
+      disabledBorder: AppFieldBorders.disabled,
+    );
+  }
+
   Widget field(
     TextEditingController c,
     String label, {
@@ -429,42 +772,7 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
         color: AppColors.navy,
         fontWeight: FontWeight.w500,
       ),
-      decoration: InputDecoration(
-        /* Floating label on all shop-detail fields (size 14). */
-        labelText: label,
-        hintText: label,
-        floatingLabelBehavior: FloatingLabelBehavior.auto,
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
-        ),
-        labelStyle: TextStyle(
-          fontFamily: AppFonts.family,
-          color: AppColors.navy.withValues(alpha: .45),
-          fontWeight: FontWeight.w400,
-          fontSize: 14,
-        ),
-        floatingLabelStyle: const TextStyle(
-          fontFamily: AppFonts.family,
-          color: AppColors.primary,
-          fontWeight: FontWeight.w500,
-          fontSize: 14,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-          borderSide: BorderSide(color: AppColors.border.withValues(alpha: .9)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-          borderSide: BorderSide(color: AppColors.border.withValues(alpha: .9)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
-        ),
-      ),
+      decoration: fieldDecoration(label),
     );
   }
 
@@ -534,88 +842,18 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     );
   }
 
-  Widget logoCard() {
-    final logoFile = logoPath.isNotEmpty ? File(logoPath) : null;
-    final hasLogo = logoFile != null && logoFile.existsSync();
-
-    return section(
-      title: 'Branding',
-      children: [
-        AspectRatio(
-          aspectRatio: 2.4,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-                child: InkWell(
-                  onTap: busy ? null : () => pickLogo(ImageSource.gallery),
-                  borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-                      border: Border.all(
-                        color: AppColors.border.withValues(alpha: .9),
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-                      child: hasLogo
-                          ? Image.file(logoFile, fit: BoxFit.contain)
-                          : Image.asset(
-                              AppAssets.yourLogoHere,
-                              fit: BoxFit.contain,
-                            ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                right: 10,
-                bottom: 10,
-                child: Material(
-                  color: AppColors.primary,
-                  shape: const CircleBorder(),
-                  elevation: 2,
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: busy ? null : () => pickLogo(ImageSource.gallery),
-                    child: const SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Icon(
-                        Icons.edit_rounded,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Text(
-          'Shown on printed bills when logo is enabled.',
-          style: TextStyle(
-            fontFamily: AppFonts.family,
-            fontSize: 12,
-            color: AppColors.navy.withValues(alpha: .48),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final pad = AppBreakpoints.pagePaddingFor(context.widthClass);
+    final wide = !context.isMobileWidth;
+    final short = context.isShortHeight;
+
     return Scaffold(
       backgroundColor: MasterUi.bg,
       appBar: AppBar(
-        toolbarHeight: 72,
+        toolbarHeight: short ? 64 : 72,
         titleSpacing: 0,
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -624,18 +862,20 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
               style: TextStyle(
                 fontFamily: AppFonts.family,
                 fontWeight: FontWeight.w700,
-                fontSize: 18,
+                fontSize: short ? 17 : 18,
                 color: Colors.white,
                 height: 1.2,
               ),
             ),
-            SizedBox(height: 2),
+            const SizedBox(height: 2),
             Text(
-              'Manage your shop information',
+              wide
+                  ? 'Manage shop profile, branding, and tax details'
+                  : 'Manage your shop information',
               style: TextStyle(
                 fontFamily: AppFonts.family,
                 fontWeight: FontWeight.w400,
-                fontSize: 12.5,
+                fontSize: short ? 12 : 12.5,
                 color: Colors.white70,
                 height: 1.2,
               ),
@@ -651,50 +891,9 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                 ResponsiveScrollShell(
                   dashboard: true,
                   child: ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      AppBreakpoints.pagePaddingFor(context.widthClass),
-                      16,
-                      AppBreakpoints.pagePaddingFor(context.widthClass),
-                      28,
-                    ),
+                    padding: EdgeInsets.fromLTRB(pad, 16, pad, 28),
                     children: [
-                      logoCard(),
-                      const SizedBox(height: 18),
-                      section(
-                        title: 'Shop Identity',
-                        children: [
-                          field(companySettingsPageShopName1, 'Shop Name 1'),
-                          field(companySettingsPageShopName2, 'Shop Name 2'),
-                          field(
-                            companySettingsPageAddressLine1,
-                            'Address Line 1',
-                          ),
-                          field(
-                            companySettingsPageAddressLine2,
-                            'Address Line 2',
-                          ),
-                          field(
-                            companySettingsPageAddressLine3,
-                            'Address Line 3',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      section(
-                        title: 'Contact',
-                        children: [
-                          field(
-                            companySettingsPagePhoneNo1,
-                            'Phone No. 1',
-                            keyboardType: TextInputType.phone,
-                          ),
-                          field(
-                            companySettingsPagePhoneNo2,
-                            'Phone No. 2',
-                            keyboardType: TextInputType.phone,
-                          ),
-                        ],
-                      ),
+                      shopProfileCard(),
                       const SizedBox(height: 18),
                       section(
                         title: 'Operations',
@@ -717,8 +916,18 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                       section(
                         title: 'Tax & Compliance',
                         children: [
-                          field(companySettingsPageCountryName, 'Country Name'),
-                          field(companySettingsPageStateName, 'State Name'),
+                          ResponsiveFormColumns(
+                            children: [
+                              field(
+                                companySettingsPageCountryName,
+                                'Country Name',
+                              ),
+                              field(
+                                companySettingsPageStateName,
+                                'State Name',
+                              ),
+                            ],
+                          ),
                           toggleRow(
                             label: 'GST',
                             value: gstEnabled,
@@ -726,36 +935,38 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                           ),
                           if (gstEnabled) ...[
                             field(companySettingsPageGstNumber, 'GST Number'),
-                            Row(
+                            ResponsiveFormColumns(
                               children: [
-                                Expanded(
-                                  child: field(
-                                    companySettingsPageShopCgst,
-                                    'Shop CGST',
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                          decimal: true,
-                                        ),
-                                  ),
+                                field(
+                                  companySettingsPageShopCgst,
+                                  'Shop CGST',
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
                                 ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: field(
-                                    companySettingsPageShopSgst,
-                                    'Shop SGST',
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                          decimal: true,
-                                        ),
-                                  ),
+                                field(
+                                  companySettingsPageShopSgst,
+                                  'Shop SGST',
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
                                 ),
                               ],
                             ),
                           ],
-                          field(companySettingsPagePanNumber, 'PAN Number'),
-                          field(
-                            companySettingsPageCompanyFssis,
-                            'shop FSSAI Number',
+                          ResponsiveFormColumns(
+                            children: [
+                              field(
+                                companySettingsPagePanNumber,
+                                'PAN Number',
+                              ),
+                              field(
+                                companySettingsPageCompanyFssis,
+                                'shop FSSAI Number',
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -795,7 +1006,7 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
           SafeArea(
             top: false,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              padding: EdgeInsets.fromLTRB(pad, 10, pad, 12),
               decoration: BoxDecoration(
                 color: MasterUi.bg,
                 border: Border(
@@ -804,11 +1015,19 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                   ),
                 ),
               ),
-              child: AppButton(
-                label: 'UPDATE DETAILS',
-                icon: Icons.save_rounded,
-                isLoading: busy,
-                onPressed: companySettingsPageSave,
+              child: Align(
+                alignment: Alignment.center,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: wide ? 420 : double.infinity,
+                  ),
+                  child: AppButton(
+                    label: 'UPDATE DETAILS',
+                    icon: Icons.save_rounded,
+                    isLoading: busy,
+                    onPressed: companySettingsPageSave,
+                  ),
+                ),
               ),
             ),
           ),

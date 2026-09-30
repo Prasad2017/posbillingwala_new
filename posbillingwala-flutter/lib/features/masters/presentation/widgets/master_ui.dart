@@ -7,7 +7,7 @@ import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 abstract final class MasterUi {
   static const bg = Colors.transparent;
   static const cardRadius = 14.0;
-  static const fieldRadius = 10.0;
+  static const fieldRadius = 16.0;
 }
 
 class MasterSectionLabel extends StatelessWidget {
@@ -128,22 +128,10 @@ class MasterOutlinedField extends StatelessWidget {
           horizontal: 14,
           vertical: 14,
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-          borderSide: BorderSide(color: AppColors.border.withValues(alpha: .9)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-          borderSide: BorderSide(color: AppColors.border.withValues(alpha: .9)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(MasterUi.fieldRadius),
-          borderSide: BorderSide(color: AppColors.border.withValues(alpha: .5)),
-        ),
+        border: AppFieldBorders.enabled,
+        enabledBorder: AppFieldBorders.enabled,
+        focusedBorder: AppFieldBorders.focused,
+        disabledBorder: AppFieldBorders.disabled,
       ),
     );
   }

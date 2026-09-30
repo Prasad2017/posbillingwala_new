@@ -259,9 +259,6 @@ class PrinterPaperProfile {
     }
   }
 
-  static bool isValidImageWidth(int widthPx) =>
-      widthPx > 0 && widthPx % 8 == 0 && widthPx <= 576;
-
   void validateOrThrow() {
     if (imageWidthPx <= 0 || imageWidthPx % 8 != 0) {
       throw StateError(

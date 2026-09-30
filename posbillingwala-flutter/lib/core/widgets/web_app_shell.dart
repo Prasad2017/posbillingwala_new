@@ -110,6 +110,21 @@ bool _licenceTakeAway(UserSession s) => _licenceAnyBilling(s) || s.takeAway;
 
 bool _licenceMess(UserSession s) => _licenceAnyBilling(s) || s.mess;
 
+/* Nav rail collapse for desktop shell — survives hot reload better than State. */
+class WebNavCollapsedController extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void toggle() => state = !state;
+
+  void setCollapsed(bool value) => state = value;
+}
+
+final webNavCollapsedProvider =
+    NotifierProvider<WebNavCollapsedController, bool>(
+      WebNavCollapsedController.new,
+    );
+
 /* Desktop chrome for Flutter web. Mobile apps pass the child through. */
 class WebAppShell extends ConsumerWidget {
   const WebAppShell({super.key, required this.child});
@@ -117,6 +132,7 @@ class WebAppShell extends ConsumerWidget {
   final Widget child;
 
   static const railWidth = 248.0;
+  static const railCollapsedWidth = 76.0;
   static const _railAnim = Duration(milliseconds: 220);
 
   @override
@@ -128,6 +144,10 @@ class WebAppShell extends ConsumerWidget {
     final online = ref
         .watch(deviceOnlineProvider)
         .maybeWhen(data: (value) => value, orElse: () => true);
+    final navCollapsed = ref.watch(webNavCollapsedProvider);
+    final railWidth = navCollapsed
+        ? WebAppShell.railCollapsedWidth
+        : WebAppShell.railWidth;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -140,7 +160,10 @@ class WebAppShell extends ConsumerWidget {
       drawer: showRail
           ? null
           : Drawer(
-              child: WebSideNav(location: GoRouterState.of(context).uri.path),
+              child: WebSideNav(
+                location: GoRouterState.of(context).uri.path,
+                collapsed: false,
+              ),
             ),
       body: Column(
         children: [
@@ -154,7 +177,13 @@ class WebAppShell extends ConsumerWidget {
                   width: showRail ? railWidth : 0,
                   clipBehavior: Clip.hardEdge,
                   decoration: const BoxDecoration(),
-                  child: const WebSideNav(),
+                  child: WebSideNav(
+                    collapsed: navCollapsed,
+                    onToggleCollapse: showRail
+                        ? () =>
+                              ref.read(webNavCollapsedProvider.notifier).toggle()
+                        : null,
+                  ),
                 ),
                 Expanded(child: child),
               ],
@@ -213,9 +242,16 @@ class WebOfflineBanner extends StatelessWidget {
 }
 
 class WebSideNav extends ConsumerWidget {
-  const WebSideNav({super.key, this.location});
+  const WebSideNav({
+    super.key,
+    this.location,
+    this.collapsed = false,
+    this.onToggleCollapse,
+  });
 
   final String? location;
+  final bool collapsed;
+  final VoidCallback? onToggleCollapse;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -248,6 +284,18 @@ class WebSideNav extends ConsumerWidget {
       return true;
     }).toList();
 
+    Future<void> openDestination(WebNavDestination item) async {
+      if (Scaffold.maybeOf(context)?.isDrawerOpen == true) {
+        Navigator.of(context).pop();
+      }
+      if (item.matches(loc)) return;
+      if (item.route == '/reports') {
+        await pushReportsUnlocked(context, ref);
+        return;
+      }
+      context.go(item.route);
+    }
+
     return ColoredBox(
       color: AppColors.navy,
       child: SafeArea(
@@ -255,217 +303,337 @@ class WebSideNav extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      AppAssets.appLogo,
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        width: 40,
-                        height: 40,
-                        color: Colors.white,
-                        alignment: Alignment.center,
-                        child: Text(
-                          shopName.isEmpty ? 'P' : shopName[0].toUpperCase(),
-                          style: const TextStyle(
-                            fontFamily: AppFonts.family,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w800,
+              padding: EdgeInsets.fromLTRB(
+                collapsed ? 8 : 14,
+                14,
+                collapsed ? 8 : 10,
+                8,
+              ),
+              child: collapsed
+                  ? Column(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.asset(
+                            AppAssets.appLogo,
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Container(
+                              width: 36,
+                              height: 36,
+                              color: Colors.white,
+                              alignment: Alignment.center,
+                              child: Text(
+                                shopName.isEmpty
+                                    ? 'P'
+                                    : shopName[0].toUpperCase(),
+                                style: const TextStyle(
+                                  fontFamily: AppFonts.family,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                        if (onToggleCollapse != null)
+                          IconButton(
+                            tooltip: 'Expand menu',
+                            onPressed: onToggleCollapse,
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 32,
+                            ),
+                            icon: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Colors.white70,
+                              size: 22,
+                            ),
+                          ),
+                      ],
+                    )
+                  : Row(
                       children: [
-                        Text(
-                          shopName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            AppAssets.appLogo,
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Container(
+                              width: 40,
+                              height: 40,
+                              color: Colors.white,
+                              alignment: Alignment.center,
+                              child: Text(
+                                shopName.isEmpty
+                                    ? 'P'
+                                    : shopName[0].toUpperCase(),
+                                style: const TextStyle(
+                                  fontFamily: AppFonts.family,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                shopName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontFamily: AppFonts.family,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                AppConstants.appName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.family,
+                                  color: Colors.white.withValues(alpha: .65),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (onToggleCollapse != null)
+                          IconButton(
+                            tooltip: 'Collapse menu',
+                            onPressed: onToggleCollapse,
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                            icon: const Icon(
+                              Icons.chevron_left_rounded,
+                              color: Colors.white70,
+                              size: 22,
+                            ),
+                          ),
+                      ],
+                    ),
+            ),
+            if (!collapsed)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 8,
+                        color: online
+                            ? const Color(0xFF4ADE80)
+                            : const Color(0xFFF87171),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          online ? 'Online' : 'Offline',
                           style: const TextStyle(
                             fontFamily: AppFonts.family,
                             color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          AppConstants.appName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: AppFonts.family,
-                            color: Colors.white.withValues(alpha: .65),
-                            fontWeight: FontWeight.w500,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .08),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.circle,
-                      size: 8,
-                      color: online
-                          ? const Color(0xFF4ADE80)
-                          : const Color(0xFFF87171),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        online ? 'Online' : 'Offline',
-                        style: const TextStyle(
-                          fontFamily: AppFonts.family,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Tooltip(
+                  message: online ? 'Online' : 'Offline',
+                  child: Icon(
+                    Icons.circle,
+                    size: 8,
+                    color: online
+                        ? const Color(0xFF4ADE80)
+                        : const Color(0xFFF87171),
+                  ),
                 ),
               ),
-            ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+                padding: EdgeInsets.fromLTRB(
+                  collapsed ? 8 : 10,
+                  4,
+                  collapsed ? 8 : 10,
+                  8,
+                ),
                 children: [
                   for (final item in items)
                     WebNavTile(
                       label: item.label,
                       icon: item.icon,
                       selected: item.matches(loc),
-                      onTap: () async {
-                        if (Scaffold.maybeOf(context)?.isDrawerOpen == true) {
-                          Navigator.of(context).pop();
-                        }
-                        if (item.matches(loc)) return;
-                        if (item.route == '/reports') {
-                          await pushReportsUnlocked(context, ref);
-                          return;
-                        }
-                        context.go(item.route);
-                      },
+                      collapsed: collapsed,
+                      onTap: () => openDestination(item),
                     ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+              padding: EdgeInsets.fromLTRB(
+                collapsed ? 8 : 12,
+                8,
+                collapsed ? 8 : 12,
+                16,
+              ),
               child: Column(
                 children: [
-                  InkWell(
-                    onTap: () {
-                      if (Scaffold.maybeOf(context)?.isDrawerOpen == true) {
-                        Navigator.of(context).pop();
-                      }
-                      context.push('/notifications');
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        children: [
-                          Badge(
-                            isLabelVisible: unread > 0,
-                            smallSize: 8,
-                            backgroundColor: AppColors.orange,
-                            child: const Icon(
-                              Icons.notifications_none_rounded,
-                              color: Colors.white70,
-                              size: 20,
-                            ),
+                  Builder(
+                    builder: (context) {
+                      final notificationsTile = InkWell(
+                        onTap: () {
+                          if (Scaffold.maybeOf(context)?.isDrawerOpen ==
+                              true) {
+                            Navigator.of(context).pop();
+                          }
+                          context.push('/notifications');
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: collapsed ? 0 : 8,
+                            vertical: 8,
                           ),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Text(
-                              'Notifications',
-                              style: TextStyle(
-                                fontFamily: AppFonts.family,
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
+                          child: Row(
+                            mainAxisAlignment: collapsed
+                                ? MainAxisAlignment.center
+                                : MainAxisAlignment.start,
+                            children: [
+                              Badge(
+                                isLabelVisible: unread > 0,
+                                smallSize: 8,
+                                backgroundColor: AppColors.orange,
+                                child: const Icon(
+                                  Icons.notifications_none_rounded,
+                                  color: Colors.white70,
+                                  size: 20,
+                                ),
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Colors.white.withValues(alpha: .12),
-                        child: Text(
-                          staffName.isEmpty ? 'S' : staffName[0].toUpperCase(),
-                          style: const TextStyle(
-                            fontFamily: AppFonts.family,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
+                              if (!collapsed) ...[
+                                const SizedBox(width: 10),
+                                const Expanded(
+                                  child: Text(
+                                    'Notifications',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.family,
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              staffName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                      );
+                      return collapsed
+                          ? Tooltip(
+                              message: 'Notifications',
+                              child: notificationsTile,
+                            )
+                          : notificationsTile;
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  Builder(
+                    builder: (context) {
+                      final profile = Row(
+                        mainAxisAlignment: collapsed
+                            ? MainAxisAlignment.center
+                            : MainAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: collapsed ? 14 : 16,
+                            backgroundColor:
+                                Colors.white.withValues(alpha: .12),
+                            child: Text(
+                              staffName.isEmpty
+                                  ? 'S'
+                                  : staffName[0].toUpperCase(),
+                              style: TextStyle(
                                 fontFamily: AppFonts.family,
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 13,
+                                fontSize: collapsed ? 12 : 13,
                               ),
                             ),
-                            Text(
-                              staffRole,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: AppFonts.family,
-                                color: Colors.white.withValues(alpha: .6),
-                                fontSize: 11,
+                          ),
+                          if (!collapsed) ...[
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    staffName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontFamily: AppFonts.family,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  Text(
+                                    staffRole,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.family,
+                                      color:
+                                          Colors.white.withValues(alpha: .6),
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    ],
+                        ],
+                      );
+                      return collapsed
+                          ? Tooltip(
+                              message: '$staffName · $staffRole',
+                              child: profile,
+                            )
+                          : profile;
+                    },
                   ),
                 ],
               ),
@@ -484,16 +652,18 @@ class WebNavTile extends StatelessWidget {
     required this.icon,
     required this.selected,
     required this.onTap,
+    this.collapsed = false,
   });
 
   final String label;
   final IconData icon;
   final bool selected;
   final VoidCallback onTap;
+  final bool collapsed;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final tile = Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Material(
         color: selected
@@ -504,31 +674,46 @@ class WebNavTile extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: selected ? Colors.white : Colors.white70,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: AppFonts.family,
-                      color: selected ? Colors.white : Colors.white70,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                      fontSize: 13.5,
-                    ),
-                  ),
-                ),
-              ],
+            padding: EdgeInsets.symmetric(
+              horizontal: collapsed ? 0 : 12,
+              vertical: 11,
             ),
+            child: collapsed
+                ? Center(
+                    child: Icon(
+                      icon,
+                      size: 22,
+                      color: selected ? Colors.white : Colors.white70,
+                    ),
+                  )
+                : Row(
+                    children: [
+                      Icon(
+                        icon,
+                        size: 20,
+                        color: selected ? Colors.white : Colors.white70,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            fontFamily: AppFonts.family,
+                            color: selected ? Colors.white : Colors.white70,
+                            fontWeight:
+                                selected ? FontWeight.w700 : FontWeight.w500,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
       ),
     );
+
+    if (!collapsed) return tile;
+    return Tooltip(message: label, child: tile);
   }
 }
