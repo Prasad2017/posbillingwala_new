@@ -71,7 +71,7 @@ class MasterOutlinedField extends StatelessWidget {
     this.keyboardType,
     this.enabled = true,
     this.onChanged,
-    this.textCapitalization = TextCapitalization.none,
+    this.textCapitalization = TextCapitalization.words,
   });
 
   final TextEditingController controller;
@@ -91,7 +91,10 @@ class MasterOutlinedField extends StatelessWidget {
       controller: controller,
       enabled: enabled,
       keyboardType: keyboardType,
-      textCapitalization: textCapitalization,
+      textCapitalization: resolveTextCapitalization(
+        requested: textCapitalization,
+        keyboardType: keyboardType,
+      ),
       onChanged: onChanged,
       style: const TextStyle(
         fontFamily: AppFonts.family,

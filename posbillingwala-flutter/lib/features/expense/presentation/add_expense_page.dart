@@ -94,7 +94,7 @@ class AddExpensePageState extends ConsumerState<AddExpensePage> {
                 required: true,
                 controller: nameCtrl,
                 label: 'Expenses Name',
-                textCapitalization: TextCapitalization.sentences,
+                textCapitalization: TextCapitalization.words,
               ),
               AppTextField(
                 required: true,

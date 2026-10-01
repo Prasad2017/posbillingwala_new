@@ -754,7 +754,7 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
                     AppTextField(
                       controller: customerAddressController,
                       label: strings.customerAddress,
-                      textCapitalization: TextCapitalization.sentences,
+                      textCapitalization: TextCapitalization.words,
                       maxLines: 2,
                       minLines: 2,
                       onChanged: (_) => persistCustomer(),

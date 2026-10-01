@@ -452,6 +452,7 @@ class CatalogPane extends ConsumerWidget {
               child: TextField(
                 controller: searchController,
                 autofocus: AppPlatform.useDesktopShell,
+                textCapitalization: TextCapitalization.words,
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   filled: true,

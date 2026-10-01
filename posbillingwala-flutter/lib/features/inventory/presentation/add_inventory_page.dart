@@ -196,7 +196,7 @@ class AddInventoryPageState extends ConsumerState<AddInventoryPage> {
                   label: isWaste
                       ? 'Reason (damage / expiry / spoilage)'
                       : 'Supplier / bill no (optional)',
-                  textCapitalization: TextCapitalization.sentences,
+                  textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 16),
                 MasterPrimaryButton(

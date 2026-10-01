@@ -153,8 +153,10 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
       phoneNo1: phone1,
       phoneNo2: companySettingsPagePhoneNo2.text.trim(),
       gstStatus: gstEnabled ? '1' : '0',
-      gstNumber: gstEnabled ? companySettingsPageGstNumber.text.trim() : '',
-      panNumber: companySettingsPagePanNumber.text.trim(),
+      gstNumber: gstEnabled
+          ? companySettingsPageGstNumber.text.trim().toUpperCase()
+          : '',
+      panNumber: companySettingsPagePanNumber.text.trim().toUpperCase(),
       companyFssis: companySettingsPageCompanyFssis.text.trim(),
       shopCgst: gstEnabled ? companySettingsPageShopCgst.text.trim() : '0',
       shopSgst: gstEnabled ? companySettingsPageShopSgst.text.trim() : '0',
@@ -185,8 +187,8 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
         c.gstStatus?.toLowerCase() == 'true' ||
         c.gstStatus?.toLowerCase() == 'yes' ||
         c.gstStatus?.toLowerCase() == 'on';
-    companySettingsPageGstNumber.text = c.gstNumber ?? '';
-    companySettingsPagePanNumber.text = c.panNumber ?? '';
+    companySettingsPageGstNumber.text = (c.gstNumber ?? '').toUpperCase();
+    companySettingsPagePanNumber.text = (c.panNumber ?? '').toUpperCase();
     companySettingsPageCompanyFssis.text = c.companyFssis ?? '';
     companySettingsPageShopCgst.text = textOrEmpty(c.shopCgst);
     companySettingsPageShopSgst.text = textOrEmpty(c.shopSgst);
@@ -234,7 +236,7 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
           companySettingsPageShopName1.text = profile.shopName1;
           companySettingsPageAddressLine1.text = profile.addressLine1;
           companySettingsPagePhoneNo1.text = profile.phoneNo1;
-          companySettingsPageGstNumber.text = profile.gstNumber;
+          companySettingsPageGstNumber.text = profile.gstNumber.toUpperCase();
           logoPath = profile.logoLocalPath;
         });
       }
@@ -760,10 +762,18 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
     TextInputType? keyboardType,
     int maxLines = 1,
     bool required = false,
+    bool uppercase = false,
   }) {
     return TextField(
       controller: c,
       keyboardType: keyboardType,
+      textCapitalization: uppercase
+          ? TextCapitalization.characters
+          : resolveTextCapitalization(
+              requested: TextCapitalization.words,
+              keyboardType: keyboardType,
+            ),
+      inputFormatters: uppercase ? const [UpperCaseTextFormatter()] : null,
       maxLines: maxLines,
       minLines: maxLines > 1 ? maxLines : null,
       style: const TextStyle(
@@ -934,7 +944,11 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                             onChanged: (v) => setState(() => gstEnabled = v),
                           ),
                           if (gstEnabled) ...[
-                            field(companySettingsPageGstNumber, 'GST Number'),
+                            field(
+                              companySettingsPageGstNumber,
+                              'GST Number',
+                              uppercase: true,
+                            ),
                             ResponsiveFormColumns(
                               children: [
                                 field(
@@ -961,6 +975,7 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
                               field(
                                 companySettingsPagePanNumber,
                                 'PAN Number',
+                                uppercase: true,
                               ),
                               field(
                                 companySettingsPageCompanyFssis,
@@ -1034,5 +1049,20 @@ class CompanySettingsPageState extends ConsumerState<CompanySettingsPage> {
         ],
       ),
     );
+  }
+}
+
+/* GSTIN / PAN are codes — every letter stays uppercase, including paste. */
+class UpperCaseTextFormatter extends TextInputFormatter {
+  const UpperCaseTextFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final upper = newValue.text.toUpperCase();
+    if (upper == newValue.text) return newValue;
+    return newValue.copyWith(text: upper, selection: newValue.selection);
   }
 }

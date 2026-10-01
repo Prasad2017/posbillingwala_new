@@ -3,6 +3,25 @@ import 'package:flutter/services.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_svg.dart';
 import 'package:pos_billingwala_v2/core/widgets/widget_theme.dart';
 
+/* First letter of each word for names and notes.
+ * Numbers, phone, email, URL, and passwords stay uncapitalized. */
+TextCapitalization resolveTextCapitalization({
+  required TextCapitalization requested,
+  TextInputType? keyboardType,
+  bool obscureText = false,
+}) {
+  if (obscureText) return TextCapitalization.none;
+  final type = keyboardType;
+  final textLike =
+      type == null ||
+      type == TextInputType.text ||
+      type == TextInputType.multiline ||
+      type == TextInputType.name ||
+      type == TextInputType.streetAddress;
+  if (!textLike) return TextCapitalization.none;
+  return requested;
+}
+
 class AppTextField extends StatefulWidget {
   const AppTextField({
     super.key,
@@ -28,7 +47,7 @@ class AppTextField extends StatefulWidget {
     this.enabled = true,
     this.autofocus = false,
     this.focusNode,
-    this.textCapitalization = TextCapitalization.none,
+    this.textCapitalization = TextCapitalization.words,
     this.textAlign = TextAlign.start,
     /* Marks the field as mandatory (validation / UX). Labels always show when set. */
     this.required = false,
@@ -179,7 +198,11 @@ class AppTextFieldState extends State<AppTextField> {
       obscureText: obscure,
       keyboardType: widget.keyboardType,
       textInputAction: widget.textInputAction,
-      textCapitalization: widget.textCapitalization,
+      textCapitalization: resolveTextCapitalization(
+        requested: widget.textCapitalization,
+        keyboardType: widget.keyboardType,
+        obscureText: widget.obscureText,
+      ),
       textAlign: widget.textAlign,
       minLines: widget.minLines,
       maxLines: widget.maxLines,

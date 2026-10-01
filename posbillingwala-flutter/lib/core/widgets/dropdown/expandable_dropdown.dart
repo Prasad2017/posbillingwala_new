@@ -212,6 +212,7 @@ class ExpandableDropdownFieldState<T>
               padding: const EdgeInsets.fromLTRB(0, 8, 0, 6),
               child: TextField(
                 controller: searchController,
+                textCapitalization: TextCapitalization.words,
                 onChanged: (_) => setState(() {}),
                 cursorColor: context.textPrimary,
                 style: bodyStyle.copyWith(
