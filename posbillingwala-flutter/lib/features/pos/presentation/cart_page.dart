@@ -298,61 +298,84 @@ class _PortraitCartBodyState extends ConsumerState<_PortraitCartBody> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: widget.cartAsync.when(
-            data: (items) {
-              if (items.isEmpty) {
-                return const EmptyCart();
-              }
-              return ListView(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                children: [
-                  _CartItemsTable(items: items, currency: widget.currency),
-                ],
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('$e')),
-          ),
-        ),
-        /* Pinned — never scrolls with the product list.
-         * Cap height when expanded so Save/Share/Print stay visible. */
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.42,
-          ),
-          child: SingleChildScrollView(
-            child: _CartBillBreakdown(
-              expandable: true,
-              expanded: billExpanded,
-              onToggleExpanded: () =>
-                  setState(() => billExpanded = !billExpanded),
-            ),
-          ),
-        ),
-        PosActionFooter(
-          summary: widget.summary,
-          currency: widget.currency,
-          displayTotal: widget.payable,
-          onCartTap: () => setState(() => billExpanded = !billExpanded),
-          onSave: () {
-            if (widget.isTable) {
-              widget.onSaveTable();
-              return;
-            }
-            widget.onClearCheckout(PosCheckoutAction.save);
-          },
-          onShare: () => widget.onClearCheckout(PosCheckoutAction.share),
-          onPrint: () => widget.onClearCheckout(PosCheckoutAction.print),
-          kotEnabled: widget.isTable && widget.kotEnabled,
-          unprintedCount: widget.unprintedCount,
-          onKot: widget.onKot,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        /* Size the bill panel from the space above the keyboard, not the
+         * full screen. A 42% screen cap plus the footer overflows once the
+         * keyboard is open. */
+        final footerReserve = 148 + MediaQuery.paddingOf(context).bottom;
+        final room = (constraints.maxHeight - footerReserve).clamp(
+          0.0,
+          constraints.maxHeight,
+        );
+        final maxBill = room < constraints.maxHeight * 0.5
+            ? room
+            : constraints.maxHeight * 0.5;
+        return Column(
+          children: [
+            Expanded(child: buildItems()),
+            if (maxBill > 0)
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxBill),
+                child: ListView(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  children: [
+                    _CartBillBreakdown(
+                      expandable: true,
+                      expanded: billExpanded,
+                      onToggleExpanded: () =>
+                          setState(() => billExpanded = !billExpanded),
+                    ),
+                  ],
+                ),
+              ),
+            buildFooter(),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget buildItems() {
+    return widget.cartAsync.when(
+      data: (items) {
+        if (items.isEmpty) {
+          return const EmptyCart();
+        }
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          children: [
+            _CartItemsTable(items: items, currency: widget.currency),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('$e')),
+    );
+  }
+
+  Widget buildFooter() {
+    return PosActionFooter(
+      summary: widget.summary,
+      currency: widget.currency,
+      displayTotal: widget.payable,
+      onCartTap: () => setState(() => billExpanded = !billExpanded),
+      onSave: () {
+        if (widget.isTable) {
+          widget.onSaveTable();
+          return;
+        }
+        widget.onClearCheckout(PosCheckoutAction.save);
+      },
+      onShare: () => widget.onClearCheckout(PosCheckoutAction.share),
+      onPrint: () => widget.onClearCheckout(PosCheckoutAction.print),
+      kotEnabled: widget.isTable && widget.kotEnabled,
+      unprintedCount: widget.unprintedCount,
+      onKot: widget.onKot,
     );
   }
 }
