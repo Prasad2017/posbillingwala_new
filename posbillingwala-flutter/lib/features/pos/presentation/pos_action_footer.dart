@@ -58,10 +58,14 @@ class PosActionFooter extends StatelessWidget {
               if (showCartBar) ...[
                 Material(
                   color: AppColors.primary,
+                  elevation: 2,
+                  shadowColor: AppColors.primary.withValues(alpha: 0.45),
                   borderRadius: BorderRadius.circular(12),
                   child: InkWell(
                     onTap: onCartTap,
                     borderRadius: BorderRadius.circular(12),
+                    splashColor: Colors.white24,
+                    highlightColor: Colors.white10,
                     child: Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 14,
@@ -104,21 +108,59 @@ class PosActionFooter extends StatelessWidget {
                           ),
                           const SizedBox(width: 14),
                           Expanded(
-                            child: Text(
-                              itemsLabel,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  itemsLabel,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  currency.format(total),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          Text(
-                            currency.format(total),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'View Bill',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                SizedBox(width: 2),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ],
                             ),
                           ),
                         ],
