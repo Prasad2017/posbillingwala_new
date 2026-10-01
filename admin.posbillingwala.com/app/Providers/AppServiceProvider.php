@@ -57,13 +57,18 @@ class AppServiceProvider extends ServiceProvider
 
         $configured = rtrim((string) config('app.url'), '/');
         $configuredHost = $configured ? (parse_url($configured, PHP_URL_HOST) ?: '') : '';
+        $configuredPath = rtrim((string) (parse_url($configured, PHP_URL_PATH) ?: ''), '/');
         $requestHost = $request->getHost();
-        $requestRoot = $request->getSchemeAndHttpHost();
+        $basePath = \admin_url_base_path();
+        if ($basePath === '') {
+            $basePath = rtrim($request->getBasePath(), '/');
+        }
+        $requestRoot = $request->getSchemeAndHttpHost() . $basePath;
 
         $assetUrl = (string) env('ASSET_URL', '');
         $assetHost = $assetUrl ? (parse_url($assetUrl, PHP_URL_HOST) ?: '') : '';
 
-        // Wrong ASSET_URL in .env (old /adminpanel path or different domain) breaks CSS on subdomains.
+        // Wrong ASSET_URL in .env (different domain) breaks CSS on this host.
         if ($assetHost !== '' && strcasecmp($assetHost, $requestHost) !== 0) {
             config(['app.asset_url' => null]);
         }
@@ -71,7 +76,12 @@ class AppServiceProvider extends ServiceProvider
         if ($configuredHost === '' || strcasecmp($configuredHost, $requestHost) !== 0) {
             URL::forceRootUrl($requestRoot);
         } elseif ($configured !== '') {
-            URL::forceRootUrl($configured);
+            // APP_URL often has no folder. Keep /adminPanel so links match the browser.
+            if ($basePath !== '' && $configuredPath === '') {
+                URL::forceRootUrl($configured . $basePath);
+            } else {
+                URL::forceRootUrl($configured);
+            }
         }
     }
 }

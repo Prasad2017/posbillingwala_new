@@ -66,19 +66,12 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
   Future<void> resetPin() async {
     final pin = TextEditingController();
     final confirm = TextEditingController();
-    final ok = await showDialog<bool>(
+    final ok = await showAppDialog<bool>(
       context: context,
       builder: (context) {
-        final screenW = MediaQuery.sizeOf(context).width;
         return AlertDialog(
-        insetPadding: EdgeInsets.symmetric(
-          horizontal: screenW < 360 ? 12 : 24,
-          vertical: 24,
-        ),
         title: const Text('Reset PIN'),
-        content: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: screenW - 48),
-          child: Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             AppTextField(
@@ -98,7 +91,6 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             ),
           ],
-        ),
         ),
         actions: [
           TextButton(

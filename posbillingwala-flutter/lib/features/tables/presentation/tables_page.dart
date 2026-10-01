@@ -309,7 +309,7 @@ class TablesPageState extends ConsumerState<TablesPage> {
         ? 'Retry Print'
         : strings.settleBill;
 
-    final action = await showModalBottomSheet<String>(
+    final action = await showAppModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       builder: (context) => SafeArea(

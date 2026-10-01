@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/payment_display/domain/payment_display_service.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/billing_session.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/payment_checkout_controller.dart';
@@ -46,7 +47,7 @@ Future<bool> promptPaymentMode(BuildContext context, WidgetRef ref) async {
         total,
       );
 
-  final confirmed = await showModalBottomSheet<bool>(
+  final confirmed = await showAppModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,

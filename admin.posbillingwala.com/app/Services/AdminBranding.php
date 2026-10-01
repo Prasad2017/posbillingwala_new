@@ -73,13 +73,31 @@ class AdminBranding
     /** Absolute URL for public website (cross-domain). */
     public static function publicLogoUrl(): string
     {
-        return url(self::logoUrl());
+        return self::absoluteUrl(self::logoUrl());
     }
 
     /** Absolute URL for public website (cross-domain). */
     public static function publicFaviconUrl(): string
     {
-        return url(self::faviconUrl());
+        return self::absoluteUrl(self::faviconUrl());
+    }
+
+    /** Host + path. logoUrl() already includes /adminPanel when the app is in a folder. */
+    private static function absoluteUrl(string $path): string
+    {
+        if (preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+
+        $path = '/' . ltrim($path, '/');
+        if (! app()->runningInConsole()) {
+            try {
+                return rtrim(request()->getSchemeAndHttpHost(), '/') . $path;
+            } catch (\Throwable $e) {
+            }
+        }
+
+        return rtrim((string) config('app.url'), '/') . $path;
     }
 
     public static function hasCustomLogo(): bool

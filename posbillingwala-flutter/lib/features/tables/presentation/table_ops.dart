@@ -86,7 +86,7 @@ Future<void> settleUnpaidTableInvoice(
   }
 
   final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
-  final settled = await showModalBottomSheet<PaymentTender?>(
+  final settled = await showAppModalBottomSheet<PaymentTender?>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -384,7 +384,7 @@ Future<void> handleTableOpsAction(
       return;
     }
     if (!context.mounted) return;
-    final selected = await showModalBottomSheet<List<CartItem>>(
+    final selected = await showAppModalBottomSheet<List<CartItem>>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,

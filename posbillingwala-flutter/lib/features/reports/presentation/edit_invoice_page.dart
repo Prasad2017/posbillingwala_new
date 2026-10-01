@@ -196,19 +196,12 @@ Future<void> editLine(
   final priceCtrl = TextEditingController(
     text: amountInputText(item.productPrice),
   );
-  final ok = await showDialog<bool>(
+  final ok = await showAppDialog<bool>(
     context: context,
     builder: (context) {
-      final screenW = MediaQuery.sizeOf(context).width;
       return AlertDialog(
-      insetPadding: EdgeInsets.symmetric(
-        horizontal: screenW < 360 ? 12 : 24,
-        vertical: 24,
-      ),
       title: Text(strings.editItem),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: screenW - 48),
-        child: Column(
+      content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           AppTextField(
@@ -225,7 +218,6 @@ Future<void> editLine(
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
         ],
-      ),
       ),
       actions: [
         TextButton(
@@ -324,20 +316,13 @@ Future<void> editInvoicePageAddProduct(
   }
   Product? selected = products.first;
   final qtyCtrl = TextEditingController(text: '1');
-  final ok = await showDialog<bool>(
+  final ok = await showAppDialog<bool>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setLocal) {
-        final screenW = MediaQuery.sizeOf(context).width;
         return AlertDialog(
-        insetPadding: EdgeInsets.symmetric(
-          horizontal: screenW < 360 ? 12 : 24,
-          vertical: 24,
-        ),
         title: Text(strings.addProduct),
-        content: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: screenW - 48),
-          child: Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             AppDropdownFormField<Product>(
@@ -357,7 +342,6 @@ Future<void> editInvoicePageAddProduct(
               keyboardType: TextInputType.number,
             ),
           ],
-        ),
         ),
         actions: [
           TextButton(
@@ -459,20 +443,14 @@ Future<void> editHeader(
   var discountType = invoice.discountType;
   var packingType = invoice.packingChargeType;
 
-  final ok = await showDialog<bool>(
+  final ok = await showAppDialog<bool>(
     context: context,
+    form: true,
     builder: (context) => StatefulBuilder(
       builder: (context, setLocal) {
-        final screenW = MediaQuery.sizeOf(context).width;
         return AlertDialog(
-        insetPadding: EdgeInsets.symmetric(
-          horizontal: screenW < 360 ? 12 : 24,
-          vertical: 24,
-        ),
         title: Text(strings.billHeader),
-        content: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: screenW - 48),
-          child: SingleChildScrollView(
+        content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -559,7 +537,6 @@ Future<void> editHeader(
               ),
             ],
           ),
-        ),
         ),
         actions: [
           TextButton(

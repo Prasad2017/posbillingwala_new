@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
@@ -16,6 +17,8 @@ import 'package:pos_billingwala_v2/language/app_strings.dart';
 
 /*
  * App logo while resolving splash; admin image when available (3s).
+ * The image follows the current window: web, phone, or tablet, portrait
+ * or landscape. Resizing or rotating swaps the artwork immediately.
  * No separate OS/Flutter double-logo — logo only on this Flutter page.
  */
 class SplashPage extends ConsumerStatefulWidget {
@@ -29,7 +32,7 @@ class SplashPageState extends ConsumerState<SplashPage> {
   static const dynamicSplashHold = Duration(seconds: 3);
 
   String? webOfflineMessage;
-  AppSplashArt? splashArt;
+  AppSplashLibrary? splashLibrary;
 
   @override
   void initState() {
@@ -50,24 +53,24 @@ class SplashPageState extends ConsumerState<SplashPage> {
     final store = AppSplashStore(ref.read(apiClientProvider));
     final online = await isDeviceOnline();
 
-    final cached = await store.readCachedArt();
+    final cached = await store.readCachedLibrary();
     if (!mounted) return;
 
     if (cached != null && !cached.isEmpty) {
-      setState(() => splashArt = cached);
+      setState(() => splashLibrary = cached);
     }
 
     if (online) {
       final fresh = await store.fetchAndCache();
       if (!mounted) return;
       if (fresh != null && !fresh.isEmpty) {
-        setState(() => splashArt = fresh);
+        setState(() => splashLibrary = fresh);
       } else {
-        setState(() => splashArt = null);
+        setState(() => splashLibrary = null);
       }
     }
 
-    final hasDynamic = splashArt != null && !splashArt!.isEmpty;
+    final hasDynamic = splashLibrary != null && !splashLibrary!.isEmpty;
     if (hasDynamic) {
       await Future<void>.delayed(dynamicSplashHold);
     }
@@ -119,31 +122,45 @@ class SplashPageState extends ConsumerState<SplashPage> {
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom;
     final size = MediaQuery.sizeOf(context);
-    final art = splashArt;
-    final showDynamic = art != null && !art.isEmpty;
+    final pick = splashLibrary?.pick(size, isWeb: kIsWeb);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          const ColoredBox(color: Colors.white),
-          if (showDynamic)
-            _DynamicSplashImage(art: art)
-          else
-            _AppLogo(size: size),
-          if (webOfflineMessage != null)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(24, 0, 24, 20 + bottomPad),
-                child: _SplashOfflineBanner(
-                  message: webOfflineMessage!,
-                  onRetry: retryWebOnline,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: MediaQuery.removePadding(
+          context: context,
+          removeTop: true,
+          removeBottom: true,
+          removeLeft: true,
+          removeRight: true,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              const ColoredBox(color: Colors.white),
+              if (pick != null)
+                _DynamicSplashImage(art: pick.art)
+              else
+                _AppLogo(size: size),
+              if (webOfflineMessage != null)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(24, 0, 24, 20 + bottomPad),
+                    child: _SplashOfflineBanner(
+                      message: webOfflineMessage!,
+                      onRetry: retryWebOnline,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -160,44 +177,42 @@ class _DynamicSplashImage extends StatelessWidget {
     final path = art.localPath?.trim() ?? '';
     final size = MediaQuery.sizeOf(context);
 
-    if (url.isNotEmpty) {
-      return Image.network(
-        url,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        alignment: Alignment.center,
-        filterQuality: FilterQuality.high,
-        gaplessPlayback: true,
-        errorBuilder: (_, _, _) {
-          if (!kIsWeb && path.isNotEmpty && File(path).existsSync()) {
-            return Image.file(
-              File(path),
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-              alignment: Alignment.center,
-              filterQuality: FilterQuality.high,
-              gaplessPlayback: true,
-              errorBuilder: (_, _, _) => _AppLogo(size: size),
-            );
-          }
-          return _AppLogo(size: size);
-        },
+    /* Always fill the screen — crop edges if needed so there is no gap. */
+    Widget image({required ImageProvider provider}) {
+      return SizedBox.expand(
+        child: Image(
+          image: provider,
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          filterQuality: FilterQuality.high,
+          gaplessPlayback: true,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (_, _, _) {
+            if (!kIsWeb && path.isNotEmpty && File(path).existsSync()) {
+              return Image.file(
+                File(path),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                alignment: Alignment.center,
+                filterQuality: FilterQuality.high,
+                gaplessPlayback: true,
+                errorBuilder: (_, _, _) => _AppLogo(size: size),
+              );
+            }
+            return _AppLogo(size: size);
+          },
+        ),
       );
     }
 
+    if (url.isNotEmpty) {
+      return image(provider: NetworkImage(url));
+    }
+
     if (!kIsWeb && path.isNotEmpty && File(path).existsSync()) {
-      return Image.file(
-        File(path),
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        alignment: Alignment.center,
-        filterQuality: FilterQuality.high,
-        gaplessPlayback: true,
-        errorBuilder: (_, _, _) => _AppLogo(size: size),
-      );
+      return image(provider: FileImage(File(path)));
     }
 
     return _AppLogo(size: size);

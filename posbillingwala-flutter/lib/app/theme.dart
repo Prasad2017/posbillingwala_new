@@ -220,6 +220,9 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         titleTextStyle: AppTypography.sectionTitle(),
         contentTextStyle: AppTypography.body(),
+        /* Caps dialogs on tablet/web; phones stay near full via inset. */
+        constraints: const BoxConstraints(minWidth: 280, maxWidth: 480),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.glassSolid,
@@ -227,6 +230,8 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
+        /* Full width on phones (<480); centered card on tablet/web. */
+        constraints: BoxConstraints(maxWidth: 480),
       ),
       tabBarTheme: TabBarThemeData(
         labelStyle: AppTypography.cardTitle(color: AppColors.primary),

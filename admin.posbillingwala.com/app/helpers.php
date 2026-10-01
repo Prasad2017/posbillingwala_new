@@ -2,7 +2,9 @@
 
 if (! function_exists('admin_asset')) {
     /**
-     * Root-relative static asset URL (works on any host/path when /assets/ is web-accessible).
+     * Static asset URL under this install.
+     * Domain root stays /assets/…. A folder such as /adminPanel keeps that prefix,
+     * otherwise the browser asks the domain root and CSS, JS, and images 404.
      */
     function admin_asset(string $path, bool $versioned = true): string
     {
@@ -11,7 +13,8 @@ if (! function_exists('admin_asset')) {
             $path = 'assets/' . $path;
         }
 
-        $url = '/' . $path;
+        $prefix = admin_url_base_path();
+        $url = $prefix . '/' . $path;
 
         if ($versioned) {
             $file = base_path($path);
@@ -24,6 +27,37 @@ if (! function_exists('admin_asset')) {
         }
 
         return $url;
+    }
+}
+
+if (! function_exists('admin_url_base_path')) {
+    /**
+     * App folder on the host (/adminPanel) or empty when the site is at domain root.
+     */
+    function admin_url_base_path(): string
+    {
+        if (! app()->runningInConsole()) {
+            try {
+                $fromRequest = rtrim((string) request()->getBasePath(), '/');
+                if ($fromRequest !== '') {
+                    return $fromRequest;
+                }
+            } catch (\Throwable $e) {
+            }
+
+            $script = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
+            if ($script !== '' && $script !== '/index.php') {
+                $dir = str_replace('\\', '/', dirname($script));
+                if ($dir !== '/' && $dir !== '.' && $dir !== '') {
+                    return rtrim($dir, '/');
+                }
+            }
+        }
+
+        $configured = rtrim((string) config('app.url'), '/');
+        $configuredPath = rtrim((string) (parse_url($configured, PHP_URL_PATH) ?: ''), '/');
+
+        return $configuredPath;
     }
 }
 

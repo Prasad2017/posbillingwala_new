@@ -607,7 +607,7 @@ Future<void> editInvoiceCustomerPayment(
   var discountType = normalizeDiscountType(invoice.discountType);
   var packingType = normalizeDiscountType(invoice.packingChargeType);
 
-  final ok = await showModalBottomSheet<bool>(
+  final ok = await showAppModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     backgroundColor: AppColors.glassSolid,

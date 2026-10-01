@@ -88,7 +88,7 @@
         </a>
         <a class="hub-row hub-row--card" href="{{ url('settings/pos-splash') }}">
             <span class="hub-icon kpi-icon green"><i class='bx bx-landscape'></i></span>
-            <div><h6>POS App Splash Upload</h6><p>Startup splash image for the POS mobile app</p></div>
+            <div><h6>POS App Splash Upload</h6><p>Startup splash for phone, tablet, and web — portrait and landscape</p></div>
             <i class='bx bx-chevron-right hub-chevron'></i>
         </a>
         <a class="hub-row hub-row--card hub-row--wide" href="{{ url('website/contacts') }}">

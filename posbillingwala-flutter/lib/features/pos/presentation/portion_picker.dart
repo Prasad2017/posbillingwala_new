@@ -50,15 +50,11 @@ Future<void> addProductWithPortionPicker(
   var qty = 1.0;
   final step = ProductUnits.stepFor(product.productUnit);
 
-  final confirmed = await showDialog<bool>(
+  final confirmed = await showAppDialog<bool>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setLocal) {
         return Dialog(
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 24,
-          ),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 7,
           child: Column(

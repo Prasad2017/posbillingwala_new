@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
+import 'package:pos_billingwala_v2/features/print/domain/kot_slip_layout.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_labels.dart';
 import 'package:pos_billingwala_v2/features/print/domain/receipt_rasterizer.dart';
@@ -51,13 +52,10 @@ class ReceiptBuilder {
   }
 
   Future<List<int>> kotPrintBytes(KotTicket ticket) {
-    return rasterizer.encodeText(
-      kotText(ticket),
+    return rasterizer.encodeKot(
+      kotLayout(ticket),
       settings: settings,
       feedLinesOverride: settings.kotFeedLines,
-      useAssetLogoFallback: false,
-      /* Kitchen tickets read larger than invoice body text. */
-      fontSizeScale: 1.28,
     );
   }
 
@@ -241,23 +239,43 @@ class ReceiptBuilder {
     ).toPlainText(width: settings.charsPerLine);
   }
 
+  /* Invoice-style KOT columns for preview + thermal raster. */
+  KotSlipLayout kotLayout(KotTicket ticket) {
+    return KotSlipLayout(
+      title: labels.kot,
+      metaLines: [
+        'KOT: ${ticket.kot.kotNumber}',
+        '${labels.date}: ${receiptBuilderDate.format(ticket.kot.createdAt)}',
+        'Table No: ${ticket.kot.tableNumber}',
+        'Round: ${ticket.roundNumber}',
+        ticket.kot.kitchenName,
+      ],
+      colItem: 'ITEMS',
+      colQty: labels.qty,
+      items: [
+        for (final item in ticket.items)
+          KotSlipItem(
+            name: item.productName,
+            qty: 'X${qtyLabel(item.productQuantity, unit: item.productUnit)}',
+          ),
+      ],
+    );
+  }
+
   String kotText(KotTicket ticket) {
     final width = settings.charsPerLine;
+    final layout = kotLayout(ticket);
     final buf = StringBuffer()
-      /* Title only — KOT number stays in the body as "KOT: …". */
-      ..writeln(receiptBuilderCenter(labels.kot, width))
-      ..writeln('-' * width)
-      ..writeln('KOT: ${ticket.kot.kotNumber}')
-      ..writeln(
-        '${labels.date}: ${receiptBuilderDate.format(ticket.kot.createdAt)}',
-      )
-      ..writeln('Table No: ${ticket.kot.tableNumber}')
-      ..writeln('Round: ${ticket.roundNumber}')
-      ..writeln(ticket.kot.kitchenName)
+      ..writeln(receiptBuilderCenter(layout.title, width))
       ..writeln('-' * width);
-    for (final item in ticket.items) {
-      final qty = 'X${qtyLabel(item.productQuantity, unit: item.productUnit)}';
-      buf.writeln(kotItemLine(item.productName, qty, width));
+    for (final line in layout.metaLines) {
+      buf.writeln(line);
+    }
+    buf.writeln('-' * width);
+    buf.writeln(kotItemLine(layout.colItem, layout.colQty, width));
+    buf.writeln('-' * width);
+    for (final item in layout.items) {
+      buf.writeln(kotItemLine(item.name, item.qty, width));
     }
     buf.writeln('-' * width);
     return buf.toString();

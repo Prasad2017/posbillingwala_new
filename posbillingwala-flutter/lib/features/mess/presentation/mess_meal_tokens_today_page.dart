@@ -276,20 +276,12 @@ class MessMealTokensTodayPageState
     if (isLocalPrinted(token)) return;
     final userId = ref.read(authControllerProvider).session?.userId;
     if (userId == null) return;
-    final confirm = await showDialog<bool>(
+    final confirm = await showAppDialog<bool>(
       context: context,
       builder: (context) {
-        final screenW = MediaQuery.sizeOf(context).width;
         return AlertDialog(
-          insetPadding: EdgeInsets.symmetric(
-            horizontal: screenW < 360 ? 12 : 24,
-            vertical: 24,
-          ),
           title: Text(AppStrings.of(ref).cancelToken),
-          content: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: screenW - 48),
-            child: Text('Cancel ${token.tokenNumber}?'),
-          ),
+          content: Text('Cancel ${token.tokenNumber}?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),

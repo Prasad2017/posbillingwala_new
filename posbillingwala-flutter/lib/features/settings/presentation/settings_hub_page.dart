@@ -78,7 +78,7 @@ class SettingsHubPage extends ConsumerWidget {
 
   Future<void> pickLanguage(BuildContext context, WidgetRef ref) async {
     final current = ref.read(appLocaleProvider).languageCode;
-    final selected = await showModalBottomSheet<String>(
+    final selected = await showAppModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.glassSolid,

@@ -40,7 +40,7 @@ class WebsiteMedia
             return null;
         }
 
-        return asset($relativePath) . '?v=' . filemtime($absolute);
+        return admin_asset(ltrim($relativePath, '/'), false) . '?v=' . filemtime($absolute);
     }
 
     public static function delete(?string $relativePath): void

@@ -257,22 +257,16 @@ Future<MessMemberFormResult?> showMemberFormDialog(
   }
   var messDays = 'Two Time';
 
-  final ok = await showDialog<bool>(
+  final ok = await showAppDialog<bool>(
     context: context,
+    form: true,
     builder: (context) => StatefulBuilder(
       builder: (context, setLocal) {
         final isStudent = memberType == 'student';
         final isWorking = memberType == 'working';
-        final screenW = MediaQuery.sizeOf(context).width;
         return AlertDialog(
-          insetPadding: EdgeInsets.symmetric(
-            horizontal: screenW < 360 ? 12 : 24,
-            vertical: 24,
-          ),
           title: Text(title),
-          content: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: screenW - 48),
-            child: SingleChildScrollView(
+          content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -368,7 +362,6 @@ Future<MessMemberFormResult?> showMemberFormDialog(
                 ],
               ],
             ),
-          ),
           ),
           actions: [
             AppButton(

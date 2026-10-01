@@ -9,6 +9,7 @@ import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_slip_builder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_encoder.dart';
+import 'package:pos_billingwala_v2/features/print/domain/kot_slip_layout.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_image_encoder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_capability.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
@@ -45,6 +46,30 @@ class ReceiptRasterizer {
       paperSize: settings.paperSize,
       logoPath: logoPath,
       useAssetLogoFallback: useAssetLogoFallback,
+    );
+    final doCut = printerCapabilityManager.shouldCutForSettings(settings);
+    return await _escPosRaster(
+      rendered,
+      charsPerLine: profile.charsPerLine,
+      feedLines: feedLinesOverride ?? settings.feedLines,
+      autoCut: doCut,
+      fullCut: settings.cutType.useFullCut,
+    );
+  }
+
+  /* Kitchen ticket — same paper width / Poppins metrics as invoice ticket. */
+  Future<List<int>> encodeKot(
+    KotSlipLayout layout, {
+    required PrinterSettings settings,
+    int? feedLinesOverride,
+  }) async {
+    final profile = settings.billProfile;
+    profile.validateOrThrow();
+    final width = profile.imageWidthPx;
+    final rendered = await renderKot(
+      layout,
+      width,
+      paperSize: settings.paperSize,
     );
     final doCut = printerCapabilityManager.shouldCutForSettings(settings);
     return await _escPosRaster(
@@ -524,6 +549,121 @@ class ReceiptRasterizer {
         gap: lineGap,
       );
     }
+
+    final height = (y + 16).ceil().clamp(24, 12000);
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, widthPx.toDouble(), height.toDouble()),
+      Paint()..color = const Color(0xFFFFFFFF),
+    );
+    for (final op in ops) {
+      op.paint(canvas, this);
+    }
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(widthPx, height);
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+    image.dispose();
+    for (final op in ops) {
+      op.dispose();
+    }
+    if (byteData == null) {
+      return RenderedImage(
+        rgba: Uint8List(widthPx * height * 4),
+        width: widthPx,
+        height: height,
+      );
+    }
+    return RenderedImage(
+      rgba: byteData.buffer.asUint8List(),
+      width: widthPx,
+      height: height,
+    );
+  }
+
+  /* KOT slip — title + meta + ITEMS/QTY columns (invoice paper metrics). */
+  Future<RenderedImage> renderKot(
+    KotSlipLayout layout,
+    int widthPx, {
+    required PrinterPaperSize paperSize,
+  }) async {
+    final profile = profileFor(paperSize);
+    final hPad = profile.marginLeft;
+    final qtyW = profile.qtyColumnWidth.clamp(36.0, 72.0);
+    final titleSize = profile.shopFontSize * 0.95;
+    final bodySize = profile.bodyFontSize * 1.12;
+    final lineGap = profile.lineGap;
+    final sectionGap = profile.sectionGap;
+    final contentW = widthPx - hPad * 2;
+    final itemColW = (contentW - qtyW).clamp(40.0, contentW);
+
+    TextStyle style({
+      double? size,
+      FontWeight weight = FontWeight.w500,
+    }) => AppFonts.printBody(
+      fontSize: size ?? bodySize,
+      weight: weight,
+      height: 1.2,
+    );
+
+    final ops = <_PaintOp>[];
+    var y = 10.0;
+
+    y = _paintCentered(
+      ops,
+      layout.title,
+      style(size: titleSize, weight: FontWeight.w700),
+      widthPx: widthPx,
+      maxWidth: contentW,
+      y: y,
+      gap: sectionGap,
+    );
+
+    y = _paintRule(ops, left: hPad, width: contentW, y: y);
+
+    for (final line in layout.metaLines) {
+      y = _paintLeft(
+        ops,
+        line,
+        style(),
+        left: hPad,
+        maxWidth: contentW,
+        y: y,
+        gap: lineGap,
+      );
+    }
+
+    y = _paintRule(ops, left: hPad, width: contentW, y: y);
+
+    y = _paintColumns(
+      ops,
+      left: hPad,
+      y: y,
+      gap: lineGap,
+      cells: [
+        _Col(layout.colItem, itemColW, TextAlign.left, FontWeight.w700),
+        _Col(layout.colQty, qtyW, TextAlign.right, FontWeight.w700),
+      ],
+      style: style(),
+    );
+
+    y = _paintRule(ops, left: hPad, width: contentW, y: y);
+
+    for (final item in layout.items) {
+      y = _paintColumns(
+        ops,
+        left: hPad,
+        y: y + lineGap,
+        gap: sectionGap,
+        cells: [
+          _Col(item.name, itemColW, TextAlign.left, FontWeight.w500),
+          _Col(item.qty, qtyW, TextAlign.right, FontWeight.w700),
+        ],
+        style: style(),
+      );
+    }
+
+    y = _paintRule(ops, left: hPad, width: contentW, y: y);
 
     final height = (y + 16).ceil().clamp(24, 12000);
     final recorder = ui.PictureRecorder();

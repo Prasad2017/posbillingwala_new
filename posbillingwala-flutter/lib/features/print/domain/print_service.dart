@@ -7,6 +7,7 @@ import 'package:pos_billingwala_v2/core/logging/app_logger.dart';
 import 'package:pos_billingwala_v2/features/mess/domain/mess_slip_builder.dart';
 import 'package:pos_billingwala_v2/features/print/domain/bluetooth_printer_hub.dart';
 import 'package:pos_billingwala_v2/features/print/domain/esc_pos_transport_hub.dart';
+import 'package:pos_billingwala_v2/features/print/domain/kot_slip_layout.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_job_manager.dart';
 import 'package:pos_billingwala_v2/features/print/domain/print_job_state.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
@@ -178,6 +179,22 @@ class PrintService {
       shopProfile: shopProfile,
       labels: labels,
     ).kotText(
+      ticket ?? SampleReceiptData.sampleKot(prefix: settings.kotPrefix),
+    );
+  }
+
+  KotSlipLayout kotPreviewLayout({
+    KotTicket? ticket,
+    PrinterPaperSize? paperSize,
+  }) {
+    final previewSettings = paperSize == null
+        ? settings.copyWith(paperSize: settings.kotPaperSize)
+        : settings.copyWith(paperSize: paperSize);
+    return ReceiptBuilder(
+      previewSettings,
+      shopProfile: shopProfile,
+      labels: labels,
+    ).kotLayout(
       ticket ?? SampleReceiptData.sampleKot(prefix: settings.kotPrefix),
     );
   }

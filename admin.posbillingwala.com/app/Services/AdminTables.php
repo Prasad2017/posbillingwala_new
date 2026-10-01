@@ -209,9 +209,17 @@ class AdminTables
         if (!Schema::hasTable('pos_app_splash')) {
             Schema::create('pos_app_splash', function (Blueprint $table) {
                 $table->increments('id');
+                $table->string('slot', 40)->default('legacy');
                 $table->string('image_path', 255)->nullable();
                 $table->string('image_url', 500)->nullable();
                 $table->dateTime('updated_at')->useCurrent();
+                $table->unique('slot', 'pos_app_splash_slot_unique');
+            });
+        }
+
+        if (Schema::hasTable('pos_app_splash') && !Schema::hasColumn('pos_app_splash', 'slot')) {
+            Schema::table('pos_app_splash', function (Blueprint $table) {
+                $table->string('slot', 40)->default('legacy');
             });
         }
 

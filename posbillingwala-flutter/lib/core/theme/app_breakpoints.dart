@@ -302,6 +302,72 @@ abstract final class AppBreakpoints {
     AppWidthClass.largeDesktop => 32,
   };
 
+  /* Compact dialogs (confirm / pickers) — never stretch on tablet/web. */
+  static double dialogMaxWidthFor(AppWidthClass w) => switch (w) {
+    AppWidthClass.smallMobile || AppWidthClass.mobile => 400,
+    AppWidthClass.tablet => 440,
+    AppWidthClass.largeTablet => 480,
+    AppWidthClass.desktop || AppWidthClass.largeDesktop => 520,
+  };
+
+  /* Multi-field form dialogs — wider, still capped. */
+  static double dialogFormMaxWidthFor(AppWidthClass w) => switch (w) {
+    AppWidthClass.smallMobile || AppWidthClass.mobile => 420,
+    AppWidthClass.tablet => 560,
+    AppWidthClass.largeTablet => 640,
+    AppWidthClass.desktop || AppWidthClass.largeDesktop => 720,
+  };
+
+  /* Bottom sheets: full bleed on phones; centered & capped on tablet/web. */
+  static double sheetMaxWidthFor(AppWidthClass w) => switch (w) {
+    AppWidthClass.smallMobile || AppWidthClass.mobile => double.infinity,
+    AppWidthClass.tablet => 480,
+    AppWidthClass.largeTablet => 520,
+    AppWidthClass.desktop => 560,
+    AppWidthClass.largeDesktop => 600,
+  };
+
+  static double dialogHorizontalInsetFor(AppWidthClass w) => switch (w) {
+    AppWidthClass.smallMobile => 16,
+    AppWidthClass.mobile => 24,
+    AppWidthClass.tablet => 40,
+    AppWidthClass.largeTablet => 48,
+    AppWidthClass.desktop || AppWidthClass.largeDesktop => 56,
+  };
+
+  static BoxConstraints dialogConstraintsOf(
+    BuildContext context, {
+    bool form = false,
+  }) {
+    final size = MediaQuery.sizeOf(context);
+    final w = ofWidth(size.width);
+    final preferred =
+        form ? dialogFormMaxWidthFor(w) : dialogMaxWidthFor(w);
+    final inset = dialogHorizontalInsetFor(w);
+    final max = preferred < size.width - inset
+        ? preferred
+        : (size.width - inset).clamp(280.0, preferred);
+    return BoxConstraints(minWidth: 280, maxWidth: max);
+  }
+
+  static BoxConstraints sheetConstraintsOf(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final w = ofWidth(size.width);
+    final preferred = sheetMaxWidthFor(w);
+    if (!preferred.isFinite) {
+      return const BoxConstraints();
+    }
+    return BoxConstraints(maxWidth: preferred.clamp(280.0, size.width));
+  }
+
+  static EdgeInsets dialogInsetPaddingOf(BuildContext context) {
+    final w = of(context);
+    return EdgeInsets.symmetric(
+      horizontal: dialogHorizontalInsetFor(w),
+      vertical: 24,
+    );
+  }
+
   static int formColumnsFor(
     AppWidthClass w, {
     int maxColumns = 2,

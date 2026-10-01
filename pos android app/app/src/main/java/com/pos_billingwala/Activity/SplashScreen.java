@@ -11,6 +11,7 @@ import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -60,9 +61,14 @@ public class SplashScreen extends BaseActivity {
         binding = ActivitySplashScreenBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
-        getWindow().setStatusBarColor(Color.WHITE);
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+        );
 
         showAppLogo();
 
@@ -88,6 +94,7 @@ public class SplashScreen extends BaseActivity {
         }
         binding.logoIcon.setVisibility(View.GONE);
         binding.dynamicSplashImage.setVisibility(View.VISIBLE);
+        binding.dynamicSplashImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
         Callback fallbackToLogo = new Callback() {
             @Override
@@ -103,10 +110,7 @@ public class SplashScreen extends BaseActivity {
         };
 
         if (!TextUtils.isEmpty(art.networkUrl)) {
-            Picasso.get()
-                    .load(art.networkUrl)
-                    .fit()
-                    .centerCrop()
+            loadSplash(Picasso.get().load(art.networkUrl))
                     .into(binding.dynamicSplashImage, new Callback() {
                         @Override
                         public void onSuccess() {
@@ -117,10 +121,7 @@ public class SplashScreen extends BaseActivity {
                             if (!TextUtils.isEmpty(art.localPath)) {
                                 File file = new File(art.localPath);
                                 if (file.exists()) {
-                                    Picasso.get()
-                                            .load(file)
-                                            .fit()
-                                            .centerCrop()
+                                    loadSplash(Picasso.get().load(file))
                                             .into(binding.dynamicSplashImage, fallbackToLogo);
                                     return;
                                 }
@@ -134,15 +135,19 @@ public class SplashScreen extends BaseActivity {
         if (!TextUtils.isEmpty(art.localPath)) {
             File file = new File(art.localPath);
             if (file.exists()) {
-                Picasso.get()
-                        .load(file)
-                        .fit()
-                        .centerCrop()
+                loadSplash(Picasso.get().load(file))
                         .into(binding.dynamicSplashImage, fallbackToLogo);
                 return;
             }
         }
         showAppLogo();
+    }
+
+    private com.squareup.picasso.RequestCreator loadSplash(
+            com.squareup.picasso.RequestCreator request
+    ) {
+        /* Fill the screen — crop edges if needed so there is no gap. */
+        return request.fit().centerCrop();
     }
 
     /**

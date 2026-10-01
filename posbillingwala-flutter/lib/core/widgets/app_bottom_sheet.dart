@@ -1,8 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/widgets/app_button.dart';
 import 'package:pos_billingwala_v2/core/widgets/widget_strings.dart';
 import 'package:pos_billingwala_v2/core/widgets/widget_theme.dart';
+
+/* Modal bottom sheet capped by screen width (full on phone, centered on tablet/web). */
+Future<T?> showAppModalBottomSheet<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  bool isScrollControlled = false,
+  bool isDismissible = true,
+  bool enableDrag = true,
+  bool? showDragHandle,
+  Color? backgroundColor,
+  ShapeBorder? shape,
+  Clip? clipBehavior,
+  bool useSafeArea = false,
+  bool useRootNavigator = false,
+  RouteSettings? routeSettings,
+  AnimationController? transitionAnimationController,
+  Offset? anchorPoint,
+  double? elevation,
+  Color? barrierColor,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    isScrollControlled: isScrollControlled,
+    isDismissible: isDismissible,
+    enableDrag: enableDrag,
+    showDragHandle: showDragHandle,
+    backgroundColor: backgroundColor,
+    shape: shape,
+    clipBehavior: clipBehavior,
+    useSafeArea: useSafeArea,
+    useRootNavigator: useRootNavigator,
+    routeSettings: routeSettings,
+    transitionAnimationController: transitionAnimationController,
+    anchorPoint: anchorPoint,
+    elevation: elevation,
+    barrierColor: barrierColor,
+    constraints: AppBreakpoints.sheetConstraintsOf(context),
+    builder: builder,
+  );
+}
 
 Future<T?> showAppBottomSheet<T>({
   required BuildContext context,
@@ -10,7 +51,7 @@ Future<T?> showAppBottomSheet<T>({
   required Widget child,
   IconData? icon,
 }) {
-  return showModalBottomSheet<T>(
+  return showAppModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
     backgroundColor: AppColors.glassSolid,
@@ -176,4 +217,3 @@ Future<String?> showAppActionSheet({
     ),
   );
 }
-

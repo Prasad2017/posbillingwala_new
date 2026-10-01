@@ -12,8 +12,8 @@ import 'package:pos_billingwala_v2/features/print/domain/printer_settings.dart';
 import 'package:pos_billingwala_v2/features/print/domain/sample_receipt_data.dart';
 import 'package:pos_billingwala_v2/features/print/domain/shop_receipt_profile.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/bill_print_preview_page.dart';
-import 'package:pos_billingwala_v2/features/print/presentation/paper_size_preview.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/printer_device_picker_page.dart';
+import 'package:pos_billingwala_v2/features/print/presentation/woosim_kot_ticket.dart';
 import 'package:pos_billingwala_v2/features/print/presentation/woosim_ticket.dart';
 import 'package:pos_billingwala_v2/language/app_strings.dart';
 
@@ -310,11 +310,14 @@ class TestInvoicePreviewPageState
             ),
             const SizedBox(height: 16),
             if (isKot)
-              PaperSizePreviewCard(
+              PreviewCard(
                 title: activePaper.shortLabel,
-                text: service.kotPreviewText(paperSize: activePaper),
-                paperSize: activePaper,
-                largeType: true,
+                child: Center(
+                  child: WoosimKotTicket(
+                    layout: service.kotPreviewLayout(paperSize: activePaper),
+                    widthMm: activePaper.profile.previewWidthMm,
+                  ),
+                ),
               )
             else
               PreviewCard(
