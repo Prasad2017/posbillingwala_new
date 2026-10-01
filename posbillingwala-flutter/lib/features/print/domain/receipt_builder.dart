@@ -206,10 +206,6 @@ class ReceiptBuilder {
               .ceilToDouble()
         : invoice.totalAmount.ceilToDouble();
 
-    final thankYou = labels.thankVisitAgain.trim().isNotEmpty
-        ? labels.thankVisitAgain.trim()
-        : 'Thank You. Visit Again';
-
     return ticketFromLabels(
       labels: labels,
       shopLines: shopLines,
@@ -219,7 +215,6 @@ class ReceiptBuilder {
       pairs: pairs,
       totalLabel: labels.totalAmount,
       totalValue: rupee(payable),
-      closingMessage: thankYou,
       footerLines: [labels.poweredBy, labels.website],
       terms: settings.invoiceTerms,
       qrPayload: upiUriFor(invoice, payableOverride: payable),

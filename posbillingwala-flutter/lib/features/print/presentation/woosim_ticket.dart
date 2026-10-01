@@ -94,7 +94,6 @@ class WoosimTicket extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 child: Text(line, textAlign: TextAlign.start),
               ),
-            rule(),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(

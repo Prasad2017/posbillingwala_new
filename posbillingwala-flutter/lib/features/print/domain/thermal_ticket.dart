@@ -33,7 +33,7 @@ class ThermalTicket {
   final List<(String, String)> pairs;
   final String totalLabel;
   final String totalValue;
-  /* e.g. "Thank You. Visit Again" — drawn above the QR. */
+  /* Optional extra line above the QR. Bills leave this empty and use [terms]. */
   final String closingMessage;
   final List<String> footerLines;
   final String terms;
@@ -54,7 +54,6 @@ class ThermalTicket {
     for (final line in metaLines) {
       buf.writeln(line);
     }
-    buf.writeln('-' * width);
     buf.writeln(center(copyBanner, width));
     buf.writeln('-' * width);
     final itemW = (width - qtyChars - rateChars - amountChars).clamp(8, width);

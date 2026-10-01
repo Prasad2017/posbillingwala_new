@@ -24,6 +24,16 @@ class ReceiptRasterizer {
   /* Decoded logo cache — same shop logo is reused across bills. */
   static final Map<String, ui.Image> _logoCache = {};
 
+  /* [Image.debugDisposed] throws when asserts are off, so only check in debug. */
+  static bool _logoStillAlive(ui.Image image) {
+    var alive = true;
+    assert(() {
+      alive = !image.debugDisposed;
+      return true;
+    }());
+    return alive;
+  }
+
   static PrinterPaperProfile profileFor(PrinterPaperSize size) =>
       PrinterPaperProfile.of(size);
 
@@ -455,8 +465,6 @@ class ReceiptRasterizer {
         gap: lineGap,
       );
     }
-
-    y = _paintRule(ops, left: hPad, width: contentW, y: y + lineGap);
 
     y = _paintCentered(
       ops,
@@ -1068,7 +1076,6 @@ class ReceiptRasterizer {
       final left = (widthPx - lw) / 2;
       canvas.drawImage(logoImage, Offset(left, y), Paint());
       y += lh + 8;
-      logoImage.dispose();
     }
 
     if (titlePainter != null) {
@@ -1122,7 +1129,8 @@ class ReceiptRasterizer {
     final filePath = logoPath?.trim() ?? '';
     final cacheKey = '$filePath|$targetWidth|$useAssetLogoFallback';
     final cached = _logoCache[cacheKey];
-    if (cached != null) return cached;
+    if (cached != null && _logoStillAlive(cached)) return cached;
+    if (cached != null) _logoCache.remove(cacheKey);
 
     ui.Image? image;
     if (filePath.isNotEmpty && !kIsWeb) {
@@ -1274,6 +1282,7 @@ class _PaintOp {
 
   void dispose() {
     painter?.dispose();
-    image?.dispose();
+    /* Logo images stay in [ReceiptRasterizer._logoCache]. Disposing them
+     * here makes the next bill draw a dead image and fail the print. */
   }
 }
