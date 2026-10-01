@@ -275,7 +275,13 @@ class PrinterDevicePickerPageState extends State<PrinterDevicePickerPage>
       appBar: AppBar(
         title: Text(title),
         bottom: tabs.length > 1
-            ? TabBar(controller: printerDevicePickerPageTabs, tabs: tabs)
+            ? TabBar(
+                controller: printerDevicePickerPageTabs,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
+                indicatorColor: Colors.white,
+                tabs: tabs,
+              )
             : null,
         actions: [
           IconButton(

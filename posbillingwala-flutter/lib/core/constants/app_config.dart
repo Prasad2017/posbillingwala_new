@@ -5,7 +5,27 @@ abstract final class AppConfig {
   AppConfig._();
 
   /* true = Google Play in-app updates on; false = off. */
-  static const bool enableInAppUpdate = false;
+  static const bool enableInAppUpdate = true;
+
+  /* Play update style when [enableInAppUpdate] is true:
+   * - 'immediate' = force update (blocking Play dialog)
+   * - 'flexible'  = background download, restart when ready
+   * Override: `--dart-define=IN_APP_UPDATE_MODE=flexible|immediate` */
+  static const String inAppUpdateModeOverride = 'immediate';
+
+  static String get inAppUpdateMode {
+    const hasDartDefine = bool.hasEnvironment('IN_APP_UPDATE_MODE');
+    if (hasDartDefine) {
+      return const String.fromEnvironment('IN_APP_UPDATE_MODE');
+    }
+    return inAppUpdateModeOverride;
+  }
+
+  /* true when mode is immediate (force). Flexible otherwise. */
+  static bool get preferImmediateInAppUpdate {
+    final mode = inAppUpdateMode.trim().toLowerCase();
+    return mode == 'immediate' || mode == 'force' || mode == '1';
+  }
 
   /* true = screenshots allowed; false = block capture (FLAG_SECURE). */
   static const bool allowScreenshot = true;

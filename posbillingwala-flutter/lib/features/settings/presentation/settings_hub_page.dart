@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/constants/app_config.dart';
 import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
+import 'package:pos_billingwala_v2/core/utils/app_version.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/auth_controller.dart';
 import 'package:pos_billingwala_v2/features/auth/domain/licence_display.dart';
@@ -53,17 +55,21 @@ class SettingsHubPage extends ConsumerWidget {
     }
     if (outcome.status == InAppUpdateStatus.available ||
         outcome.status == InAppUpdateStatus.downloaded) {
+      final forceImmediate = AppConfig.preferImmediateInAppUpdate;
       final go = await showAppConfirmBottomSheet(
         context: context,
         title: strings.newVersionAvailable,
         message: strings.updateBeforeContinue,
         confirmLabel: strings.updateApp,
         cancelLabel: strings.cancel,
+        showCancel: !forceImmediate,
+        barrierDismissible: !forceImmediate,
         icon: Icons.system_update_rounded,
       );
-      if (!context.mounted || !go) return;
+      if (!context.mounted) return;
+      if (!go && !forceImmediate) return;
       final started = await inAppUpdateService.startUpdate(
-        preferImmediate: true,
+        preferImmediate: forceImmediate,
       );
       if (!context.mounted) return;
       if (started.status == InAppUpdateStatus.failed) {
@@ -490,7 +496,7 @@ class SettingsHubPage extends ConsumerWidget {
         icon: Icons.info_outline_rounded,
         color: AppColors.green,
         title: strings.about,
-        subtitle: AppConstants.appVersionLabel,
+        subtitle: appVersionOf(ref).label,
         onTap: () => context.push('/settings/about'),
       ),
       if (!AppPlatform.isWeb)
@@ -670,7 +676,7 @@ class SettingsHubPage extends ConsumerWidget {
                   ],
                   const SizedBox(height: 22),
                   Text(
-                    AppConstants.appVersionLabel,
+                    appVersionOf(ref).label,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AppFonts.family,
@@ -681,7 +687,18 @@ class SettingsHubPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Developed by Billingwala',
+                    'Build ${appVersionOf(ref).buildNumber}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: AppFonts.family,
+                      color: AppColors.navy.withValues(alpha: .28),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Developed by ${AppConstants.developerName}',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AppFonts.family,

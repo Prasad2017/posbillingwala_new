@@ -14,6 +14,9 @@ class ThermalTicket {
     required this.items,
     required this.pairs,
     required this.footerLines,
+    this.totalLabel = '',
+    this.totalValue = '',
+    this.closingMessage = '',
     this.terms = '',
     this.qrPayload,
   });
@@ -26,7 +29,12 @@ class ThermalTicket {
   final String colRate;
   final String colAmount;
   final List<ThermalLine> items;
+  /* Subtotal / tax / discount / packing — TOTAL is [totalLabel]/[totalValue]. */
   final List<(String, String)> pairs;
+  final String totalLabel;
+  final String totalValue;
+  /* e.g. "Thank You. Visit Again" — drawn above the QR. */
+  final String closingMessage;
   final List<String> footerLines;
   final String terms;
   final String? qrPayload;
@@ -46,6 +54,7 @@ class ThermalTicket {
     for (final line in metaLines) {
       buf.writeln(line);
     }
+    buf.writeln('-' * width);
     buf.writeln(center(copyBanner, width));
     buf.writeln('-' * width);
     final itemW = (width - qtyChars - rateChars - amountChars).clamp(8, width);
@@ -55,18 +64,26 @@ class ThermalTicket {
     );
     buf.writeln('-' * width);
     for (final item in items) {
+      /* Name uses the full line; qty / rate / amount sit on the next. */
       buf.writeln(item.name);
-      buf.writeln(
-        columns(['', item.qty, item.rate, item.amount], widths),
-      );
+      buf.writeln(columns(['', item.qty, item.rate, item.amount], widths));
     }
     buf.writeln('-' * width);
     for (final pair in pairs) {
       buf.writeln(thermalTicketPair(pair.$1, pair.$2, width));
     }
-    buf.writeln('-' * width);
+    if (totalLabel.trim().isNotEmpty || totalValue.trim().isNotEmpty) {
+      buf.writeln('=' * width);
+      buf.writeln(thermalTicketPair(totalLabel, totalValue, width));
+      buf.writeln('=' * width);
+    } else {
+      buf.writeln('-' * width);
+    }
     if (terms.trim().isNotEmpty) {
       buf.writeln(center(terms.trim(), width));
+    }
+    if (closingMessage.trim().isNotEmpty) {
+      buf.writeln(center(closingMessage.trim(), width));
     }
     if (qrPayload != null && qrPayload!.trim().isNotEmpty) {
       buf.writeln(upiQrMarker);
@@ -126,6 +143,9 @@ ThermalTicket ticketFromLabels({
   required List<ThermalLine> items,
   required List<(String, String)> pairs,
   required List<String> footerLines,
+  String totalLabel = '',
+  String totalValue = '',
+  String closingMessage = '',
   String terms = '',
   String? qrPayload,
 }) {
@@ -139,6 +159,9 @@ ThermalTicket ticketFromLabels({
     colAmount: labels.amount,
     items: items,
     pairs: pairs,
+    totalLabel: totalLabel,
+    totalValue: totalValue,
+    closingMessage: closingMessage,
     footerLines: footerLines,
     terms: terms,
     qrPayload: qrPayload,

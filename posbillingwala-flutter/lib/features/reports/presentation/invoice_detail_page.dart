@@ -114,11 +114,6 @@ class InvoiceDetailPageState extends ConsumerState<InvoiceDetailPage> {
         title: Text(strings.billDetails),
         actions: [
           IconButton(
-            tooltip: strings.editBill,
-            onPressed: openAddProducts,
-            icon: const Icon(Icons.edit_outlined),
-          ),
-          IconButton(
             tooltip: strings.duplicatePrint,
             onPressed: () => context.push('/print/bill/$invoiceId?duplicate=1'),
             icon: const Icon(Icons.print_rounded),
@@ -185,6 +180,8 @@ class InvoiceDetailPageState extends ConsumerState<InvoiceDetailPage> {
                                         children: [
                                           Text(
                                             invoice.invoiceNumber,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .titleMedium
@@ -198,6 +195,8 @@ class InvoiceDetailPageState extends ConsumerState<InvoiceDetailPage> {
                                             timeFormat.format(
                                               invoice.invoiceDate,
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .bodySmall
@@ -210,19 +209,15 @@ class InvoiceDetailPageState extends ConsumerState<InvoiceDetailPage> {
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        currency.format(invoice.totalAmount),
-                                        textAlign: TextAlign.right,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 16,
-                                          color: AppColors.primary,
-                                        ),
+                                    Text(
+                                      currency.format(invoice.totalAmount),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 16,
+                                        color: AppColors.primary,
                                       ),
                                     ),
+                                    const SizedBox(width: 2),
                                     Icon(
                                       summaryExpanded
                                           ? Icons.expand_less_rounded
@@ -506,63 +501,51 @@ class BillDetailActionRow extends StatelessWidget {
       ),
     ];
 
-    Widget actionChip(int i, {required bool expanded}) {
-      final chip = Material(
-        color: i == 0 ? AppColors.primary : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
+    Widget actionChip(int i) {
+      final primary = i == 0;
+      return Expanded(
+        child: Material(
+          color: primary ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          onTap: () => onRun(actions[i].id),
-          child: Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.primary.withValues(
-                  alpha: i == 0 ? 0 : 0.35,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => onRun(actions[i].id),
+            child: Container(
+              height: 56,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary.withValues(
+                    alpha: primary ? 0 : 0.35,
+                  ),
                 ),
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  actions[i].icon,
-                  size: 18,
-                  color: i == 0 ? Colors.white : AppColors.primary,
-                ),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    actions[i].icon,
+                    size: 18,
+                    color: primary ? Colors.white : AppColors.primary,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
                     actions[i].label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: i == 0 ? Colors.white : AppColors.primary,
+                      color: primary ? Colors.white : AppColors.primary,
                       fontWeight: FontWeight.w800,
-                      fontSize: 12,
+                      fontSize: 10,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      );
-      if (expanded) return Expanded(child: chip);
-      return chip;
-    }
-
-    if (context.isCompactWidth) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < actions.length; i++) ...[
-            if (i > 0) const SizedBox(height: 8),
-            actionChip(i, expanded: false),
-          ],
-        ],
       );
     }
 
@@ -570,7 +553,7 @@ class BillDetailActionRow extends StatelessWidget {
       children: [
         for (var i = 0; i < actions.length; i++) ...[
           if (i > 0) const SizedBox(width: 8),
-          actionChip(i, expanded: true),
+          actionChip(i),
         ],
       ],
     );

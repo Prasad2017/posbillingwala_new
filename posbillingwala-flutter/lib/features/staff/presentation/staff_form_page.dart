@@ -138,8 +138,12 @@ class StaffFormPageState extends ConsumerState<StaffFormPage> {
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
+      final raw = e.toString();
+      final message = raw
+          .replaceFirst('Exception: ', '')
+          .replaceFirst('Bad state: ', '');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(content: Text(message)),
       );
     } finally {
       if (mounted) setState(() => loading = false);

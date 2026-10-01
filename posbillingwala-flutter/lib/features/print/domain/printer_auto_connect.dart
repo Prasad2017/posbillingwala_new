@@ -25,10 +25,17 @@ abstract final class PrinterAutoConnect {
   }) async {
     if (kIsWeb) return;
 
+    /* Warm path: already linked — skip reconnect wait on the bill critical path. */
+    if (!force && await isBillPrinterOnline(settings)) {
+      return;
+    }
+
     final existing = _inFlight;
     if (existing != null) {
       await existing.future;
       if (!force) return;
+      /* force after shared wait: try again below. */
+      if (await isBillPrinterOnline(settings)) return;
     }
 
     final now = DateTime.now();
@@ -142,6 +149,11 @@ abstract final class PrinterAutoConnect {
         if (mac.isEmpty) return false;
         final hub = BluetoothPrinterHub.instance;
         if (hub.isConnecting) return false;
+        /* Trust hub session first — avoids platform round-trip on every Print. */
+        if (hub.connectedAddress.isNotEmpty &&
+            hub.connectedAddress.toLowerCase() == mac.toLowerCase()) {
+          return true;
+        }
         if (!await hub.connectionStatus()) return false;
         return hub.connectedAddress.toLowerCase() == mac.toLowerCase();
       case PosPrinterTransport.usb:

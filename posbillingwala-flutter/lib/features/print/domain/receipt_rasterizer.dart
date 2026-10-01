@@ -21,6 +21,9 @@ import 'package:qr_flutter/qr_flutter.dart';
 class ReceiptRasterizer {
   const ReceiptRasterizer();
 
+  /* Decoded logo cache — same shop logo is reused across bills. */
+  static final Map<String, ui.Image> _logoCache = {};
+
   static PrinterPaperProfile profileFor(PrinterPaperSize size) =>
       PrinterPaperProfile.of(size);
 
@@ -443,6 +446,8 @@ class ReceiptRasterizer {
       );
     }
 
+    y = _paintRule(ops, left: hPad, width: contentW, y: y + lineGap);
+
     y = _paintCentered(
       ops,
       ticket.copyBanner,
@@ -450,7 +455,7 @@ class ReceiptRasterizer {
       widthPx: widthPx,
       maxWidth: contentW,
       y: y + lineGap,
-      gap: sectionGap,
+      gap: lineGap,
     );
 
     y = _paintRule(ops, left: hPad, width: contentW, y: y);
@@ -458,12 +463,12 @@ class ReceiptRasterizer {
     y = _paintColumns(
       ops,
       left: hPad,
-      y: y,
+      y: y + lineGap,
       gap: lineGap,
       cells: [
         _Col(ticket.colItem, itemColW, TextAlign.left, FontWeight.w700),
         _Col(ticket.colQty, qtyW, TextAlign.center, FontWeight.w700),
-        _Col(ticket.colRate, rateW, TextAlign.center, FontWeight.w700),
+        _Col(ticket.colRate, rateW, TextAlign.right, FontWeight.w700),
         _Col(ticket.colAmount, amountW, TextAlign.right, FontWeight.w700),
       ],
       style: style(),
@@ -472,27 +477,20 @@ class ReceiptRasterizer {
     y = _paintRule(ops, left: hPad, width: contentW, y: y);
 
     for (final item in ticket.items) {
-      y = _paintLeft(
+      y = _paintItemRow(
         ops,
-        item.name,
-        style(weight: FontWeight.w500),
         left: hPad,
-        maxWidth: contentW,
         y: y + lineGap,
-        gap: 0,
-      );
-      y = _paintColumns(
-        ops,
-        left: hPad,
-        y: y,
         gap: sectionGap,
-        cells: [
-          _Col('', itemColW, TextAlign.left, FontWeight.w500),
-          _Col(item.qty, qtyW, TextAlign.center, FontWeight.w500),
-          _Col(item.rate, rateW, TextAlign.center, FontWeight.w500),
-          _Col(item.amount, amountW, TextAlign.right, FontWeight.w500),
-        ],
-        style: style(),
+        name: item.name,
+        itemColW: itemColW,
+        qty: item.qty,
+        qtyW: qtyW,
+        rate: item.rate,
+        rateW: rateW,
+        amount: item.amount,
+        amountW: amountW,
+        style: style(weight: FontWeight.w500),
       );
     }
 
@@ -511,14 +509,54 @@ class ReceiptRasterizer {
       );
     }
 
-    y = _paintRule(ops, left: hPad, width: contentW, y: y);
+    final hasTotal =
+        ticket.totalLabel.trim().isNotEmpty || ticket.totalValue.trim().isNotEmpty;
+    if (hasTotal) {
+      y = _paintRule(
+        ops,
+        left: hPad,
+        width: contentW,
+        y: y + lineGap,
+        thickness: 2.5,
+      );
+      y = _paintPair(
+        ops,
+        left: ticket.totalLabel,
+        right: ticket.totalValue,
+        style: style(size: shopSize, weight: FontWeight.w700),
+        leftPad: hPad,
+        maxWidth: contentW,
+        y: y + lineGap,
+        gap: lineGap,
+      );
+      y = _paintRule(
+        ops,
+        left: hPad,
+        width: contentW,
+        y: y,
+        thickness: 2.5,
+      );
+    } else {
+      y = _paintRule(ops, left: hPad, width: contentW, y: y);
+    }
 
     if (ticket.terms.trim().isNotEmpty) {
       y = _paintCentered(
         ops,
         ticket.terms.trim(),
-        /* Same family as Powered by, slightly larger. */
         style(size: bodySize * 0.95, weight: FontWeight.w400),
+        widthPx: widthPx,
+        maxWidth: contentW,
+        y: y + lineGap,
+        gap: sectionGap,
+      );
+    }
+
+    if (ticket.closingMessage.trim().isNotEmpty) {
+      y = _paintCentered(
+        ops,
+        ticket.closingMessage.trim(),
+        style(weight: FontWeight.w500),
         widthPx: widthPx,
         maxWidth: contentW,
         y: y + lineGap,
@@ -804,14 +842,97 @@ class ReceiptRasterizer {
     return y + rowH + gap;
   }
 
+  /* Product name on a full-width line; qty / rate / amount on the next. */
+  double _paintItemRow(
+    List<_PaintOp> ops, {
+    required double left,
+    required double y,
+    required double gap,
+    required String name,
+    required double itemColW,
+    required String qty,
+    required double qtyW,
+    required String rate,
+    required double rateW,
+    required String amount,
+    required double amountW,
+    required TextStyle style,
+  }) {
+    final nameWidth = itemColW + qtyW + rateW + amountW;
+    final namePainter = TextPainter(
+      text: TextSpan(text: name, style: style),
+      textAlign: TextAlign.left,
+      textDirection: TextDirection.ltr,
+      locale: const Locale('hi', 'IN'),
+    )..layout(maxWidth: nameWidth);
+
+    ops.add(_PaintOp.text(namePainter, left, y));
+
+    final qtyPainter = TextPainter(
+      text: TextSpan(text: qty, style: style),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+      locale: const Locale('hi', 'IN'),
+    )..layout(maxWidth: qtyW);
+
+    final ratePainter = TextPainter(
+      text: TextSpan(text: rate, style: style),
+      textAlign: TextAlign.right,
+      textDirection: TextDirection.ltr,
+      locale: const Locale('hi', 'IN'),
+    )..layout(maxWidth: rateW);
+
+    final amountPainter = TextPainter(
+      text: TextSpan(text: amount, style: style),
+      textAlign: TextAlign.right,
+      textDirection: TextDirection.ltr,
+      locale: const Locale('hi', 'IN'),
+    )..layout(maxWidth: amountW);
+
+    final metricsY = y + namePainter.height + 1;
+    var x = left + itemColW;
+    ops.add(
+      _PaintOp.text(
+        qtyPainter,
+        x + (qtyW - qtyPainter.width) / 2,
+        metricsY,
+      ),
+    );
+    x += qtyW;
+    ops.add(
+      _PaintOp.text(
+        ratePainter,
+        x + rateW - ratePainter.width,
+        metricsY,
+      ),
+    );
+    x += rateW;
+    ops.add(
+      _PaintOp.text(
+        amountPainter,
+        x + amountW - amountPainter.width,
+        metricsY,
+      ),
+    );
+
+    final metricsH = [
+      qtyPainter.height,
+      ratePainter.height,
+      amountPainter.height,
+    ].reduce((a, b) => a > b ? a : b);
+    return metricsY + metricsH + gap;
+  }
+
   double _paintRule(
     List<_PaintOp> ops, {
     required double left,
     required double width,
     required double y,
+    double thickness = 1,
   }) {
-    ops.add(_PaintOp.rule(left, y + 2, width));
-    return y + 6;
+    final t = thickness.clamp(1.0, 4.0);
+    ops.add(_PaintOp.rule(left, y + 2, width, thickness: t));
+    return y + 4 + t;
   }
 
   Future<RenderedImage> render(
@@ -989,27 +1110,35 @@ class ReceiptRasterizer {
     final targetWidth =
         (widthPx * widthFraction).round().clamp(48, widthPx - 32);
     final filePath = logoPath?.trim() ?? '';
+    final cacheKey = '$filePath|$targetWidth|$useAssetLogoFallback';
+    final cached = _logoCache[cacheKey];
+    if (cached != null) return cached;
+
+    ui.Image? image;
     if (filePath.isNotEmpty && !kIsWeb) {
       try {
         final file = File(filePath);
         if (await file.exists()) {
           final bytes = await file.readAsBytes();
-          return await decodeImage(bytes, targetWidth);
+          image = await decodeImage(bytes, targetWidth);
         }
       } catch (_) {}
     }
-    if (!useAssetLogoFallback) return null;
-    try {
-      final data = await rootBundle.load(AppAssets.receiptLogo);
-      return await decodeImage(data.buffer.asUint8List(), targetWidth);
-    } catch (_) {
+    if (image == null && useAssetLogoFallback) {
       try {
-        final data = await rootBundle.load(AppAssets.appLogo);
-        return await decodeImage(data.buffer.asUint8List(), targetWidth);
+        final data = await rootBundle.load(AppAssets.receiptLogo);
+        image = await decodeImage(data.buffer.asUint8List(), targetWidth);
       } catch (_) {
-        return null;
+        try {
+          final data = await rootBundle.load(AppAssets.appLogo);
+          image = await decodeImage(data.buffer.asUint8List(), targetWidth);
+        } catch (_) {
+          image = null;
+        }
       }
     }
+    if (image != null) _logoCache[cacheKey] = image;
+    return image;
   }
 
   Future<ui.Image?> decodeImage(Uint8List bytes, int targetWidth) async {
@@ -1086,8 +1215,13 @@ class _PaintOp {
   factory _PaintOp.text(TextPainter painter, double x, double y) =>
       _PaintOp._(kind: _PaintKind.text, painter: painter, x: x, y: y);
 
-  factory _PaintOp.rule(double x, double y, double width) =>
-      _PaintOp._(kind: _PaintKind.rule, x: x, y: y, w: width, h: 1);
+  factory _PaintOp.rule(
+    double x,
+    double y,
+    double width, {
+    double thickness = 1,
+  }) =>
+      _PaintOp._(kind: _PaintKind.rule, x: x, y: y, w: width, h: thickness);
 
   factory _PaintOp.image(ui.Image image, double x, double y) =>
       _PaintOp._(kind: _PaintKind.image, image: image, x: x, y: y);

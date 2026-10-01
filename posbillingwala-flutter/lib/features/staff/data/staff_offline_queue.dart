@@ -41,7 +41,7 @@ abstract final class StaffOfflineQueue {
   static Future<bool> hasPendingOps() async => (await loadOps()).isNotEmpty;
 
   static Future<void> enqueue(Map<String, dynamic> op) async {
-    final ops = await loadOps();
+    final ops = List<Map<String, dynamic>>.from(await loadOps());
     ops.add({
       ...op,
       'queuedAt': DateTime.now().toIso8601String(),
@@ -95,7 +95,9 @@ abstract final class StaffOfflineQueue {
   }
 
   static Future<void> upsertSalaryCache(Map<String, dynamic> row) async {
-    final list = await CloudScreenCache.loadMapList(CloudScreenCache.salary);
+    final list = List<Map<String, dynamic>>.from(
+      await CloudScreenCache.loadMapList(CloudScreenCache.salary),
+    );
     final staffId = row['staffId']?.toString() ?? '';
     final i = list.indexWhere((e) => e['staffId']?.toString() == staffId);
     if (i >= 0) {
@@ -104,6 +106,40 @@ abstract final class StaffOfflineQueue {
       list.add(row);
     }
     await CloudScreenCache.saveJson(CloudScreenCache.salary, list);
+  }
+
+  /* Mobile is unique per store (matches insertStaff / updateStaff). */
+  static Future<void> _ensureMobileUnique(
+    String mobileNumber, {
+    String? excludeId,
+  }) async {
+    final mobile = mobileNumber.trim();
+    final list = await loadStaffCache();
+    final taken = list.any((u) {
+      if (excludeId != null && u.id == excludeId) return false;
+      if (u.status.toUpperCase() == 'DELETED') return false;
+      return u.mobileNumber.trim() == mobile;
+    });
+    if (taken) {
+      throw StateError('Mobile number already used in this store');
+    }
+  }
+
+  static bool _isStaffValidationError(Object e) {
+    final text = e.toString().toLowerCase();
+    return text.contains('already used') ||
+        text.contains('user limit') ||
+        text.contains('pin must') ||
+        text.contains('valid 10-digit') ||
+        text.contains('valid role') ||
+        text.contains('name is required') ||
+        text.contains('enable user management');
+  }
+
+  static Future<void> _discardLocalCreate(String localId) async {
+    final list = await loadStaffCache();
+    await saveStaffCache(list.where((e) => e.id != localId).toList());
+    await _removeOpsForLocalId(localId);
   }
 
   /* Soft-fail create: cache + queue, try API when online. */
@@ -118,6 +154,7 @@ abstract final class StaffOfflineQueue {
     String address = '',
     Map<String, String> overrides = const {},
   }) async {
+    await _ensureMobileUnique(mobileNumber);
     final localId = newLocalId();
     final draft = StaffUser(
       id: localId,
@@ -146,6 +183,7 @@ abstract final class StaffOfflineQueue {
 
     if (!await isDeviceOnline()) {
       if (AppPlatform.requiresNetwork) {
+        await _discardLocalCreate(localId);
         throw StateError(kOnlineRequiredMessage);
       }
       return const StaffOfflineSaveResult(
@@ -169,7 +207,10 @@ abstract final class StaffOfflineQueue {
       await _removeOpsForLocalId(localId);
       return StaffOfflineSaveResult(synced: true, staff: created);
     } catch (e) {
-      if (AppPlatform.requiresNetwork) rethrow;
+      if (AppPlatform.requiresNetwork || _isStaffValidationError(e)) {
+        await _discardLocalCreate(localId);
+        rethrow;
+      }
       AppLogger.warning('Staff create offline queue keep: $e');
       return const StaffOfflineSaveResult(
         synced: false,
@@ -188,6 +229,7 @@ abstract final class StaffOfflineQueue {
     String status = 'ACTIVE',
     Map<String, String>? overrides,
   }) async {
+    await _ensureMobileUnique(mobileNumber, excludeId: id);
     final existing = await getStaffFromCache(id);
     final updated = (existing ??
             StaffUser(
@@ -239,7 +281,9 @@ abstract final class StaffOfflineQueue {
           op['op'] == 'update' && op['id']?.toString() == id);
       return StaffOfflineSaveResult(synced: true, staff: server);
     } catch (e) {
-      if (AppPlatform.requiresNetwork) rethrow;
+      if (AppPlatform.requiresNetwork || _isStaffValidationError(e)) {
+        rethrow;
+      }
       AppLogger.warning('Staff update offline queue keep: $e');
       return const StaffOfflineSaveResult(
         synced: false,
@@ -610,8 +654,16 @@ abstract final class StaffOfflineQueue {
         }
       } catch (e) {
         failed++;
-        remaining.add(op);
-        AppLogger.warning('StaffOfflineQueue flush FAIL $type: $e');
+        if (type == 'create' && _isStaffValidationError(e)) {
+          final localId = op['localId']?.toString() ?? '';
+          if (localId.isNotEmpty) {
+            await _discardLocalCreate(localId);
+          }
+          AppLogger.warning('StaffOfflineQueue flush DROP create: $e');
+        } else {
+          remaining.add(op);
+          AppLogger.warning('StaffOfflineQueue flush FAIL $type: $e');
+        }
       }
     }
 

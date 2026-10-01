@@ -104,7 +104,7 @@ class CartPage extends ConsumerWidget {
     );
   }
 
-  /* Portrait: items + bill scroll together so the keyboard cannot overflow the footer. */
+  /* Portrait: product list scrolls; bill summary + footer stay pinned at bottom. */
   Widget buildPortraitBody({
     required AsyncValue<List<CartItem>> cartAsync,
     required NumberFormat currency,
@@ -116,56 +116,17 @@ class CartPage extends ConsumerWidget {
     required double unprintedCount,
     required double payable,
   }) {
-    return Column(
-      children: [
-        Expanded(
-          child: cartAsync.when(
-            data: (items) {
-              if (items.isEmpty) {
-                return const EmptyCart();
-              }
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    keyboardDismissBehavior:
-                        ScrollViewKeyboardDismissBehavior.onDrag,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                            child: _CartItemsTable(
-                              items: items,
-                              currency: currency,
-                            ),
-                          ),
-                          const _CartBillBreakdown(expandable: true),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('$e')),
-          ),
-        ),
-        buildFooter(
-          context: context,
-          ref: ref,
-          summary: summary,
-          currency: currency,
-          isTable: isTable,
-          kotEnabled: kotEnabled,
-          unprintedCount: unprintedCount,
-          payable: payable,
-        ),
-      ],
+    return _PortraitCartBody(
+      cartAsync: cartAsync,
+      currency: currency,
+      summary: summary,
+      isTable: isTable,
+      kotEnabled: kotEnabled,
+      unprintedCount: unprintedCount,
+      payable: payable,
+      onClearCheckout: (action) => unawaitedCheckout(context, ref, action),
+      onSaveTable: () => context.go('/tables'),
+      onKot: () => sendKotTicket(context, ref),
     );
   }
 
@@ -303,6 +264,99 @@ class CartPage extends ConsumerWidget {
   }
 }
 
+class _PortraitCartBody extends ConsumerStatefulWidget {
+  const _PortraitCartBody({
+    required this.cartAsync,
+    required this.currency,
+    required this.summary,
+    required this.isTable,
+    required this.kotEnabled,
+    required this.unprintedCount,
+    required this.payable,
+    required this.onClearCheckout,
+    required this.onSaveTable,
+    required this.onKot,
+  });
+
+  final AsyncValue<List<CartItem>> cartAsync;
+  final NumberFormat currency;
+  final CartSummary summary;
+  final bool isTable;
+  final bool kotEnabled;
+  final double unprintedCount;
+  final double payable;
+  final void Function(PosCheckoutAction action) onClearCheckout;
+  final VoidCallback onSaveTable;
+  final VoidCallback onKot;
+
+  @override
+  ConsumerState<_PortraitCartBody> createState() => _PortraitCartBodyState();
+}
+
+class _PortraitCartBodyState extends ConsumerState<_PortraitCartBody> {
+  bool billExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: widget.cartAsync.when(
+            data: (items) {
+              if (items.isEmpty) {
+                return const EmptyCart();
+              }
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                children: [
+                  _CartItemsTable(items: items, currency: widget.currency),
+                ],
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('$e')),
+          ),
+        ),
+        /* Pinned — never scrolls with the product list.
+         * Cap height when expanded so Save/Share/Print stay visible. */
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.42,
+          ),
+          child: SingleChildScrollView(
+            child: _CartBillBreakdown(
+              expandable: true,
+              expanded: billExpanded,
+              onToggleExpanded: () =>
+                  setState(() => billExpanded = !billExpanded),
+            ),
+          ),
+        ),
+        PosActionFooter(
+          summary: widget.summary,
+          currency: widget.currency,
+          displayTotal: widget.payable,
+          onCartTap: () => setState(() => billExpanded = !billExpanded),
+          onSave: () {
+            if (widget.isTable) {
+              widget.onSaveTable();
+              return;
+            }
+            widget.onClearCheckout(PosCheckoutAction.save);
+          },
+          onShare: () => widget.onClearCheckout(PosCheckoutAction.share),
+          onPrint: () => widget.onClearCheckout(PosCheckoutAction.print),
+          kotEnabled: widget.isTable && widget.kotEnabled,
+          unprintedCount: widget.unprintedCount,
+          onKot: widget.onKot,
+        ),
+      ],
+    );
+  }
+}
+
 class _CartItemsTable extends StatelessWidget {
   const _CartItemsTable({required this.items, required this.currency});
 
@@ -409,9 +463,16 @@ class _CartItemsTable extends StatelessWidget {
 }
 
 class _CartBillBreakdown extends ConsumerStatefulWidget {
-  const _CartBillBreakdown({this.expandable = true});
+  const _CartBillBreakdown({
+    this.expandable = true,
+    this.expanded,
+    this.onToggleExpanded,
+  });
 
   final bool expandable;
+  /* When set with [onToggleExpanded], parent owns expand state (pinned portrait). */
+  final bool? expanded;
+  final VoidCallback? onToggleExpanded;
 
   @override
   ConsumerState<_CartBillBreakdown> createState() => _CartBillBreakdownState();
@@ -454,7 +515,9 @@ class _CartBillBreakdownState extends ConsumerState<_CartBillBreakdown> {
     final checkout = ref.watch(paymentCheckoutControllerProvider);
     final currency = MoneyFormat.inr;
     final payable = checkoutPayable(summary, checkout);
-    final expanded = widget.expandable ? billExpanded : true;
+    final expanded = !widget.expandable
+        ? true
+        : (widget.expanded ?? billExpanded);
 
     return BillSummaryCard(
       summary: summary,
@@ -467,7 +530,8 @@ class _CartBillBreakdownState extends ConsumerState<_CartBillBreakdown> {
       expandable: widget.expandable,
       showCollapsedAmount: false,
       onToggleExpanded: widget.expandable
-          ? () => setState(() => billExpanded = !billExpanded)
+          ? (widget.onToggleExpanded ??
+                () => setState(() => billExpanded = !billExpanded))
           : () {},
       onDiscountChanged: (value) {
         final d = double.tryParse(value) ?? 0;

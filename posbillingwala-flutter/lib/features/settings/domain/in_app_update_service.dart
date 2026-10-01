@@ -72,8 +72,10 @@ class InAppUpdateService {
     }
   }
 
-  /* Immediate Play dialog when allowed; otherwise flexible download. */
-  Future<InAppUpdateOutcome> startUpdate({bool preferImmediate = true}) async {
+  /* Immediate or flexible from [AppConfig.inAppUpdateMode]. */
+  Future<InAppUpdateOutcome> startUpdate({bool? preferImmediate}) async {
+    final wantImmediate =
+        preferImmediate ?? AppConfig.preferImmediateInAppUpdate;
     if (!isAndroidPlay) {
       await openPlayStore();
       return const InAppUpdateOutcome(InAppUpdateStatus.notSupported);
@@ -98,12 +100,17 @@ class InAppUpdateService {
       }
 
       AppUpdateResult result;
-      if (preferImmediate && (info.immediateUpdateAllowed || inProgress)) {
+      if (wantImmediate && (info.immediateUpdateAllowed || inProgress)) {
         result = await InAppUpdate.performImmediateUpdate();
-      } else if (info.flexibleUpdateAllowed) {
+      } else if (!wantImmediate && info.flexibleUpdateAllowed) {
+        result = await InAppUpdate.startFlexibleUpdate();
+      } else if (wantImmediate && info.flexibleUpdateAllowed) {
+        /* Immediate requested but Play only allows flexible — still update. */
         result = await InAppUpdate.startFlexibleUpdate();
       } else if (info.immediateUpdateAllowed) {
         result = await InAppUpdate.performImmediateUpdate();
+      } else if (info.flexibleUpdateAllowed) {
+        result = await InAppUpdate.startFlexibleUpdate();
       } else {
         await openPlayStore();
         return const InAppUpdateOutcome(InAppUpdateStatus.started);

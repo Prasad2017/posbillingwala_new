@@ -41,8 +41,8 @@ class WoosimTicket extends StatelessWidget {
           height: 1.2,
         );
 
-    Widget rule() => Container(
-      height: 1,
+    Widget rule({double thickness = 1}) => Container(
+      height: thickness,
       margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       color: black,
     );
@@ -51,6 +51,8 @@ class WoosimTicket extends StatelessWidget {
     final canShowLogo =
         showLogo && path.isNotEmpty && !kIsWeb && File(path).existsSync();
     final qr = ticket.qrPayload?.trim() ?? '';
+    final hasTotal =
+        ticket.totalLabel.trim().isNotEmpty || ticket.totalValue.trim().isNotEmpty;
 
     return Container(
       width: mm * 3.78,
@@ -92,6 +94,7 @@ class WoosimTicket extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 child: Text(line, textAlign: TextAlign.start),
               ),
+            rule(),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
@@ -123,7 +126,7 @@ class WoosimTicket extends StatelessWidget {
                     width: rateW,
                     child: Text(
                       ticket.colRate,
-                      textAlign: TextAlign.center,
+                      textAlign: TextAlign.end,
                       style: pop(weight: FontWeight.w700),
                     ),
                   ),
@@ -139,32 +142,34 @@ class WoosimTicket extends StatelessWidget {
               ),
             ),
             rule(),
-            for (final item in ticket.items) ...[
+            for (final item in ticket.items)
               Padding(
-                padding: const EdgeInsets.fromLTRB(5, 4, 5, 0),
-                child: Text(item.name, style: pop(weight: FontWeight.w500)),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(5, 0, 5, 4),
-                child: Row(
+                padding: const EdgeInsets.fromLTRB(5, 3, 5, 3),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Expanded(child: SizedBox.shrink()),
-                    SizedBox(
-                      width: qtyW,
-                      child: Text(item.qty, textAlign: TextAlign.center),
-                    ),
-                    SizedBox(
-                      width: rateW,
-                      child: Text(item.rate, textAlign: TextAlign.center),
-                    ),
-                    SizedBox(
-                      width: amountW,
-                      child: Text(item.amount, textAlign: TextAlign.end),
+                    Text(item.name, style: pop(weight: FontWeight.w500)),
+                    const SizedBox(height: 1),
+                    Row(
+                      children: [
+                        const Spacer(),
+                        SizedBox(
+                          width: qtyW,
+                          child: Text(item.qty, textAlign: TextAlign.center),
+                        ),
+                        SizedBox(
+                          width: rateW,
+                          child: Text(item.rate, textAlign: TextAlign.end),
+                        ),
+                        SizedBox(
+                          width: amountW,
+                          child: Text(item.amount, textAlign: TextAlign.end),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ],
             rule(),
             for (final pair in ticket.pairs)
               Padding(
@@ -178,15 +183,44 @@ class WoosimTicket extends StatelessWidget {
                   ],
                 ),
               ),
-            rule(),
+            if (hasTotal) ...[
+              rule(thickness: 2.5),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        ticket.totalLabel,
+                        style: pop(size: shopSize, weight: FontWeight.w700),
+                      ),
+                    ),
+                    Text(
+                      ticket.totalValue,
+                      style: pop(size: shopSize, weight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+              rule(thickness: 2.5),
+            ] else
+              rule(),
             if (ticket.terms.trim().isNotEmpty)
               Padding(
                 padding: const EdgeInsets.all(5),
                 child: Text(
                   ticket.terms.trim(),
                   textAlign: TextAlign.center,
-                  /* Same family as Powered by, slightly larger. */
                   style: pop(size: bodySize * 0.95, weight: FontWeight.w400),
+                ),
+              ),
+            if (ticket.closingMessage.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                child: Text(
+                  ticket.closingMessage.trim(),
+                  textAlign: TextAlign.center,
+                  style: pop(weight: FontWeight.w500),
                 ),
               ),
             if (qr.isNotEmpty) ...[

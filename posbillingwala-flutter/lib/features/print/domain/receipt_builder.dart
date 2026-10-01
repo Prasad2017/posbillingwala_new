@@ -167,13 +167,13 @@ class ReceiptBuilder {
       taxTotal = cgstAmt + sgstAmt;
       if (cgstPct > 0) {
         pairs.add((
-          'CGST@${money.format(cgstPct)}%',
+          'CGST @${money.format(cgstPct)}%',
           rupee(cgstAmt),
         ));
       }
       if (sgstPct > 0) {
         pairs.add((
-          'SGST@${money.format(sgstPct)}%',
+          'SGST @${money.format(sgstPct)}%',
           rupee(sgstAmt),
         ));
       }
@@ -205,7 +205,10 @@ class ReceiptBuilder {
               .clamp(0, double.infinity)
               .ceilToDouble()
         : invoice.totalAmount.ceilToDouble();
-    pairs.add((labels.totalAmount, rupee(payable)));
+
+    final thankYou = labels.thankVisitAgain.trim().isNotEmpty
+        ? labels.thankVisitAgain.trim()
+        : 'Thank You. Visit Again';
 
     return ticketFromLabels(
       labels: labels,
@@ -214,6 +217,9 @@ class ReceiptBuilder {
       duplicate: duplicate,
       items: lines,
       pairs: pairs,
+      totalLabel: labels.totalAmount,
+      totalValue: rupee(payable),
+      closingMessage: thankYou,
       footerLines: [labels.poweredBy, labels.website],
       terms: settings.invoiceTerms,
       qrPayload: upiUriFor(invoice, payableOverride: payable),

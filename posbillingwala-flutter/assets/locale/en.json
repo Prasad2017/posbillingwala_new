@@ -803,7 +803,7 @@
   "ui_test_copy": "**** Test Copy ****",
   "ui_test_invoice_preview_hint": "Connect your printer and test a sample invoice before billing. Logo, QR and customer details follow your printer setting toggles. This does not create a real bill.",
   "ui_test_print": "Test Print",
-  "ui_thank_visit_again": "Thank Visit Again",
+  "ui_thank_visit_again": "Thank You. Visit Again",
   "ui_this_branch_only": "This branch only",
   "ui_this_month": "This Month",
   "ui_today": "Today",

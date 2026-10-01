@@ -43,6 +43,13 @@ class StaffDetailPageState extends ConsumerState<StaffDetailPage> {
         error = null;
       });
     }
+    /* Local-only draft not on server yet — skip getStaff. */
+    if (widget.staffId.startsWith('staff_local_')) {
+      if (cached == null && mounted) {
+        setState(() => error = 'User not found offline');
+      }
+      return;
+    }
     if (!await isDeviceOnline()) {
       if (cached == null && mounted) {
         setState(() => error = 'User not found offline');

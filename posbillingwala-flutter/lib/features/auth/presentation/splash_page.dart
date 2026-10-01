@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/constants/app_config.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
@@ -91,6 +92,8 @@ class SplashPageState extends ConsumerState<SplashPage> {
       return;
     }
     if (outcome.status != InAppUpdateStatus.available) return;
+
+    final forceImmediate = AppConfig.preferImmediateInAppUpdate;
     final strings = AppStrings.of(ref);
     final go = await showAppConfirmBottomSheet(
       context: context,
@@ -98,13 +101,27 @@ class SplashPageState extends ConsumerState<SplashPage> {
       message: strings.updateBeforeContinue,
       confirmLabel: strings.updateApp,
       cancelLabel: strings.cancel,
+      showCancel: !forceImmediate,
+      barrierDismissible: !forceImmediate,
       icon: Icons.system_update_rounded,
     );
-    if (!mounted || !go) return;
+    if (!mounted) return;
+    /* Force (immediate): always start update — no skip. */
+    if (!go && !forceImmediate) return;
+
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(strings.dataUploadingOnServer)));
-    await inAppUpdateService.startUpdate(preferImmediate: true);
+    final started = await inAppUpdateService.startUpdate(
+      preferImmediate: forceImmediate,
+    );
+    if (!mounted) return;
+    if (forceImmediate &&
+        (started.status == InAppUpdateStatus.denied ||
+            started.status == InAppUpdateStatus.failed)) {
+      /* Keep prompting until user updates when force mode is on. */
+      await promptPlayUpdateIfNeeded();
+    }
   }
 
   Future<void> retryWebOnline() async {

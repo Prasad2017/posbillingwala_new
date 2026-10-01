@@ -163,7 +163,9 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
     if (AppPlatform.isWeb) return true;
 
     var settings = ref.read(printerSettingsProvider);
-    await PrinterAutoConnect.ensureSavedPrinters(settings);
+    if (await PrinterAutoConnect.isBillPrinterOnline(settings)) return true;
+
+    await PrinterAutoConnect.ensureSavedPrinters(settings, force: true);
     settings = ref.read(printerSettingsProvider);
     final hub = BluetoothPrinterHub.instance;
     final usbHub = EscPosTransportHub.instance;
@@ -270,7 +272,15 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
   }
 
   Future<void> openPrintBillFlow() async {
+    /* Warm printer while payment sheet is open. */
+    final printerWarm = AppPlatform.isWeb
+        ? null
+        : PrinterAutoConnect.ensureSavedPrinters(
+            ref.read(printerSettingsProvider),
+          );
     if (!await confirmPaymentMode()) return;
+    if (!mounted) return;
+    if (printerWarm != null) await printerWarm;
     if (!mounted) return;
 
     final printerReady = await ensureBillPrinterReady();

@@ -285,8 +285,8 @@ class PrintBluetoothThermalPlugin : FlutterPlugin, MethodCallHandler, ActivityAw
                 bytes[i] = lista[i].toByte()
             }
 
-            /* Cheap ESC/POS BT printers drop large dumps; pace 512-byte chunks. */
-            val chunkSize = 512
+            /* Cheap ESC/POS BT printers drop large dumps; pace 1KB chunks. */
+            val chunkSize = 1024
             val total = bytes.size
             var offset = 0
 
@@ -297,7 +297,7 @@ class PrintBluetoothThermalPlugin : FlutterPlugin, MethodCallHandler, ActivityAw
                 offset = end
                 if (offset < total) {
                     try {
-                        Thread.sleep(8L)
+                        Thread.sleep(3L)
                     } catch (_: InterruptedException) {
                         Thread.currentThread().interrupt()
                     }

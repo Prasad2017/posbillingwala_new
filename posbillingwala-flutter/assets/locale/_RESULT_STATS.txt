@@ -1,4 +1,0 @@
-﻿te.json: keys=868, stillEnglish=0
-ta.json: keys=868, stillEnglish=0
-gu.json: keys=868, stillEnglish=0
-Still-English keys (if any): none

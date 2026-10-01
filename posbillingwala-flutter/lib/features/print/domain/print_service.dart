@@ -128,6 +128,7 @@ class PrintService {
       discount: 'DISCOUNT',
       packing: 'PACKING',
       totalAmount: 'TOTAL AMOUNT',
+      thankVisitAgain: 'Thank You. Visit Again',
       poweredBy: 'Powered by Billingwala',
       website: 'www.posbillingwala.com',
       customerName: 'Customer Name',

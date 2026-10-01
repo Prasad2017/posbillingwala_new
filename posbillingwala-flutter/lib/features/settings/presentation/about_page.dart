@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
@@ -6,6 +7,7 @@ import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
 import 'package:pos_billingwala_v2/core/theme/app_typography.dart';
+import 'package:pos_billingwala_v2/core/utils/app_version.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/support/presentation/support_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -155,7 +157,14 @@ class AboutPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            DeveloperCard(phone: phone, onCall: () => openPhone(context)),
+            DeveloperCard(
+              phone: phone,
+              onCall: () => openPhone(context),
+              onOpenWebsite: () => openExternal(
+                context,
+                Uri.parse(AppConstants.developerWebsite),
+              ),
+            ),
             const SizedBox(height: 14),
             RateUsCard(onRate: () => rateUs(context)),
           ],
@@ -193,7 +202,7 @@ class SectionTitle extends StatelessWidget {
   }
 }
 
-class HeroCard extends StatelessWidget {
+class HeroCard extends ConsumerWidget {
   const HeroCard({super.key, required this.tagline});
 
   final String tagline;
@@ -232,7 +241,8 @@ class HeroCard extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final version = appVersionOf(ref);
     return AppCard(
       accentColor: AppColors.primary,
       padding: const EdgeInsets.fromLTRB(18, 22, 18, 18),
@@ -253,7 +263,7 @@ class HeroCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(99),
             ),
             child: Text(
-              AppConstants.appVersionBadge,
+              version.badge,
               style: const TextStyle(
                 fontFamily: AppFonts.family,
                 color: Colors.white,
@@ -262,6 +272,12 @@ class HeroCard extends StatelessWidget {
                 letterSpacing: 0.2,
               ),
             ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Build ${version.buildNumber}',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodySmall(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 12),
           Text(
@@ -493,10 +509,16 @@ class DisclaimerCard extends StatelessWidget {
 }
 
 class DeveloperCard extends StatelessWidget {
-  const DeveloperCard({super.key, required this.phone, required this.onCall});
+  const DeveloperCard({
+    super.key,
+    required this.phone,
+    required this.onCall,
+    required this.onOpenWebsite,
+  });
 
   final String phone;
   final VoidCallback onCall;
+  final VoidCallback onOpenWebsite;
 
   @override
   Widget build(BuildContext context) {
@@ -535,6 +557,29 @@ class DeveloperCard extends StatelessWidget {
                 Text(
                   AppConstants.developerName,
                   style: AppTypography.cardTitle(color: AppColors.primaryDark),
+                ),
+                const SizedBox(height: 6),
+                InkWell(
+                  onTap: onOpenWebsite,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.language_rounded,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          AppConstants.developerWebsiteDisplay,
+                          style: AppTypography.bodySmall(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 8),
                 InkWell(

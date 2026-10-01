@@ -50,10 +50,14 @@ Future<T?> showAppBottomSheet<T>({
   required String title,
   required Widget child,
   IconData? icon,
+  bool isDismissible = true,
+  bool enableDrag = true,
 }) {
   return showAppModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
+    isDismissible: isDismissible,
+    enableDrag: enableDrag,
     backgroundColor: AppColors.glassSolid,
     showDragHandle: true,
     shape: const RoundedRectangleBorder(
@@ -112,13 +116,17 @@ Future<bool> showAppConfirmBottomSheet({
   required String message,
   required String confirmLabel,
   String? cancelLabel,
+  bool showCancel = true,
   IconData? icon,
   AppButtonVariant confirmVariant = AppButtonVariant.primary,
+  bool barrierDismissible = true,
 }) async {
   final result = await showAppBottomSheet<bool>(
     context: context,
     title: title,
     icon: icon,
+    isDismissible: barrierDismissible,
+    enableDrag: barrierDismissible,
     child: Builder(
       builder: (sheetContext) => Column(
         mainAxisSize: MainAxisSize.min,
@@ -135,14 +143,16 @@ Future<bool> showAppConfirmBottomSheet({
           const SizedBox(height: 24),
           Row(
             children: [
-              Expanded(
-                child: AppButton(
-                  label: cancelLabel ?? WidgetStrings.cancel,
-                  variant: AppButtonVariant.outlined,
-                  onPressed: () => Navigator.of(sheetContext).pop(false),
+              if (showCancel) ...[
+                Expanded(
+                  child: AppButton(
+                    label: cancelLabel ?? WidgetStrings.cancel,
+                    variant: AppButtonVariant.outlined,
+                    onPressed: () => Navigator.of(sheetContext).pop(false),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
+              ],
               Expanded(
                 child: AppButton(
                   label: confirmLabel,

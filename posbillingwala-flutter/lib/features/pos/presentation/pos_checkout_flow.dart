@@ -100,11 +100,21 @@ Future<void> runPosCheckoutAction(
     return;
   }
 
+  /* Warm printer while user picks Cash/UPI — hides connect latency. */
+  Future<void>? printerWarm;
+  if (action == PosCheckoutAction.print && !AppPlatform.isWeb) {
+    printerWarm = PrinterAutoConnect.ensureSavedPrinters(
+      ref.read(printerSettingsProvider),
+    );
+  }
+
   /* Dismiss keeps the same Cart / POS UI — do not navigate away. */
   if (!await promptPaymentMode(context, ref)) return;
   if (!context.mounted) return;
 
   if (action == PosCheckoutAction.print) {
+    if (printerWarm != null) await printerWarm;
+    if (!context.mounted) return;
     final printerReady = await ensureBillPrinterReady(context, ref);
     if (!context.mounted) return;
     if (!printerReady) {
@@ -263,7 +273,10 @@ Future<bool> ensureBillPrinterReady(BuildContext context, WidgetRef ref) async {
   if (AppPlatform.isWeb) return true;
 
   var settings = ref.read(printerSettingsProvider);
-  await PrinterAutoConnect.ensureSavedPrinters(settings);
+  /* Already linked — skip reconnect wait on Print tap. */
+  if (await PrinterAutoConnect.isBillPrinterOnline(settings)) return true;
+
+  await PrinterAutoConnect.ensureSavedPrinters(settings, force: true);
   settings = ref.read(printerSettingsProvider);
   final hub = BluetoothPrinterHub.instance;
   final usbHub = EscPosTransportHub.instance;

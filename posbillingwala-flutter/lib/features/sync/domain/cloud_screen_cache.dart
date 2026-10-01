@@ -66,7 +66,8 @@ abstract final class CloudScreenCache {
 
   static Future<List<Map<String, dynamic>>> loadMapList(String name) async {
     final decoded = await loadJson(name);
-    if (decoded is! List) return const [];
+    /* Growable: callers (enqueue, upsert*) mutate with .add / []. */
+    if (decoded is! List) return <Map<String, dynamic>>[];
     return decoded
         .whereType<Map>()
         .map((e) => Map<String, dynamic>.from(e))

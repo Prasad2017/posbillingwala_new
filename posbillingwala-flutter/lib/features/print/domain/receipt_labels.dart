@@ -13,6 +13,7 @@ class ReceiptLabels {
     required this.discount,
     required this.packing,
     required this.totalAmount,
+    required this.thankVisitAgain,
     required this.poweredBy,
     required this.website,
     required this.customerName,
@@ -33,6 +34,7 @@ class ReceiptLabels {
   final String discount;
   final String packing;
   final String totalAmount;
+  final String thankVisitAgain;
   final String poweredBy;
   final String website;
   final String customerName;
@@ -55,6 +57,7 @@ class ReceiptLabels {
       discount: t('ui_discount'),
       packing: t('ui_packing'),
       totalAmount: t('ui_total_amount'),
+      thankVisitAgain: t('ui_thank_visit_again'),
       poweredBy: t('print_powered_by'),
       website: t('print_powered_by_website'),
       customerName: t('ui_customer_name'),
