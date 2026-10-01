@@ -139,3 +139,60 @@ List<int> encodeRgbaIsolate(EncodeRgbaArgs args) {
     brightValue: args.brightValue,
   );
 }
+
+class TrimmedRgba {
+  const TrimmedRgba({
+    required this.rgba,
+    required this.width,
+    required this.height,
+  });
+
+  final Uint8List rgba;
+  final int width;
+  final int height;
+}
+
+/* Remove blank rows above the first ink so the logo starts at the top.
+ * [keepDots] leaves a hair of paper so the first line is not clipped. */
+TrimmedRgba trimTopBlankRows({
+  required Uint8List rgba,
+  required int width,
+  required int height,
+  int keepDots = 4,
+}) {
+  if (width <= 0 || height <= 0) {
+    return TrimmedRgba(rgba: rgba, width: width, height: height);
+  }
+  final rowBytes = width * 4;
+  if (rgba.length < height * rowBytes) {
+    return TrimmedRgba(rgba: rgba, width: width, height: height);
+  }
+
+  var firstInk = height;
+  for (var y = 0; y < height; y++) {
+    final row = y * rowBytes;
+    var blank = true;
+    for (var i = 0; i < rowBytes; i += 4) {
+      final r = rgba[row + i];
+      final g = rgba[row + i + 1];
+      final b = rgba[row + i + 2];
+      if (r < 245 || g < 245 || b < 245) {
+        blank = false;
+        break;
+      }
+    }
+    if (!blank) {
+      firstInk = y;
+      break;
+    }
+  }
+
+  final drop = (firstInk - keepDots).clamp(0, height - 1);
+  if (drop <= 0) {
+    return TrimmedRgba(rgba: rgba, width: width, height: height);
+  }
+  final newHeight = height - drop;
+  final out = Uint8List(rowBytes * newHeight);
+  out.setRange(0, out.length, rgba, drop * rowBytes);
+  return TrimmedRgba(rgba: out, width: width, height: newHeight);
+}

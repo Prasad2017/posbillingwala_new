@@ -217,7 +217,7 @@ class ReceiptRasterizer {
     );
 
     final ops = <_PaintOp>[];
-    var y = 8.0;
+    var y = 0.0;
 
     if (logoImage != null) {
       final lw = logoImage.width.toDouble();
@@ -343,20 +343,30 @@ class ReceiptRasterizer {
     bool autoCut = true,
     bool fullCut = true,
   }) async {
+    /* Drop blank rows above the logo. ESC @ is not sent: many BT printers
+     * feed a blank band when they see initialize. */
+    final trimmed = trimTopBlankRows(
+      rgba: rendered.rgba,
+      width: rendered.width,
+      height: rendered.height,
+    );
     /* Floyd–Steinberg is CPU-heavy — keep it off the UI isolate. */
     final raster = await compute(
       encodeRgbaIsolate,
       EncodeRgbaArgs(
-        rgba: rendered.rgba,
-        width: rendered.width,
-        height: rendered.height,
+        rgba: trimmed.rgba,
+        width: trimmed.width,
+        height: trimmed.height,
         brightValue: 128,
       ),
     );
     final lines = feedLines.clamp(0, 20);
     final out = EscPosEncoder(charsPerLine: charsPerLine)
-      ..init()
-      ..raw(raster);
+      /* Line spacing 0 so the printer does not insert a blank line
+       * above the raster. ESC 2 restores normal spacing for the end feed. */
+      ..raw(const [0x1B, 0x33, 0x00])
+      ..raw(raster)
+      ..raw(const [0x1B, 0x32]);
     /* Feed lines always apply (with or without auto-cut / cutter hardware).
      * 0 → no blank space; N → exactly N lines. Cut is optional and separate. */
     out.feed(lines);
@@ -410,7 +420,7 @@ class ReceiptRasterizer {
     );
 
     final ops = <_PaintOp>[];
-    var y = 8.0;
+    var y = 0.0;
 
     if (logoImage != null) {
       final lw = logoImage.width.toDouble();
@@ -645,7 +655,7 @@ class ReceiptRasterizer {
     );
 
     final ops = <_PaintOp>[];
-    var y = 10.0;
+    var y = 0.0;
 
     y = _paintCentered(
       ops,
@@ -1051,7 +1061,7 @@ class ReceiptRasterizer {
       Paint()..color = const Color(0xFFFFFFFF),
     );
 
-    var y = 12.0;
+    var y = 0.0;
     if (logoImage != null) {
       final lw = logoImage.width.toDouble();
       final lh = logoImage.height.toDouble();
