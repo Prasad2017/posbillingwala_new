@@ -86,12 +86,11 @@ void main() {
     });
   });
 
-  test('ESC/POS full cut bytes use only caller feed lines', () {
+  test('ESC/POS cut with caller feed uses ESC d then cut', () {
     final encoder = EscPosEncoder(charsPerLine: 32)
       ..init()
       ..cut(full: true, feedToCutter: 3);
     final bytes = encoder.bytes;
-    /* ESC d 3 + GS V 65 0 + GS V 0 — no hardcoded feed */
     expect(
       bytes.sublist(bytes.length - 10),
       [0x1B, 0x64, 0x03, 0x1D, 0x56, 0x41, 0x00, 0x1D, 0x56, 0x00],
@@ -104,8 +103,31 @@ void main() {
       ..cut(full: true, feedToCutter: 0);
     final bytes = encoder.bytes;
     expect(
-      bytes.sublist(bytes.length - 6),
+      bytes.sublist(bytes.length - 7),
       [0x1D, 0x56, 0x41, 0x00, 0x1D, 0x56, 0x00],
     );
+  });
+
+  test('bill ending feed is ESC d n and works without cut', () {
+    final withCut = EscPosEncoder(charsPerLine: 32)
+      ..init()
+      ..feed(2)
+      ..cut(full: true, feedToCutter: 0);
+    expect(withCut.bytes, [
+      0x1B, 0x40,
+      0x1B, 0x64, 0x02,
+      0x1D, 0x56, 0x41, 0x00,
+      0x1D, 0x56, 0x00,
+    ]);
+
+    final noCut = EscPosEncoder(charsPerLine: 32)
+      ..init()
+      ..feed(2);
+    expect(noCut.bytes, [0x1B, 0x40, 0x1B, 0x64, 0x02]);
+
+    final zeroFeed = EscPosEncoder(charsPerLine: 32)
+      ..init()
+      ..feed(0);
+    expect(zeroFeed.bytes, [0x1B, 0x40]);
   });
 }

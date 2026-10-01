@@ -354,15 +354,15 @@ class ReceiptRasterizer {
     final out = EscPosEncoder(charsPerLine: charsPerLine)
       ..init()
       ..raw(raster);
-    /* Trailing advance = user feed lines only (no hardcoded extras). */
+    /* Feed lines always apply (with or without auto-cut / cutter hardware).
+     * 0 → no blank space; N → exactly N lines. Cut is optional and separate. */
+    out.feed(lines);
     if (autoCut) {
       try {
-        out.cut(full: fullCut, feedToCutter: lines);
+        out.cut(full: fullCut, feedToCutter: 0);
       } catch (_) {
-        out.feed(lines);
+        /* Printers without a cutter ignore cut bytes; feed already applied. */
       }
-    } else {
-      out.feed(lines);
     }
     return out.bytes;
   }

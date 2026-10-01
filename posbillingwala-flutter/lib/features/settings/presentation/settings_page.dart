@@ -587,9 +587,9 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> settingsPageSave({bool showSnack = true}) async {
     final current = ref.read(printerSettingsProvider);
     final feed =
-        int.tryParse(settingsPageFeed.text.trim()) ?? current.feedLines;
+        int.tryParse(settingsPageFeed.text.trim()) ?? 0;
     final kotFeed =
-        int.tryParse(settingsPageKotFeed.text.trim()) ?? current.kotFeedLines;
+        int.tryParse(settingsPageKotFeed.text.trim()) ?? 0;
     final port =
         int.tryParse(settingsPagePort.text.trim()) ?? current.networkPort;
     final copies =
@@ -895,7 +895,15 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                         AppTextField(
                           controller: settingsPageFeed,
                           label: 'Print Feed Lines',
+                          hint: '0',
                           keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Blank lines after bill end. Works with or without auto-cut.',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         AppSwitchTile(
@@ -998,6 +1006,7 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                         AppTextField(
                           controller: settingsPageKotFeed,
                           label: 'KOT Print Feed Lines',
+                          hint: '0',
                           keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 4),
