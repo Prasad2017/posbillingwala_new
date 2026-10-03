@@ -71,7 +71,8 @@ abstract final class AppBreakpoints {
   static const double shortHeightMax = 500;
   static const double tallHeightMin = 800;
 
-  static const double minProductCardWidth = 150;
+  /* Wider cards so full product names wrap cleanly on POS tablets. */
+  static const double minProductCardWidth = 168;
   static const double minTableCardWidth = 140;
   static const double minModuleTileWidth = 150;
   static const double minHubCardWidth = 260;
@@ -221,14 +222,14 @@ abstract final class AppBreakpoints {
     AppHeightClass height = AppHeightClass.regular,
     bool includeImage = true,
   }) {
-    /* Name + price + Add — optional 70×70 image above. */
-    final textBlock = height == AppHeightClass.short ? 96.0 : switch (w) {
-      AppWidthClass.smallMobile || AppWidthClass.mobile => 102.0,
-      AppWidthClass.tablet => 104.0,
+    /* Name (up to 4 lines) + meta + price + Add — optional image above. */
+    final textBlock = height == AppHeightClass.short ? 140.0 : switch (w) {
+      AppWidthClass.smallMobile || AppWidthClass.mobile => 152.0,
+      AppWidthClass.tablet => 158.0,
       AppWidthClass.largeTablet ||
       AppWidthClass.desktop ||
       AppWidthClass.largeDesktop =>
-        106.0,
+        164.0,
     };
     if (!includeImage) return textBlock;
     return textBlock + (height == AppHeightClass.short ? 74 : 76);

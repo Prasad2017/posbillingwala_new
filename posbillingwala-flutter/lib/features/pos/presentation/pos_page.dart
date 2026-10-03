@@ -6,8 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_assets.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/theme/app_scale.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
@@ -964,7 +966,8 @@ class ProductMasonryGrid extends StatelessWidget {
 
   /* Rough height so we pack into the shortest column (true masonry). */
   static double estimateHeight(Product product) {
-    const textBlock = 92.0;
+    /* Name up to 4 lines + price/unit + Add. */
+    const textBlock = 140.0;
     return hasProductImage(product.productImage) ? textBlock + 76 : textBlock;
   }
 
@@ -1031,6 +1034,8 @@ class ProductCard extends ConsumerWidget {
         ? '₹ ${product.productPrice.toStringAsFixed(1)}'
         : '₹ ${product.productPrice.toStringAsFixed(1)}/$unit';
     final showImage = hasProductImage(product.productImage);
+    final nameSize = context.sp(13);
+    final priceSize = context.sp(12.5);
 
     return RepaintBoundary(
       child: Material(
@@ -1060,7 +1065,7 @@ class ProductCard extends ConsumerWidget {
             child: SizedBox(
               width: double.infinity,
               child: Padding(
-                padding: EdgeInsets.fromLTRB(8, showImage ? 6 : 8, 8, 6),
+                padding: EdgeInsets.fromLTRB(10, showImage ? 8 : 10, 10, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
@@ -1077,36 +1082,42 @@ class ProductCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 6),
                     ],
+                    /* Name + price/unit + Add only — no qty on catalog cards. */
                     Text(
                       product.productName,
-                      maxLines: 1,
+                      maxLines: 4,
+                      softWrap: true,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.left,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
+                      style: TextStyle(
+                        fontFamily: AppFonts.family,
+                        fontFamilyFallback: AppFonts.indicFallbacks,
+                        fontWeight: FontWeight.w600,
+                        fontSize: nameSize,
                         color: AppColors.navy,
-                        height: 1.1,
+                        height: 1.28,
+                        letterSpacing: -0.15,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       priceLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.left,
-                      style: const TextStyle(
+                      style: TextStyle(
+                        fontFamily: AppFonts.family,
                         fontWeight: FontWeight.w700,
-                        fontSize: 12,
+                        fontSize: priceSize,
                         color: AppColors.textPrimary,
-                        height: 1.1,
+                        height: 1.15,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     GestureDetector(
                       onTap: () {},
                       behavior: HitTestBehavior.opaque,
-                      child: ProductQtyButton(product: product),
+                      child: ProductAddButton(product: product),
                     ),
                   ],
                 ),
@@ -1119,123 +1130,40 @@ class ProductCard extends ConsumerWidget {
   }
 }
 
-class ProductQtyButton extends ConsumerWidget {
-  const ProductQtyButton({super.key, required this.product});
+class ProductAddButton extends ConsumerWidget {
+  const ProductAddButton({super.key, required this.product});
 
   final Product product;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final qtyInCart = ref.watch(
-      cartItemsProvider.select((async) {
-        final items = async.maybeWhen(
-          data: (items) => items,
-          orElse: () => const <CartItem>[],
-        );
-        return items
-            .where((i) => i.productId == product.productId)
-            .fold<double>(0, (sum, i) => sum + i.quantity);
-      }),
-    );
+    final height = AppScale.addButtonHeight(context);
+    final labelSize = context.sp(14);
 
-    List<CartItem> productLines() {
-      return ref
-          .read(cartItemsProvider)
-          .maybeWhen(
-            data: (items) => items
-                .where((i) => i.productId == product.productId)
-                .toList(growable: false),
-            orElse: () => const <CartItem>[],
-          );
-    }
-
-    Future<void> addOrIncrement() async {
-      final lines = productLines();
-      if (lines.isEmpty) {
-        await addProductWithPortionPicker(context, ref, product);
-        return;
-      }
-      await ref.read(posCartControllerProvider.notifier).increment(lines.first);
-    }
-
-    Future<void> removeOrDecrement() async {
-      final lines = productLines();
-      if (lines.isEmpty) return;
-      await ref.read(posCartControllerProvider.notifier).decrement(lines.first);
-    }
-
-    if (qtyInCart <= 0) {
-      return SizedBox(
-        width: double.infinity,
-        height: 32,
-        child: Material(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(10),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(10),
-            onTap: addOrIncrement,
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add, color: Colors.white, size: 18),
-                SizedBox(width: 4),
-                Text(
-                  'Add',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      decoration: BoxDecoration(
-        color: AppColors.primaryLight,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        children: [
-          _qtyIconButton(icon: Icons.remove, onTap: removeOrDecrement),
-          Expanded(
-            child: Text(
-              ProductUnits.formatQty(qtyInCart, unit: product.productUnit),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.navy,
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
+      height: height,
+      child: Material(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => addProductWithPortionPicker(context, ref, product),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add, color: Colors.white, size: context.sp(20)),
+              const SizedBox(width: 6),
+              Text(
+                'Add',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: labelSize,
+                ),
               ),
-            ),
+            ],
           ),
-          _qtyIconButton(icon: Icons.add, onTap: addOrIncrement),
-        ],
-      ),
-    );
-  }
-
-  Widget _qtyIconButton({required IconData icon, required VoidCallback onTap}) {
-    return Material(
-      color: Colors.transparent,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 30,
-          height: 30,
-          child: Icon(icon, size: 18, color: AppColors.primary),
         ),
       ),
     );
@@ -1258,6 +1186,7 @@ class CartPane extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final summary = ref.watch(cartSummaryProvider);
     final short = context.isShortHeight;
+    final headerSize = context.sp(13);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1268,14 +1197,14 @@ class CartPane extends ConsumerWidget {
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(16, short ? 10 : 18, 16, short ? 6 : 10),
+            padding: EdgeInsets.fromLTRB(16, short ? 10 : 16, 16, short ? 6 : 10),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'Current Order',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
-                  fontSize: short ? 18 : null,
+                  fontSize: short ? context.sp(18) : context.sp(20),
                 ),
               ),
             ),
@@ -1284,48 +1213,43 @@ class CartPane extends ConsumerWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final narrow = constraints.maxWidth < 320;
+              final headerStyle = TextStyle(
+                fontFamily: AppFonts.family,
+                fontWeight: FontWeight.w700,
+                fontSize: headerSize,
+                color: AppColors.navy,
+              );
               return Padding(
                 padding: EdgeInsets.fromLTRB(
-                  narrow ? 10 : 16,
-                  short ? 4 : 8,
-                  narrow ? 10 : 16,
+                  narrow ? 10 : 14,
+                  short ? 6 : 8,
+                  narrow ? 10 : 14,
                   0,
                 ),
                 child: Row(
                   children: [
                     Expanded(
-                      flex: 24,
+                      flex: 5,
+                      child: Text('Product', style: headerStyle),
+                    ),
+                    SizedBox(
+                      width: narrow ? 112 : 128,
                       child: Text(
-                        'Product Name',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        'Qty',
+                        textAlign: TextAlign.center,
+                        style: headerStyle,
                       ),
                     ),
                     SizedBox(
-                      width: narrow ? 100 : 116,
-                      child: const Text(
-                        'Qty',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
+                      width: narrow ? 64 : 78,
+                      child: Text(
+                        'Price',
+                        textAlign: TextAlign.end,
+                        style: headerStyle,
                       ),
                     ),
-                    if (!narrow)
-                      const Expanded(
-                        flex: 8,
-                        child: Text(
-                          'Unit Price',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    SizedBox(width: narrow ? 28 : 36),
+                    /* Gap reserved for separated delete control. */
+                    SizedBox(width: AppScale.tap(context, base: 44) + 8),
                   ],
                 ),
               );
@@ -1338,7 +1262,7 @@ class CartPane extends ConsumerWidget {
                   return const EmptyCart();
                 }
                 return ListView.separated(
-                  padding: EdgeInsets.all(short ? 10 : 16),
+                  padding: EdgeInsets.all(short ? 10 : 14),
                   itemCount: items.length,
                   separatorBuilder: (_, _) =>
                       SizedBox(height: short ? 6 : 10),
@@ -1431,52 +1355,62 @@ class CartItemTile extends ConsumerWidget {
   final CartItem item;
   final NumberFormat currency;
 
+  Future<void> confirmRemove(BuildContext context, WidgetRef ref) async {
+    final ok = await showAppConfirmBottomSheet(
+      context: context,
+      title: 'Remove item?',
+      message: 'Remove "${item.productName}" from the current order?',
+      confirmLabel: 'Delete',
+      confirmVariant: AppButtonVariant.danger,
+      icon: Icons.delete_outline_rounded,
+    );
+    if (!ok || !context.mounted) return;
+    await ref.read(posCartControllerProvider.notifier).remove(item);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final nameSize = context.sp(13);
+    final valueSize = context.sp(13);
+    final qtySize = context.sp(15);
+    final deleteTap = AppScale.tap(context, base: 44);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final narrow = constraints.maxWidth < 320;
         return Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: narrow ? 4 : 8,
+            horizontal: narrow ? 2 : 4,
             vertical: 4,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                flex: 24,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.productName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: narrow ? 13 : 14),
-                    ),
-                    if (narrow)
-                      InkWell(
-                        onTap: () => editCartLineDialog(context, ref, item),
-                        child: Text(
-                          currency.format(item.unitPrice),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                  ],
+                flex: 5,
+                child: Text(
+                  item.productName,
+                  maxLines: 3,
+                  softWrap: true,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: AppFonts.family,
+                    fontFamilyFallback: AppFonts.indicFallbacks,
+                    fontSize: nameSize,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.navy,
+                    height: 1.28,
+                    letterSpacing: -0.15,
+                  ),
                 ),
               ),
               SizedBox(
-                width: narrow ? 100 : 116,
+                width: narrow ? 112 : 128,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     QtyButton(
                       isAdd: false,
-                      dense: true,
                       onTap: () => ref
                           .read(posCartControllerProvider.notifier)
                           .decrement(item),
@@ -1485,7 +1419,7 @@ class CartItemTile extends ConsumerWidget {
                       child: InkWell(
                         onTap: () => editCartLineDialog(context, ref, item),
                         child: SizedBox(
-                          height: 36,
+                          height: AppScale.qtyButton(context),
                           child: Center(
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
@@ -1496,8 +1430,9 @@ class CartItemTile extends ConsumerWidget {
                                 ),
                                 maxLines: 1,
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: narrow ? 13 : 15,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: qtySize,
+                                  color: AppColors.navy,
                                 ),
                               ),
                             ),
@@ -1507,7 +1442,6 @@ class CartItemTile extends ConsumerWidget {
                     ),
                     QtyButton(
                       isAdd: true,
-                      dense: true,
                       onTap: () => ref
                           .read(posCartControllerProvider.notifier)
                           .increment(item),
@@ -1515,35 +1449,45 @@ class CartItemTile extends ConsumerWidget {
                   ],
                 ),
               ),
-              if (!narrow)
-                Expanded(
-                  flex: 8,
-                  child: InkWell(
-                    onTap: () => editCartLineDialog(context, ref, item),
-                    child: Text(
-                      currency.format(item.unitPrice),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13),
+              SizedBox(
+                width: narrow ? 64 : 78,
+                child: InkWell(
+                  onTap: () => editCartLineDialog(context, ref, item),
+                  child: Text(
+                    currency.format(item.unitPrice),
+                    textAlign: TextAlign.end,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppFonts.family,
+                      fontSize: valueSize,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.navy,
                     ),
                   ),
                 ),
-              IconButton(
-                tooltip: 'Remove item',
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-                constraints: BoxConstraints(
-                  minWidth: narrow ? 28 : 36,
-                  minHeight: 32,
-                ),
-                onPressed: () =>
-                    ref.read(posCartControllerProvider.notifier).remove(item),
-                icon: const AppSvg(
-                  AppAssets.svgDelete,
-                  width: 18,
-                  height: 18,
-                  color: AppColors.danger,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Material(
+                  color: AppColors.danger.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => confirmRemove(context, ref),
+                    child: SizedBox(
+                      width: deleteTap,
+                      height: deleteTap,
+                      child: const Center(
+                        child: AppSvg(
+                          AppAssets.svgDelete,
+                          width: 20,
+                          height: 20,
+                          color: AppColors.danger,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1564,16 +1508,18 @@ class QtyButton extends StatelessWidget {
 
   final VoidCallback onTap;
   final bool isAdd;
+  /* Kept for call-site compatibility; size is always responsive. */
   final bool dense;
 
   @override
   Widget build(BuildContext context) {
-    final size = dense ? 36.0 : 40.0;
+    final size = AppScale.qtyButton(context);
+    final fontSize = context.sp(dense ? 20 : 22);
     return Material(
       color: const Color(0xFF9BBDE8),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(size / 2),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(size / 2),
         onTap: onTap,
         child: SizedBox(
           width: size,
@@ -1583,8 +1529,9 @@ class QtyButton extends StatelessWidget {
               isAdd ? '+' : '−',
               style: TextStyle(
                 color: AppColors.primaryDark,
-                fontWeight: FontWeight.w700,
-                fontSize: dense ? 20 : 22,
+                fontWeight: FontWeight.w800,
+                fontSize: fontSize,
+                height: 1,
               ),
             ),
           ),

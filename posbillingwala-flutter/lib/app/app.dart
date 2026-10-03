@@ -8,6 +8,7 @@ import 'package:pos_billingwala_v2/app/router.dart';
 import 'package:pos_billingwala_v2/app/theme.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_constants.dart';
+import 'package:pos_billingwala_v2/core/theme/app_scale.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/widgets/aurora_background.dart';
 import 'package:pos_billingwala_v2/features/print/domain/printer_auto_connect.dart';
@@ -98,16 +99,17 @@ class _PosBillingwalaAppState extends ConsumerState<PosBillingwalaApp>
       ],
       routerConfig: router,
       builder: (context, child) {
-        /* Lock text size at 0.9 — ignore system Display / Text size. */
+        /* Responsive text scale by screen width; ignore system Display size. */
         final mq = MediaQuery.of(context);
         /* viewPadding stays stable when system nav briefly hides/shows. */
         final topInset = mq.viewPadding.top;
         final bottomInset = mq.viewPadding.bottom;
         final leftInset = mq.viewPadding.left;
         final rightInset = mq.viewPadding.right;
+        final textScale = AppScale.textScalerForWidth(mq.size.width);
         return MediaQuery(
           data: mq.copyWith(
-            textScaler: const TextScaler.linear(0.9),
+            textScaler: TextScaler.linear(textScale),
             boldText: false,
             /* Layout follows system insets — no jump on nav hide/show. */
             padding: EdgeInsets.only(

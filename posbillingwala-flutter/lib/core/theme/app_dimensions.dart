@@ -25,13 +25,15 @@ abstract final class AppDimensions {
   static const double iconLg = 28;
   static const double iconXl = 36;
 
-  /* Controls */
+  /* Controls — prefer AppScale.tap / AppScale.buttonHeight at runtime. */
   static const double inputHeight = 52;
   static const double buttonHeight = 52;
   static const double appBarAction = 44;
   static const double cardPadding = 16;
   static const double pagePadding = 16;
   static const double minTapTarget = 48;
+  static const double posQtyTap = 48;
+  static const double posAddButton = 44;
 
   /* Narrow forms (login / MPIN) — prefer [AppBreakpoints.contentMaxWidthFor]. */
   static const double maxContentWidth = 560;

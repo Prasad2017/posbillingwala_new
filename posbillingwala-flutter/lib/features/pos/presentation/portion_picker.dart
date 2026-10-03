@@ -5,6 +5,7 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/constants/app_fonts.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/database/database_provider.dart';
+import 'package:pos_billingwala_v2/core/theme/app_scale.dart';
 import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
@@ -511,20 +512,21 @@ class QtyBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = AppScale.qtyButton(context);
     return Material(
       color: AppColors.primary,
       child: InkWell(
         onTap: onTap,
         child: SizedBox(
-          width: 44,
-          height: 44,
+          width: size,
+          height: size,
           child: Center(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
+                fontSize: context.sp(22),
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),

@@ -8,6 +8,7 @@ import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/network/online_guard.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/theme/app_scale.dart';
 import 'package:pos_billingwala_v2/core/utils/app_platform.dart';
 import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
@@ -793,54 +794,66 @@ class PaymentPageState extends ConsumerState<PaymentPage> {
                     color: AppColors.primarySoft,
                     child: Row(
                       children: [
-                        const SizedBox(
+                        SizedBox(
                           width: 24,
                           child: Text(
                             '#',
                             style: TextStyle(
                               color: AppColors.navy,
                               fontWeight: FontWeight.w800,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                        ),
-                        const Expanded(
-                          flex: 5,
-                          child: Text(
-                            'Product Name',
-                            style: TextStyle(
-                              color: AppColors.navy,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12.5,
+                              fontSize: context.sp(13),
                             ),
                           ),
                         ),
                         Expanded(
-                          flex: narrow ? 3 : 4,
-                          child: const Text(
-                            'Quantity',
+                          flex: 5,
+                          child: Text(
+                            'Product',
+                            style: TextStyle(
+                              color: AppColors.navy,
+                              fontWeight: FontWeight.w800,
+                              fontSize: context.sp(13),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: narrow ? 112 : 128,
+                          child: Text(
+                            'Qty',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: AppColors.navy,
                               fontWeight: FontWeight.w800,
-                              fontSize: 12.5,
+                              fontSize: context.sp(13),
                             ),
                           ),
                         ),
                         if (!narrow)
-                          const Expanded(
-                            flex: 3,
+                          SizedBox(
+                            width: 72,
                             child: Text(
-                              'Unit Price',
+                              'Price',
                               textAlign: TextAlign.end,
                               style: TextStyle(
                                 color: AppColors.navy,
                                 fontWeight: FontWeight.w800,
-                                fontSize: 12.5,
+                                fontSize: context.sp(13),
                               ),
                             ),
                           ),
-                        const SizedBox(width: 36),
+                        SizedBox(
+                          width: narrow ? 64 : 76,
+                          child: Text(
+                            'Amount',
+                            textAlign: TextAlign.end,
+                            style: TextStyle(
+                              color: AppColors.navy,
+                              fontWeight: FontWeight.w800,
+                              fontSize: context.sp(13),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: AppScale.tap(context, base: 44) + 8),
                       ],
                     ),
                   ),
@@ -1148,9 +1161,25 @@ class InvoiceLineRow extends ConsumerWidget {
     return item.quantity.toStringAsFixed(2);
   }
 
+  Future<void> confirmRemove(BuildContext context, WidgetRef ref) async {
+    final cart = ref.read(posCartControllerProvider.notifier);
+    final ok = await showAppConfirmBottomSheet(
+      context: context,
+      title: 'Remove item?',
+      message: 'Remove "${item.productName}" from the current order?',
+      confirmLabel: 'Delete',
+      confirmVariant: AppButtonVariant.danger,
+      icon: Icons.delete_outline_rounded,
+    );
+    if (!ok || !context.mounted) return;
+    await cart.remove(item);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.read(posCartControllerProvider.notifier);
+    final lineAmount = item.unitPrice * item.quantity;
+    final deleteTap = AppScale.tap(context, base: 44);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),
@@ -1158,7 +1187,7 @@ class InvoiceLineRow extends ConsumerWidget {
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 340;
           final qtyControls = SizedBox(
-            width: compact ? 96 : 108,
+            width: compact ? 112 : 128,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -1174,9 +1203,9 @@ class InvoiceLineRow extends ConsumerWidget {
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 14,
+                        fontSize: context.sp(15),
                         color: AppColors.navy,
                       ),
                     ),
@@ -1198,37 +1227,23 @@ class InvoiceLineRow extends ConsumerWidget {
                   '$index',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: compact ? 12 : 13,
+                    fontSize: context.sp(compact ? 12 : 13),
                     color: AppColors.navy,
                   ),
                 ),
               ),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.productName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: compact ? 12.5 : 13.5,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                    if (!showUnitPrice) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        currency.format(item.unitPrice),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ],
+                flex: 5,
+                child: Text(
+                  item.productName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: context.sp(compact ? 13 : 14),
+                    color: AppColors.navy,
+                    height: 1.2,
+                  ),
                 ),
               ),
               qtyControls,
@@ -1242,24 +1257,46 @@ class InvoiceLineRow extends ConsumerWidget {
                       textAlign: TextAlign.end,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12.5,
+                      style: TextStyle(
+                        fontSize: context.sp(13),
                         fontWeight: FontWeight.w700,
                         color: AppColors.navy,
                       ),
                     ),
                   ),
                 ),
-              IconButton(
-                tooltip: 'Remove item',
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                onPressed: () => cart.remove(item),
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: AppColors.danger,
-                  size: 22,
+              SizedBox(
+                width: compact ? 64 : 76,
+                child: Text(
+                  currency.format(lineAmount),
+                  textAlign: TextAlign.end,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: context.sp(13),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.navy,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Material(
+                  color: AppColors.danger.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => confirmRemove(context, ref),
+                    child: SizedBox(
+                      width: deleteTap,
+                      height: deleteTap,
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        color: AppColors.danger,
+                        size: context.sp(22),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1285,6 +1322,7 @@ class CircleQtyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = AppScale.qtyButton(context);
     return Material(
       color: const Color(0xFF9BBDE8),
       shape: const CircleBorder(),
@@ -1292,11 +1330,11 @@ class CircleQtyButton extends StatelessWidget {
         customBorder: const CircleBorder(),
         onTap: onTap,
         child: SizedBox(
-          width: 30,
-          height: 30,
+          width: size,
+          height: size,
           child: Icon(
             icon,
-            size: 18,
+            size: context.sp(20),
             color: AppColors.primaryDark,
           ),
         ),

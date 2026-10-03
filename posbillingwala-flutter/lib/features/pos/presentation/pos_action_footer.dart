@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
+import 'package:pos_billingwala_v2/core/theme/app_scale.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
 import 'package:pos_billingwala_v2/features/pos/domain/pos_providers.dart';
 
@@ -236,6 +237,7 @@ class _ActionIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onTap != null;
+    final height = AppScale.buttonHeight(context);
     return Expanded(
       child: Material(
         color: enabled
@@ -246,13 +248,13 @@ class _ActionIconButton extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: SizedBox(
-            height: compact ? 48 : 52,
+            height: compact ? height * 0.92 : height,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   icon,
-                  size: compact ? 18 : 20,
+                  size: context.sp(compact ? 20 : 22),
                   color: enabled ? color : AppColors.textSecondary,
                 ),
                 const SizedBox(height: 2),
@@ -261,8 +263,8 @@ class _ActionIconButton extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
+                    fontSize: context.sp(12),
+                    fontWeight: FontWeight.w800,
                     color: enabled ? color : AppColors.textSecondary,
                   ),
                 ),

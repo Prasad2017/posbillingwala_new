@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pos_billingwala_v2/core/constants/app_colors.dart';
 import 'package:pos_billingwala_v2/core/database/app_database.dart';
 import 'package:pos_billingwala_v2/core/theme/app_breakpoints.dart';
+import 'package:pos_billingwala_v2/core/theme/app_scale.dart';
 import 'package:pos_billingwala_v2/core/utils/money_format.dart';
 import 'package:pos_billingwala_v2/core/widgets/widgets.dart';
 import 'package:pos_billingwala_v2/features/masters/domain/product_units.dart';
@@ -415,54 +416,66 @@ class _CartItemsTable extends StatelessWidget {
                 color: AppColors.primarySoft,
                 child: Row(
                   children: [
-                    const SizedBox(
+                    SizedBox(
                       width: 24,
                       child: Text(
                         '#',
                         style: TextStyle(
                           color: AppColors.navy,
                           fontWeight: FontWeight.w800,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                    ),
-                    const Expanded(
-                      flex: 5,
-                      child: Text(
-                        'Product Name',
-                        style: TextStyle(
-                          color: AppColors.navy,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12.5,
+                          fontSize: context.sp(13),
                         ),
                       ),
                     ),
                     Expanded(
-                      flex: narrow ? 3 : 4,
-                      child: const Text(
-                        'Quantity',
+                      flex: 5,
+                      child: Text(
+                        'Product',
+                        style: TextStyle(
+                          color: AppColors.navy,
+                          fontWeight: FontWeight.w800,
+                          fontSize: context.sp(13),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: narrow ? 112 : 128,
+                      child: Text(
+                        'Qty',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: AppColors.navy,
                           fontWeight: FontWeight.w800,
-                          fontSize: 12.5,
+                          fontSize: context.sp(13),
                         ),
                       ),
                     ),
                     if (!narrow)
-                      const Expanded(
-                        flex: 3,
+                      SizedBox(
+                        width: 72,
                         child: Text(
-                          'Unit Price',
+                          'Price',
                           textAlign: TextAlign.end,
                           style: TextStyle(
                             color: AppColors.navy,
                             fontWeight: FontWeight.w800,
-                            fontSize: 12.5,
+                            fontSize: context.sp(13),
                           ),
                         ),
                       ),
-                    const SizedBox(width: 36),
+                    SizedBox(
+                      width: narrow ? 64 : 76,
+                      child: Text(
+                        'Amount',
+                        textAlign: TextAlign.end,
+                        style: TextStyle(
+                          color: AppColors.navy,
+                          fontWeight: FontWeight.w800,
+                          fontSize: context.sp(13),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: AppScale.tap(context, base: 44) + 8),
                   ],
                 ),
               ),
